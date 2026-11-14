@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es" data-type="software">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#070b14">
+<meta name="description" content="Asistente de salud local para astronautas: monitoreo con semáforo, cuerpo 3D y asistente que funciona sin conexión con la Tierra.">
+<title>Copiloto de salud · Prototipo</title>
+<link rel="preload" href="fuentes/JetBrainsMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/app.css">
+<script type="importmap">
+{ "imports": { "three": "./lib/three/three.module.js", "three/addons/": "./lib/three/addons/" } }
+</script>
+</head>
+<body>
+<a class="saltar" href="#chat">Ir al asistente</a>
+
+<header class="barra">
+  <div class="marca">
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 17h6l3-7 4 12 3-7h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"/></svg>
+    <div>
+      <p class="nombre">Copiloto de salud</p>
+      <p class="sub">Prototipo · NASA Space Apps 2026</p>
+    </div>
+  </div>
+  <dl class="mision">
+    <div><dt>Tripulante</dt><dd translate="no">A1 · Cmdte.</dd></div>
+    <div><dt>Tiempo de misión</dt><dd id="met">180 d 00:00:00</dd></div>
+    <div><dt>Retraso con la Tierra</dt><dd>14 min</dd></div>
+  </dl>
+  <p id="cw" class="cw" aria-live="polite" aria-label="Resumen de precauciones y alertas"></p>
+  <button id="btnSenal" class="senal" type="button" aria-pressed="true">
+    <span class="punto" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="txtSenal">Enlace con la Tierra</span>
+  </button>
+</header>
+
+<main class="app">
+  <section class="visor" aria-labelledby="t-visor">
+    <h1 id="t-visor" class="sr-only">Estado de salud del astronauta</h1>
+    <div id="lienzo" class="lienzo" data-entrar style="--i:1">
+      <p class="hud-rotulo" aria-hidden="true"><span>Cuerpo · vista 3D</span><span id="rotuloEstado">Normal</span></p>
+      <p id="sinWebgl" class="sin-webgl" hidden>Este equipo no tiene WebGL. Usa la lista de órganos del panel o abre la página en Chrome o Chromium.</p>
+      <div class="herramientas" role="toolbar" aria-label="Vista del cuerpo">
+        <div class="grupo-capas" role="group" aria-label="Capas">
+          <button type="button" class="capa" data-capa="piel" aria-pressed="true">Piel</button>
+          <button type="button" class="capa" data-capa="huesos" aria-pressed="true">Esqueleto</button>
+          <button type="button" class="capa" data-capa="sangre" aria-pressed="true">Vasos</button>
+          <button type="button" class="capa" data-capa="organos" aria-pressed="true">Órganos</button>
+        </div>
+        <div class="grupo-capas" role="group" aria-label="Controles">
+          <button type="button" class="capa" id="btnEtiquetas" aria-pressed="true">Etiquetas</button>
+          <button type="button" class="capa" id="btnGirar" aria-pressed="true">Girar</button>
+          <button type="button" class="capa" id="btnCentrar">Centrar</button>
+        </div>
+      </div>
+      <p class="ayuda">Arrastra para girar · rueda para acercar · toca un órgano</p>
+    </div>
+    <ul id="signos" class="signos" aria-label="Signos vitales" data-entrar style="--i:2"></ul>
+  </section>
+
+  <div class="lateral">
+    <section id="ficha" class="tarjeta ficha" aria-live="polite" aria-label="Detalle del órgano" data-entrar style="--i:2"></section>
+
+    <section id="chat" class="tarjeta chat" aria-labelledby="t-chat" tabindex="-1" data-entrar style="--i:3">
+      <div class="chat-cabecera">
+        <h2 id="t-chat">Asistente a bordo</h2>
+        <span class="chip">Local · sin internet</span>
+      </div>
+      <ol id="mensajes" class="mensajes" aria-live="polite">
+        <li class="msg msg-ia">Hola. Pregúntame por tus síntomas o tus datos. Respondo con las guías de salud de NASA guardadas en la nave y te digo de dónde saco cada recomendación.</li>
+      </ol>
+      <div id="sugerencias" class="sugerencias" aria-label="Preguntas sugeridas">
+        <button type="button" data-pregunta="Me duele la cabeza y dormí 4 horas, ¿qué hago?">Dolor de cabeza</button>
+        <button type="button" data-pregunta="¿Por qué mi presión está en amarillo?">Mi presión</button>
+        <button type="button" data-pregunta="Llevo varios días con el ánimo bajo">Ánimo bajo</button>
+      </div>
+      <form id="formChat" class="form-chat">
+        <label for="pregunta" class="sr-only">Escribe tu pregunta</label>
+        <input id="pregunta" name="pregunta" type="text" autocomplete="off" placeholder="Ej.: Siento el corazón muy rápido…" required>
+        <button id="enviar" type="submit" class="btn btn-primario">Enviar</button>
+      </form>
+      <div class="tierra">
+        <button id="btnTierra" type="button" class="btn">Enviar resumen a la Tierra</button>
+        <div id="estadoTierra" class="estado-tierra" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <details class="tarjeta demo">
+      <summary>Controles de demostración</summary>
+      <label for="pulso" class="fila">Pulso <output id="vPulso" for="pulso"></output></label>
+      <input id="pulso" name="pulso" type="range" min="35" max="170" step="1">
+      <div class="botones">
+        <button id="btnEmergencia" type="button" class="btn btn-peligro">Simular emergencia</button>
+        <button id="btnReiniciar" type="button" class="btn">Reiniciar datos</button>
+      </div>
+    </details>
+  </div>
+</main>
+
+<footer class="pie">
+  Prototipo TRL 3–4 · no diagnostica · rangos ilustrativos. Anatomía: BodyParts3D, © The Database Center for Life Science, CC BY 4.0. Datos: NASA OSDR OSD-575 y NASA Human Research Program. Visor: Three.js (MIT).
+</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

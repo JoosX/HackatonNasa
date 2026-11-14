@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuerpo 3D – Asistente de salud</title>
+<link rel="stylesheet" href="css/cuerpo.css">
+<style>
+  #escena canvas { display:block; width:100%; height:100%; cursor: grab; }
+  #escena canvas:active { cursor: grabbing; }
+  .ayuda { position:absolute; left:12px; bottom:10px; font-size:12px; color:var(--suave); pointer-events:none; }
+  .botones { display:flex; gap:8px; margin-top:10px; }
+  .botones button { flex:1; background:#14223d; color:var(--texto); border:1px solid var(--borde); border-radius:8px; padding:8px; cursor:pointer; font-size:12.5px; }
+  .botones button:hover { border-color: var(--cian); }
+  #sinwebgl { display:none; padding:20px; color:#ffb3b3; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./lib/three/three.module.js", "three/addons/": "./lib/three/addons/" } }
+</script>
+</head>
+<body>
+<header>
+  <h1>🧑‍🚀 Cuerpo interactivo · 3D</h1>
+  <div><span class="modo" id="origen"></span><a href="cuerpo2d.html">← Ver versión 2D</a></div>
+</header>
+<main>
+  <section id="escena">
+    <div id="tooltip"></div>
+    <div class="ayuda">Arrastra para girar · rueda para acercar · clic en un órgano</div>
+    <p id="sinwebgl">Este equipo no tiene WebGL. Usa la versión 2D.</p>
+  </section>
+  <aside>
+    <div class="tarjeta" id="panel"></div>
+    <div class="tarjeta control">
+      <label>Pulso (demo) <span class="valor" id="vPulso"></span></label>
+      <input type="range" id="pulso" min="35" max="170" step="1">
+      <div class="botones">
+        <button id="emergencia">Simular emergencia</button>
+        <button id="reiniciar">Reiniciar</button>
+      </div>
+    </div>
+    <p class="pie">Prototipo · cuerpo construido por código (Three.js, MIT). Se puede reemplazar por un modelo de Blender (.glb) con los mismos nombres de órganos.</p>
+  </aside>
+</main>
+
+<script type="module">
+// Código escrito con asistencia de IA (Claude); revisado por el equipo.
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { ORGANOS, COLORES, cargarEstado, colorOrgano, indicador, colorPulso, pintarPanel } from "./js/organos.js";
+
+const contenedor = document.getElementById("escena");
+const panel = document.getElementById("panel");
+const tooltip = document.getElementById("tooltip");
+let estado, inicial, seleccionado = null, hover = null;
+
+// ---------- Escena ----------
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+} catch (e) {
+  document.getElementById("sinwebgl").style.display = "block";
+  throw e;
+}
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+contenedor.prepend(renderer.domElement);
+
+const escena = new THREE.Scene();
+const camara = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+camara.position.set(0, 1.0, 6.6);
+const controles = new OrbitControls(camara, renderer.domElement);
+controles.target.set(0, 0.78, 0);
+controles.enableDamping = true;
+controles.minDistance = 2.5;
+controles.maxDistance = 10;
+controles.autoRotate = !location.search.includes("quieto");   // ?quieto: sin giro (capturas)
+controles.autoRotateSpeed = 1.2;
+controles.addEventListener("start", () => (controles.autoRotate = false));
+
+escena.add(new THREE.AmbientLight(0x8fb8ff, 0.7));
+const luz = new THREE.DirectionalLight(0xffffff, 1.4); luz.position.set(3, 5, 4); escena.add(luz);
+const luz2 = new THREE.DirectionalLight(0x4fd1ff, 0.8); luz2.position.set(-4, 2, -3); escena.add(luz2);
+
+// Plataforma y anillos estilo holograma.
+const base = new THREE.Mesh(new THREE.CircleGeometry(1.1, 64),
+  new THREE.MeshBasicMaterial({ color: 0x4fd1ff, transparent: true, opacity: 0.08 }));
+base.rotation.x = -Math.PI / 2; base.position.y = -0.98; escena.add(base);
+const anillos = [];
+for (const r of [0.9, 1.1, 1.3]) {
+  const a = new THREE.Mesh(new THREE.TorusGeometry(r, 0.006, 8, 96),
+    new THREE.MeshBasicMaterial({ color: 0x4fd1ff, transparent: true, opacity: 0.35 }));
+  a.rotation.x = Math.PI / 2; a.position.y = -0.97; escena.add(a); anillos.push(a);
+}
+const escaneo = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.008, 8, 96),
+  new THREE.MeshBasicMaterial({ color: 0x4fd1ff, transparent: true, opacity: 0.6 }));
+escaneo.rotation.x = Math.PI / 2; escena.add(escaneo);
+
+// ---------- Cuerpo ----------
+const cuerpo = new THREE.Group(); cuerpo.name = "cuerpo"; escena.add(cuerpo);
+const grupos = {};         // nombre de órgano -> THREE.Group
+const materiales = {};     // nombre de órgano -> [materiales]
+const clicables = [];      // meshes de órganos internos (se prueban antes que la piel)
+
+function grupo(nombre) {
+  const g = new THREE.Group(); g.name = nombre; cuerpo.add(g);
+  grupos[nombre] = g; materiales[nombre] = [];
+  return g;
+}
+
+function mat(nombre, opciones) {
+  const m = new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.1, ...opciones });
+  materiales[nombre].push(m);
+  return m;
+}
+
+function malla(nombre, geo, material, pos = [0, 0, 0], rot = [0, 0, 0], esc = [1, 1, 1]) {
+  const m = new THREE.Mesh(geo, material);
+  m.position.set(...pos); m.rotation.set(...rot); m.scale.set(...esc);
+  m.userData.organo = nombre;
+  grupos[nombre].add(m);
+  if (nombre !== "piel") clicables.push(m);
+  return m;
+}
+
+// Extremidad entre dos puntos (cápsula orientada).
+function extremidad(nombre, a, b, r, material) {
+  const va = new THREE.Vector3(...a), vb = new THREE.Vector3(...b);
+  const largo = va.distanceTo(vb);
+  const m = malla(nombre, new THREE.CapsuleGeometry(r, largo, 6, 16), material);
+  m.position.copy(va).add(vb).multiplyScalar(0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vb.clone().sub(va).normalize());
+  return m;
+}
+
+let corazon = null;   // malla del corazón (se anima con el pulso)
+
+// ---------- Modelo realista: BodyParts3D (CC BY 4.0) procesado con Blender ----------
+const ESCALA_MODELO = 1.5;   // el modelo mide 1,72 m; se escala al tamaño de la escena
+const MATERIAL_REAL = {
+  corazon:  { color: 0xb3172a, roughness: 0.45, emissiveIntensity: 0.35 },
+  pulmones: { color: 0xe89aa5, roughness: 0.7, emissiveIntensity: 0.3 },
+  cerebro:  { color: 0xf0b1bd, roughness: 0.75, emissiveIntensity: 0.3 },
+  ojos:     { color: 0xf4f4f4, roughness: 0.25, emissiveIntensity: 0.3 },
+  // Huesos tipo rayos X: semitransparentes para ver corazón, pulmones y cerebro a través.
+  huesos:   { color: 0xeee5cf, roughness: 0.6, emissiveIntensity: 0.22, transparent: true, opacity: 0.42, depthWrite: false },
+  sangre:   { color: 0xc0202a, roughness: 0.45, emissiveIntensity: 0.4 },
+};
+
+async function cargarModelo(url) {
+  const gltf = await new GLTFLoader().loadAsync(url);
+  const mallas = [];
+  gltf.scene.traverse((o) => { if (o.isMesh && ORGANOS[o.name]) mallas.push(o); });
+  if (!mallas.length) throw new Error("El modelo no trae órganos con los nombres del contrato");
+  for (const m of mallas) {
+    const nombre = m.name;
+    if (!grupos[nombre]) grupo(nombre);
+    m.updateWorldMatrix(true, false);
+    const geo = m.geometry.clone().applyMatrix4(m.matrixWorld).scale(ESCALA_MODELO, ESCALA_MODELO, ESCALA_MODELO);
+    // Centrar la geometría en su propio centro (para que el corazón lata en su lugar).
+    geo.computeBoundingBox();
+    const centro = geo.boundingBox.getCenter(new THREE.Vector3());
+    geo.translate(-centro.x, -centro.y, -centro.z);
+    geo.computeVertexNormals();
+    let material;
+    if (nombre === "piel") {
+      material = mat("piel", { color: 0x4fd1ff, transparent: true, opacity: 0.07, depthWrite: false,
+                               side: THREE.FrontSide, roughness: 0.2 });
+      material.userData.holograma = true;
+    } else {
+      material = mat(nombre, { metalness: 0.05, ...MATERIAL_REAL[nombre] });
+    }
+    material.userData.opBase = material.opacity;
+    const malla3d = new THREE.Mesh(geo, material);
+    malla3d.position.copy(centro);
+    malla3d.userData.organo = nombre;
+    if (nombre === "piel") {
+      malla3d.renderOrder = 10;
+      const matAlambre = mat("piel", { color: 0x4fd1ff, wireframe: true, transparent: true, opacity: 0.035, depthWrite: false });
+      matAlambre.userData.opBase = 0.035; matAlambre.userData.holograma = true;
+      const alambre = new THREE.Mesh(geo, matAlambre);
+      alambre.position.copy(centro); alambre.userData.organo = "piel"; alambre.renderOrder = 11;
+      grupos.piel.add(alambre);
+    } else {
+      clicables.push(malla3d);
+    }
+    grupos[nombre].add(malla3d);
+    if (nombre === "corazon") corazon = malla3d;
+  }
+  cuerpo.position.y = -0.97;   // pies sobre la plataforma
+  camara.position.set(0, 0.55, 4.9);   // el modelo realista es más delgado: acercar la cámara
+  controles.target.set(0, 0.32, 0);
+}
+
+// ---------- Respaldo: cuerpo construido con formas simples ----------
+function construirProcedural() {
+// PIEL: silueta translúcida + malla de alambre.
+grupo("piel");
+const matPiel = mat("piel", { color: 0x4fd1ff, transparent: true, opacity: 0.13, depthWrite: false, side: THREE.DoubleSide });
+const matAlambre = mat("piel", { color: 0x4fd1ff, wireframe: true, transparent: true, opacity: 0.08 });
+const partesPiel = [];
+const cabeza = malla("piel", new THREE.SphereGeometry(0.26, 32, 24), matPiel, [0, 2.32, 0], [0, 0, 0], [0.9, 1.08, 0.95]);
+partesPiel.push(cabeza);
+partesPiel.push(extremidad("piel", [0, 1.98, 0], [0, 2.1, 0], 0.09, matPiel));
+partesPiel.push(malla("piel", new THREE.CapsuleGeometry(0.36, 0.62, 8, 24), matPiel, [0, 1.48, 0], [0, 0, 0], [1, 1, 0.55]));
+partesPiel.push(malla("piel", new THREE.SphereGeometry(0.34, 24, 16), matPiel, [0, 0.95, 0], [0, 0, 0], [1, 0.62, 0.62]));
+for (const s of [-1, 1]) {
+  partesPiel.push(extremidad("piel", [0.42 * s, 1.86, 0], [0.56 * s, 1.25, 0], 0.085, matPiel));
+  partesPiel.push(extremidad("piel", [0.56 * s, 1.25, 0], [0.64 * s, 0.68, 0.04], 0.07, matPiel));
+  partesPiel.push(malla("piel", new THREE.SphereGeometry(0.075, 16, 12), matPiel, [0.66 * s, 0.56, 0.05]));
+  partesPiel.push(extremidad("piel", [0.17 * s, 0.85, 0], [0.19 * s, 0.05, 0], 0.12, matPiel));
+  partesPiel.push(extremidad("piel", [0.19 * s, 0.05, 0], [0.2 * s, -0.8, 0], 0.09, matPiel));
+  partesPiel.push(malla("piel", new THREE.BoxGeometry(0.16, 0.08, 0.3), matPiel, [0.2 * s, -0.93, 0.07]));
+}
+for (const p of partesPiel) { const w = new THREE.Mesh(p.geometry, matAlambre); w.position.copy(p.position);
+  w.quaternion.copy(p.quaternion); w.scale.copy(p.scale); w.userData.organo = "piel"; grupos.piel.add(w); }
+
+// HUESOS: columna, costillas, pelvis, fémures y brazos.
+grupo("huesos");
+const matHueso = mat("huesos", { color: 0xe8eef8, emissiveIntensity: 0.35 });
+for (let i = 0; i < 16; i++) malla("huesos", new THREE.CylinderGeometry(0.035, 0.035, 0.05, 10), matHueso, [0, 1.0 + i * 0.065, -0.1]);
+for (let i = 0; i < 6; i++) {
+  const r = 0.2 + Math.sin((i + 1) / 7 * Math.PI) * 0.07;
+  const c = malla("huesos", new THREE.TorusGeometry(r, 0.012, 6, 32, Math.PI * 1.55), matHueso,
+    [0, 1.82 - i * 0.1, -0.02], [Math.PI / 2, 0, Math.PI * 0.725], [1, 0.7, 1]);
+}
+malla("huesos", new THREE.TorusGeometry(0.2, 0.04, 8, 24), matHueso, [0, 0.92, -0.02], [Math.PI / 2.3, 0, 0], [1.1, 0.8, 1]);
+for (const s of [-1, 1]) {
+  extremidad("huesos", [0.17 * s, 0.85, 0], [0.19 * s, 0.08, 0], 0.025, matHueso);
+  extremidad("huesos", [0.19 * s, 0.0, 0], [0.2 * s, -0.78, 0], 0.022, matHueso);
+  extremidad("huesos", [0.42 * s, 1.86, 0], [0.56 * s, 1.27, 0], 0.02, matHueso);
+  extremidad("huesos", [0.56 * s, 1.23, 0], [0.64 * s, 0.7, 0.04], 0.017, matHueso);
+}
+
+// SANGRE: vasos desde el corazón.
+grupo("sangre");
+const matSangre = mat("sangre", { color: 0xd23b3b, emissiveIntensity: 0.6 });
+const rutas = [];
+for (const s of [-1, 1]) {
+  rutas.push([[0.06, 1.55, 0.12], [0.08 * s, 1.2, 0.05], [0.14 * s, 0.85, 0.02], [0.18 * s, 0.1, 0.04], [0.2 * s, -0.75, 0.03]]);
+  rutas.push([[0.06, 1.6, 0.12], [0.3 * s, 1.82, 0.02], [0.5 * s, 1.55, 0.03], [0.6 * s, 1.0, 0.05], [0.65 * s, 0.6, 0.05]]);
+}
+rutas.push([[0.05, 1.62, 0.1], [0.04, 1.9, 0.04], [0.03, 2.1, 0.03], [0.02, 2.25, 0.02]]);
+for (const r of rutas) {
+  const curva = new THREE.CatmullRomCurve3(r.map((p) => new THREE.Vector3(...p)));
+  malla("sangre", new THREE.TubeGeometry(curva, 48, 0.014, 8), matSangre);
+}
+
+// PULMONES.
+grupo("pulmones");
+const matPulmon = mat("pulmones", { color: 0xff9eb5, transparent: true, opacity: 0.85, emissiveIntensity: 0.4 });
+malla("pulmones", new THREE.SphereGeometry(0.15, 24, 18), matPulmon, [-0.15, 1.6, 0.03], [0, 0, 0.12], [1, 1.7, 0.95]);
+malla("pulmones", new THREE.SphereGeometry(0.135, 24, 18), matPulmon, [0.17, 1.62, 0.03], [0, 0, -0.12], [1, 1.6, 0.95]);
+
+// CORAZÓN (forma de corazón extruida).
+grupo("corazon");
+const forma = new THREE.Shape();
+forma.moveTo(0, -0.06);
+forma.bezierCurveTo(0, -0.14, -0.12, -0.14, -0.12, -0.05);
+forma.bezierCurveTo(-0.12, 0.04, 0, 0.1, 0, 0.16);
+forma.bezierCurveTo(0, 0.1, 0.12, 0.04, 0.12, -0.05);
+forma.bezierCurveTo(0.12, -0.14, 0, -0.14, 0, -0.06);
+const geoCorazon = new THREE.ExtrudeGeometry(forma, { depth: 0.08, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.025, bevelSegments: 4 });
+geoCorazon.center();
+const matCorazon = mat("corazon", { color: 0xff3355, emissiveIntensity: 0.7 });
+corazon = malla("corazon", geoCorazon, matCorazon, [0.07, 1.55, 0.1], [Math.PI, 0, -0.25], [0.95, 0.95, 0.95]);
+corazon.userData.procedural = true;
+
+// CEREBRO.
+grupo("cerebro");
+const matCerebro = mat("cerebro", { color: 0xf7a8c4, emissiveIntensity: 0.45, roughness: 0.8 });
+const geoCerebro = new THREE.SphereGeometry(0.17, 48, 32);
+const pos = geoCerebro.attributes.position;
+for (let i = 0; i < pos.count; i++) {   // relieve tipo circunvoluciones
+  const v = new THREE.Vector3().fromBufferAttribute(pos, i);
+  const ruido = 1 + 0.045 * Math.sin(v.x * 70) * Math.sin(v.y * 60 + v.z * 40);
+  v.multiplyScalar(ruido); pos.setXYZ(i, v.x, v.y, v.z);
+}
+geoCerebro.computeVertexNormals();
+malla("cerebro", geoCerebro, matCerebro, [0, 2.38, -0.02], [0, 0, 0], [0.95, 0.8, 1.05]);
+
+// OJOS.
+grupo("ojos");
+const matOjo = mat("ojos", { color: 0xffffff, emissiveIntensity: 0.6 });
+for (const s of [-1, 1]) malla("ojos", new THREE.SphereGeometry(0.035, 16, 12), matOjo, [0.085 * s, 2.29, 0.22]);
+
+cuerpo.position.y = -0.03;   // pies apoyados sobre la plataforma (y ≈ -0.97)
+}
+
+// ---------- Estado y colores ----------
+// Brillo según gravedad: verde casi sin brillo (aspecto realista), amarillo moderado, rojo fuerte.
+const BRILLO = { verde: 0.06, amarillo: 0.3, rojo: 0.75, "sin dato": 0.0 };
+
+function aplicarEstado() {
+  for (const nombre of Object.keys(ORGANOS)) {
+    const c = colorOrgano(estado, nombre);
+    const color = new THREE.Color(COLORES[c]);
+    // Vasos y huesos son grandes: brillo menor para que no tapen el color real (sangre roja, hueso marfil).
+    const factor = nombre === "sangre" ? 0.4 : nombre === "huesos" ? 0.6 : 1;
+    for (const m of materiales[nombre]) {
+      m.userData.base = BRILLO[c] * factor;
+      m.emissiveIntensity = BRILLO[c] * factor;
+      m.userData.rojo = c === "rojo";
+      if (nombre === "piel") {   // holograma cian, apenas teñido por el estado
+        m.color.copy(m.userData.holograma ? new THREE.Color(0x4fd1ff).lerp(color, 0.3) : color); continue;
+      }
+      m.emissive = color;
+    }
+  }
+  const lpm = Number(indicador(estado, "pulso")?.valor) || 70;
+  document.getElementById("vPulso").textContent = `${lpm} lpm`;
+  document.getElementById("pulso").value = lpm;
+  pintarPanel(panel, estado, seleccionado);
+}
+
+function resaltar() {
+  for (const [nombre, mats] of Object.entries(materiales)) {
+    const activo = nombre === hover || nombre === seleccionado;
+    for (const m of mats) {
+      if (nombre === "piel") {
+        const base = m.userData.opBase ?? (m.wireframe ? 0.08 : 0.13);
+        m.opacity = activo ? base * 2 : base; continue;
+      }
+      m.emissiveIntensity = activo ? Math.max(0.9, m.userData.base ?? 0) : (m.userData.base ?? m.emissiveIntensity);
+    }
+  }
+  // Atenuar lo no seleccionado para que destaque el órgano elegido.
+  for (const [nombre, g] of Object.entries(grupos)) {
+    if (nombre === "piel") continue;
+    g.traverse((o) => {
+      if (!o.material) return;
+      const base = o.material.userData.opBase ?? (nombre === "pulmones" ? 0.85 : 1);
+      o.material.transparent = true;
+      o.material.opacity = (seleccionado && nombre !== seleccionado) ? 0.25 : base;
+    });
+  }
+}
+
+// ---------- Interacción ----------
+const raycaster = new THREE.Raycaster();
+const puntero = new THREE.Vector2();
+const pielMeshes = () => grupos.piel.children;
+
+function organoBajoPuntero(ev) {
+  const r = renderer.domElement.getBoundingClientRect();
+  puntero.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  raycaster.setFromCamera(puntero, camara);
+  // Órganos internos primero (se ven a través de la piel), luego la piel.
+  const interno = raycaster.intersectObjects(clicables, false)[0];
+  if (interno) return interno.object.userData.organo;
+  const piel = raycaster.intersectObjects(pielMeshes(), false)[0];
+  return piel ? "piel" : null;
+}
+
+renderer.domElement.addEventListener("pointermove", (ev) => {
+  hover = organoBajoPuntero(ev);
+  if (hover) {
+    const r = contenedor.getBoundingClientRect();
+    tooltip.innerHTML = `<b style="color:${COLORES[colorOrgano(estado, hover)]}">●</b> ${ORGANOS[hover].nombre}`;
+    tooltip.style.display = "block";
+    tooltip.style.left = ev.clientX - r.left + 14 + "px";
+    tooltip.style.top = ev.clientY - r.top + 10 + "px";
+    renderer.domElement.style.cursor = "pointer";
+  } else {
+    tooltip.style.display = "none";
+    renderer.domElement.style.cursor = "";
+  }
+  resaltar();
+});
+
+let abajo = null;
+renderer.domElement.addEventListener("pointerdown", (ev) => (abajo = [ev.clientX, ev.clientY]));
+renderer.domElement.addEventListener("pointerup", (ev) => {
+  if (!abajo || Math.hypot(ev.clientX - abajo[0], ev.clientY - abajo[1]) > 5) return; // fue un arrastre
+  seleccionado = organoBajoPuntero(ev);
+  pintarPanel(panel, estado, seleccionado);
+  resaltar();
+});
+
+function fijar(nombre, valor, color) {
+  const i = indicador(estado, nombre);
+  if (i) { i.valor = valor; i.color = color; i.antiguedad_min = 0; }
+}
+document.getElementById("pulso").addEventListener("input", (e) => {
+  const lpm = Number(e.target.value); fijar("pulso", lpm, colorPulso(lpm)); aplicarEstado();
+});
+document.getElementById("emergencia").addEventListener("click", () => {
+  fijar("pulso", 148, "rojo"); fijar("oxigeno", 88, "rojo"); fijar("animo", 1, "rojo");
+  seleccionado = "corazon"; aplicarEstado(); resaltar();
+});
+document.getElementById("reiniciar").addEventListener("click", () => {
+  estado = structuredClone(inicial); seleccionado = null; aplicarEstado(); resaltar();
+});
+
+// ---------- Animación ----------
+function ajustarTamano() {
+  const { clientWidth: w, clientHeight: h } = contenedor;
+  renderer.setSize(w, h, false);
+  camara.aspect = w / h; camara.updateProjectionMatrix();
+}
+new ResizeObserver(ajustarTamano).observe(contenedor);
+
+const reloj = new THREE.Clock();
+function latido(fase) {           // "lub-dub": dos picos por ciclo
+  const a = Math.exp(-Math.pow((fase - 0.12) / 0.05, 2));
+  const b = 0.6 * Math.exp(-Math.pow((fase - 0.34) / 0.05, 2));
+  return a + b;
+}
+renderer.setAnimationLoop(() => {
+  const t = reloj.getElapsedTime();
+  const lpm = Number(indicador(estado ?? { indicadores: [] }, "pulso")?.valor) || 70;
+  const fase = (t * lpm / 60) % 1;
+  // Los órganos en rojo laten en brillo para llamar la atención.
+  for (const [nombre, mats] of Object.entries(materiales)) {
+    if (nombre === "piel" || nombre === hover || nombre === seleccionado) continue;
+    for (const m of mats) if (m.userData.rojo) m.emissiveIntensity = 0.5 + 0.35 * (0.5 + 0.5 * Math.sin(t * 5));
+  }
+  if (corazon) {
+    const s = (corazon.userData.procedural ? 0.72 : 1) * (1 + 0.12 * latido(fase));
+    corazon.scale.set(s, s, s);
+  }
+  escaneo.position.y = -0.95 + ((t * 0.45) % 1) * 3.45;
+  escaneo.material.opacity = 0.5 * Math.sin(((t * 0.45) % 1) * Math.PI);
+  anillos.forEach((a, i) => (a.rotation.z = t * (0.2 + i * 0.1) * (i % 2 ? -1 : 1)));
+  controles.update();
+  renderer.render(escena, camara);
+});
+
+let tipoModelo = "realista (BodyParts3D)";
+try {
+  await cargarModelo("modelos/cuerpo.glb");
+} catch (e) {
+  console.warn("No se pudo cargar el modelo realista; uso el cuerpo simple:", e);
+  for (const k of Object.keys(grupos)) { cuerpo.remove(grupos[k]); delete grupos[k]; delete materiales[k]; }
+  clicables.length = 0;
+  construirProcedural();
+  tipoModelo = "simple (respaldo)";
+}
+estado = await cargarEstado();
+inicial = structuredClone(estado);
+document.querySelector(".pie").textContent =
+  `Prototipo · modelo ${tipoModelo}. Anatomía: BodyParts3D, © The Database Center for Life Science, licencia CC BY 4.0. Visor: Three.js (MIT).`;
+document.getElementById("origen").textContent = estado.origen === "api" ? "Datos: API local" : "Datos: demostración";
+aplicarEstado(); resaltar(); ajustarTamano();
+if (location.hash === "#emergencia") document.getElementById("emergencia").click();
+window.__cuerpo = { escena, grupos };   // para depurar desde la consola
+</script>
+</body>
+</html>

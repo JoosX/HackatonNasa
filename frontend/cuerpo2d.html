@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuerpo 2D – Asistente de salud</title>
+<link rel="stylesheet" href="css/cuerpo.css">
+<style>
+  #escena { display:flex; align-items:center; justify-content:center; }
+  svg { height: 96%; max-width: 100%; overflow: visible; }
+  .organo { cursor: pointer; transition: opacity .2s, filter .2s; outline: none; }
+  .organo .forma { fill: var(--c); fill-opacity: .45; stroke: var(--c); stroke-width: 1.4; }
+  .organo:hover .forma, .organo.sel .forma { fill-opacity: .8; stroke-width: 2.4; }
+  .organo { filter: drop-shadow(0 0 4px var(--c)); }
+  .organo.sel { filter: drop-shadow(0 0 10px var(--c)) drop-shadow(0 0 3px #fff); }
+  #piel .forma { fill: #4fd1ff; fill-opacity: .07; stroke: var(--c); stroke-opacity: .7; stroke-width: 1.6; }
+  #piel:hover .forma, #piel.sel .forma { fill-opacity: .14; }
+  #piel { filter: drop-shadow(0 0 6px rgba(79,209,255,.35)); }
+  #sangre .vaso { fill: none; stroke: var(--c); stroke-width: 2.4; stroke-linecap: round; stroke-opacity: .85; }
+  #sangre .hit { fill: none; stroke: transparent; stroke-width: 12; }
+  #sangre .vaso { stroke-dasharray: 6 5; animation: fluir calc(var(--periodo) * 2) linear infinite; }
+  @keyframes fluir { to { stroke-dashoffset: -22; } }
+  #huesos .forma { fill: #dfe8f7; fill-opacity: .25; stroke: var(--c); stroke-width: 1.1; }
+  #huesos .linea { fill: none; stroke: var(--c); stroke-width: 3; stroke-linecap: round; stroke-opacity: .6; }
+  #corazon .forma { transform-box: fill-box; transform-origin: center; animation: latido var(--periodo) ease-in-out infinite; }
+  @keyframes latido { 0%,100% { transform: scale(1); } 12% { transform: scale(1.18); } 24% { transform: scale(1.02); } 36% { transform: scale(1.12); } 50% { transform: scale(1); } }
+  .rejilla { stroke: rgba(79,209,255,.07); }
+  .escaneo { fill: url(#gradEscaneo); animation: escanear 5s linear infinite; }
+  @keyframes escanear { from { transform: translateY(-40px); } to { transform: translateY(660px); } }
+  .botones { display:flex; gap:8px; margin-top:10px; }
+  .botones button { flex:1; background:#14223d; color:var(--texto); border:1px solid var(--borde); border-radius:8px; padding:8px; cursor:pointer; font-size:12.5px; }
+  .botones button:hover { border-color: var(--cian); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🧑‍🚀 Cuerpo interactivo · 2D</h1>
+  <div><span class="modo" id="origen"></span><a href="cuerpo3d.html">Ver versión 3D →</a></div>
+</header>
+<main>
+  <section id="escena">
+    <svg id="svg" viewBox="0 0 320 640" aria-label="Cuerpo humano interactivo"></svg>
+    <div id="tooltip"></div>
+  </section>
+  <aside>
+    <div class="tarjeta" id="panel"></div>
+    <div class="tarjeta control">
+      <label>Pulso (demo) <span class="valor" id="vPulso"></span></label>
+      <input type="range" id="pulso" min="35" max="170" step="1">
+      <div class="botones">
+        <button id="emergencia">Simular emergencia</button>
+        <button id="reiniciar">Reiniciar</button>
+      </div>
+    </div>
+    <p class="pie">Prototipo · datos de demostración · rangos ilustrativos. Los nombres de órganos siguen el contrato con el modelo 3D.</p>
+  </aside>
+</main>
+
+<script type="module">
+import { ORGANOS, COLORES, cargarEstado, colorOrgano, indicador, colorPulso, pintarPanel } from "./js/organos.js";
+
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("svg");
+const panel = document.getElementById("panel");
+const tooltip = document.getElementById("tooltip");
+let estado, inicial, seleccionado = null;
+
+const el = (tag, attrs = {}, padre = null) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (padre) padre.appendChild(e);
+  return e;
+};
+
+// Cápsula (extremidad) entre dos puntos con radio r.
+function capsula(x1, y1, x2, y2, r) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  const nx = -dy / L * r, ny = dx / L * r;
+  return `M${x1 + nx},${y1 + ny} L${x2 + nx},${y2 + ny} A${r},${r} 0 0 0 ${x2 - nx},${y2 - ny}
+          L${x1 - nx},${y1 - ny} A${r},${r} 0 0 0 ${x1 + nx},${y1 + ny} Z`;
+}
+
+function construir() {
+  const defs = el("defs", {}, svg);
+  const g = el("linearGradient", { id: "gradEscaneo", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+  el("stop", { offset: "0", "stop-color": "#4fd1ff", "stop-opacity": "0" }, g);
+  el("stop", { offset: "0.5", "stop-color": "#4fd1ff", "stop-opacity": ".18" }, g);
+  el("stop", { offset: "1", "stop-color": "#4fd1ff", "stop-opacity": "0" }, g);
+
+  // Rejilla de fondo estilo holograma.
+  const rej = el("g", { class: "rejilla" }, svg);
+  for (let x = 0; x <= 320; x += 20) el("line", { x1: x, y1: 0, x2: x, y2: 640 }, rej);
+  for (let y = 0; y <= 640; y += 20) el("line", { x1: 0, y1: y, x2: 320, y2: y }, rej);
+
+  // PIEL (silueta).
+  const piel = grupo("piel");
+  const formasPiel = [
+    ["ellipse", { cx: 160, cy: 66, rx: 34, ry: 42 }],
+    ["path", { d: capsula(160, 104, 160, 130, 13) }],
+    ["path", { d: "M106 140 C120 127 200 127 214 140 L224 250 C226 292 210 320 160 324 C110 320 94 292 96 250 Z" }],
+    ["path", { d: capsula(112, 150, 86, 250, 15) }], ["path", { d: capsula(86, 250, 72, 350, 12) }],
+    ["path", { d: capsula(208, 150, 234, 250, 15) }], ["path", { d: capsula(234, 250, 248, 350, 12) }],
+    ["circle", { cx: 70, cy: 364, r: 12 }], ["circle", { cx: 250, cy: 364, r: 12 }],
+    ["path", { d: capsula(138, 314, 133, 462, 21) }], ["path", { d: capsula(133, 462, 129, 592, 16) }],
+    ["path", { d: capsula(182, 314, 187, 462, 21) }], ["path", { d: capsula(187, 462, 191, 592, 16) }],
+    ["ellipse", { cx: 124, cy: 607, rx: 21, ry: 9 }], ["ellipse", { cx: 196, cy: 607, rx: 21, ry: 9 }],
+  ];
+  for (const [t, a] of formasPiel) el(t, { ...a, class: "forma" }, piel);
+
+  // HUESOS: columna, costillas, pelvis y fémures.
+  const huesos = grupo("huesos");
+  for (let y = 138; y < 300; y += 11) el("rect", { x: 155, y, width: 10, height: 8, rx: 2.5, class: "forma" }, huesos);
+  for (let i = 0; i < 6; i++) {
+    const y = 152 + i * 17, w = 44 + Math.sin((i + 1) / 7 * Math.PI) * 14;
+    el("path", { d: `M156 ${y} Q${160 - w} ${y + 4} ${160 - w + 6} ${y + 16}`, class: "linea", "stroke-width": 2 }, huesos);
+    el("path", { d: `M164 ${y} Q${160 + w} ${y + 4} ${160 + w - 6} ${y + 16}`, class: "linea", "stroke-width": 2 }, huesos);
+  }
+  el("path", { d: "M122 300 Q160 285 198 300 L190 326 Q160 338 130 326 Z", class: "forma" }, huesos);
+  for (const [x1, y1, x2, y2] of [[140, 330, 134, 455], [180, 330, 186, 455], [134, 470, 130, 585], [186, 470, 190, 585],
+                                   [110, 158, 88, 245], [210, 158, 232, 245], [87, 258, 74, 342], [233, 258, 246, 342]])
+    el("line", { x1, y1, x2, y2, class: "linea" }, huesos);
+
+  // SANGRE: vasos desde el corazón.
+  const sangre = grupo("sangre");
+  const vasos = [
+    "M168 205 C150 240 152 280 150 312 C146 380 136 440 132 585",
+    "M168 205 C176 245 172 280 170 312 C176 380 184 440 188 585",
+    "M164 196 C140 170 120 160 104 175 C92 210 84 260 74 350",
+    "M172 196 C196 170 204 160 216 175 C228 210 236 260 246 350",
+    "M166 192 C164 160 162 130 160 100",
+  ];
+  for (const d of vasos) { el("path", { d, class: "hit" }, sangre); el("path", { d, class: "vaso" }, sangre); }
+
+  // PULMONES.
+  const pulmones = grupo("pulmones");
+  el("path", { d: "M150 150 C126 150 114 175 114 215 C114 240 124 248 140 246 C150 244 152 230 152 210 Z", class: "forma" }, pulmones);
+  el("path", { d: "M170 150 C194 150 206 172 206 210 C206 238 196 246 182 244 C176 243 174 238 176 232 Z", class: "forma" }, pulmones);
+
+  // CORAZÓN.
+  const corazon = grupo("corazon");
+  // La posición va en un <g>; la animación de latido escala solo el <path> interior.
+  const pos = el("g", { transform: "translate(170 204) scale(1.35)" }, corazon);
+  el("path", { d: "M0 -6 C0 -14 -12 -14 -12 -5 C-12 4 0 10 0 16 C0 10 12 4 12 -5 C12 -14 0 -14 0 -6 Z",
+               class: "forma" }, pos);
+
+  // CEREBRO.
+  const cerebro = grupo("cerebro");
+  el("ellipse", { cx: 160, cy: 54, rx: 25, ry: 21, class: "forma" }, cerebro);
+  for (const d of ["M146 46 Q152 40 158 47 Q164 54 170 46", "M142 58 Q150 52 156 60 Q164 66 174 58", "M160 34 L160 74"])
+    el("path", { d, fill: "none", stroke: "rgba(255,255,255,.35)", "stroke-width": 1 }, cerebro);
+
+  // OJOS.
+  const ojos = grupo("ojos");
+  el("circle", { cx: 147, cy: 80, r: 5, class: "forma" }, ojos);
+  el("circle", { cx: 173, cy: 80, r: 5, class: "forma" }, ojos);
+
+  el("rect", { x: 0, y: 0, width: 320, height: 40, class: "escaneo", "pointer-events": "none" }, svg);
+}
+
+function grupo(id) {
+  const g = el("g", { id, class: "organo", tabindex: 0, role: "button", "aria-label": ORGANOS[id].nombre }, svg);
+  g.addEventListener("click", (ev) => { ev.stopPropagation(); seleccionar(id); });
+  g.addEventListener("keydown", (ev) => { if (ev.key === "Enter") seleccionar(id); });
+  g.addEventListener("mousemove", (ev) => mostrarTooltip(ev, id));
+  g.addEventListener("mouseleave", () => (tooltip.style.display = "none"));
+  return g;
+}
+
+function mostrarTooltip(ev, id) {
+  const caja = document.getElementById("escena").getBoundingClientRect();
+  const c = colorOrgano(estado, id);
+  tooltip.innerHTML = `<b style="color:${COLORES[c]}">●</b> ${ORGANOS[id].nombre}`;
+  tooltip.style.display = "block";
+  tooltip.style.left = ev.clientX - caja.left + 14 + "px";
+  tooltip.style.top = ev.clientY - caja.top + 10 + "px";
+}
+
+function seleccionar(id) {
+  seleccionado = id;
+  document.querySelectorAll(".organo").forEach((g) => g.classList.toggle("sel", g.id === id));
+  pintarPanel(panel, estado, id);
+}
+
+function aplicarEstado() {
+  for (const id of Object.keys(ORGANOS)) {
+    const g = document.getElementById(id);
+    g.style.setProperty("--c", COLORES[colorOrgano(estado, id)]);
+  }
+  const p = indicador(estado, "pulso");
+  const lpm = Number(p?.valor) || 70;
+  svg.style.setProperty("--periodo", (60 / lpm).toFixed(3) + "s");
+  document.getElementById("vPulso").textContent = `${lpm} lpm`;
+  document.getElementById("pulso").value = lpm;
+  pintarPanel(panel, estado, seleccionado);
+}
+
+function fijar(nombre, valor, color) {
+  const i = indicador(estado, nombre);
+  if (i) { i.valor = valor; i.color = color; i.antiguedad_min = 0; }
+}
+
+document.getElementById("pulso").addEventListener("input", (e) => {
+  const lpm = Number(e.target.value);
+  fijar("pulso", lpm, colorPulso(lpm));
+  aplicarEstado();
+});
+document.getElementById("emergencia").addEventListener("click", () => {
+  fijar("pulso", 148, "rojo"); fijar("oxigeno", 88, "rojo"); fijar("animo", 1, "rojo");
+  aplicarEstado(); seleccionar("corazon");
+});
+document.getElementById("reiniciar").addEventListener("click", () => {
+  estado = structuredClone(inicial); seleccionado = null;
+  document.querySelectorAll(".organo").forEach((g) => g.classList.remove("sel"));
+  aplicarEstado();
+});
+svg.addEventListener("click", () => { seleccionado = null; document.querySelectorAll(".organo").forEach((g) => g.classList.remove("sel")); pintarPanel(panel, estado, null); });
+
+construir();
+estado = await cargarEstado();
+inicial = structuredClone(estado);
+document.getElementById("origen").textContent = estado.origen === "api" ? "Datos: API local" : "Datos: demostración";
+aplicarEstado();
+</script>
+</body>
+</html>

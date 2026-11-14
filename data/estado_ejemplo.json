@@ -1,0 +1,11 @@
+{
+  "astronauta_id": "A1",
+  "nota": "Estado de ejemplo para probar el chat mientras P4 termina GET /api/estado. Mismo formato que debe devolver P4.",
+  "indicadores": [
+    {"indicador": "presion_arterial", "valor": "142/92", "unidad": "mmHg", "color": "amarillo", "antiguedad_min": 12, "tendencia": "sube"},
+    {"indicador": "pulso", "valor": 96, "unidad": "lpm", "color": "verde", "antiguedad_min": 12, "tendencia": "estable"},
+    {"indicador": "sueno", "valor": 4.5, "unidad": "horas", "color": "amarillo", "antiguedad_min": 480, "tendencia": "baja"},
+    {"indicador": "animo", "valor": 2, "unidad": "escala 1-5", "color": "amarillo", "antiguedad_min": 30}
+  ],
+  "notas": ["4 noches seguidas durmiendo menos de 6 horas"]
+}

@@ -1,0 +1,268 @@
+{
+  "_nota": "Rangos ILUSTRATIVOS para el prototipo, basados en valores de referencia generales para adultos. Deben validarlos médicos de vuelo. Formato: verde y amarillo son [min, max] inclusivos; fuera de amarillo es rojo; fuera de 'posible' es un dato sospechoso (repetir medición). Escrito con asistencia de IA (Claude) y revisado por el equipo. Amarillo siempre contiene a verde: primero se prueba verde, luego amarillo.",
+  "version": "2026-11-14",
+  "indicadores": [
+    {
+      "indicador": "pulso",
+      "nombre": "Pulso",
+      "unidad": "lpm",
+      "organo": "corazon",
+      "verde": [
+        50,
+        100
+      ],
+      "amarillo": [
+        40,
+        120
+      ],
+      "posible": [
+        25,
+        230
+      ],
+      "max_antiguedad_min": 240,
+      "accion": {
+        "amarillo": "Repite la medición en reposo en 15 minutos.",
+        "rojo": "Avisa a la tripulación y abre la guía de presión y pulso."
+      },
+      "guia": "presion_cardiovascular.md",
+      "fuente": "NASA HRP – Cardiovascular Adaptations"
+    },
+    {
+      "indicador": "presion_arterial",
+      "nombre": "Presión arterial",
+      "unidad": "mmHg",
+      "organo": "corazon",
+      "formato": "sistolica/diastolica",
+      "componentes": {
+        "sistolica": {
+          "verde": [
+            90,
+            129
+          ],
+          "amarillo": [
+            80,
+            159
+          ],
+          "posible": [
+            50,
+            260
+          ]
+        },
+        "diastolica": {
+          "verde": [
+            60,
+            84
+          ],
+          "amarillo": [
+            50,
+            99
+          ],
+          "posible": [
+            30,
+            160
+          ]
+        }
+      },
+      "max_antiguedad_min": 720,
+      "accion": {
+        "amarillo": "Repite la medición en reposo en 15 minutos y revisa sueño e hidratación.",
+        "rojo": "Avisa a la tripulación; si hay dolor de pecho o falta de aire, sigue el protocolo de emergencia."
+      },
+      "guia": "presion_cardiovascular.md",
+      "fuente": "NASA HRP – Cardiovascular Adaptations"
+    },
+    {
+      "indicador": "oxigeno",
+      "nombre": "Oxígeno en sangre",
+      "unidad": "%",
+      "organo": "pulmones",
+      "verde": [
+        95,
+        100
+      ],
+      "amarillo": [
+        90,
+        100
+      ],
+      "posible": [
+        50,
+        100
+      ],
+      "max_antiguedad_min": 240,
+      "accion": {
+        "amarillo": "Repite en reposo y revisa con la tripulación el aire de la nave.",
+        "rojo": "Avisa de inmediato a la tripulación y sigue el protocolo de a bordo."
+      },
+      "guia": "oxigeno_aire.md",
+      "fuente": "NASA HRP – Hypoxia; Hostile/Closed Environments"
+    },
+    {
+      "indicador": "glucosa",
+      "nombre": "Glucosa",
+      "unidad": "mg/dL",
+      "organo": "sangre",
+      "verde": [
+        70,
+        99
+      ],
+      "amarillo": [
+        55,
+        180
+      ],
+      "posible": [
+        20,
+        600
+      ],
+      "max_antiguedad_min": 1440,
+      "accion": {
+        "amarillo": "Repite la medición y anota si fue en ayunas o después de comer.",
+        "rojo": "Si tienes síntomas, sigue el protocolo de a bordo y avisa a la tripulación."
+      },
+      "guia": "glucosa.md",
+      "fuente": "NASA OSDR OSD-575 (Inspiration4); rangos de referencia del mismo panel"
+    },
+    {
+      "indicador": "temperatura",
+      "nombre": "Temperatura",
+      "unidad": "°C",
+      "organo": "piel",
+      "verde": [
+        36.0,
+        37.4
+      ],
+      "amarillo": [
+        35.0,
+        38.4
+      ],
+      "posible": [
+        32,
+        43
+      ],
+      "max_antiguedad_min": 1440,
+      "accion": {
+        "amarillo": "Repite la medición en 30 minutos y revisa la piel.",
+        "rojo": "Avisa al oficial médico de la tripulación."
+      },
+      "guia": "piel_temperatura.md",
+      "fuente": "Crucian et al. 2016; NASA HRP – Immune System"
+    },
+    {
+      "indicador": "sueno",
+      "nombre": "Sueño",
+      "unidad": "h",
+      "organo": "cerebro",
+      "verde": [
+        6,
+        12
+      ],
+      "amarillo": [
+        4,
+        12
+      ],
+      "posible": [
+        0,
+        20
+      ],
+      "max_antiguedad_min": 1440,
+      "accion": {
+        "amarillo": "Prioriza el descanso y evita tareas críticas si la prueba de reacción empeora.",
+        "rojo": "Avisa al oficial médico de la tripulación."
+      },
+      "guia": "sueno_fatiga.md",
+      "fuente": "NASA HRP – Inadequate Sleep and Irregular Schedules"
+    },
+    {
+      "indicador": "animo",
+      "nombre": "Ánimo",
+      "unidad": "/5",
+      "organo": "cerebro",
+      "verde": [
+        3,
+        5
+      ],
+      "amarillo": [
+        2,
+        5
+      ],
+      "posible": [
+        1,
+        5
+      ],
+      "max_antiguedad_min": 1440,
+      "accion": {
+        "amarillo": "Mantén tus rutinas y habla con un compañero de confianza.",
+        "rojo": "Avisa al oficial médico de la tripulación."
+      },
+      "guia": "animo_estres.md",
+      "fuente": "NASA HRP – Behavioral Changes and Psychiatric Disorders"
+    },
+    {
+      "indicador": "estres",
+      "nombre": "Estrés",
+      "unidad": "/5",
+      "organo": "cerebro",
+      "verde": [
+        1,
+        3
+      ],
+      "amarillo": [
+        1,
+        4
+      ],
+      "posible": [
+        1,
+        5
+      ],
+      "max_antiguedad_min": 1440,
+      "accion": {
+        "amarillo": "Toma una pausa y revisa tu carga de trabajo con la tripulación.",
+        "rojo": "Avisa al oficial médico de la tripulación."
+      },
+      "guia": "animo_estres.md",
+      "fuente": "NASA HRP – Behavioral Changes and Psychiatric Disorders"
+    },
+    {
+      "indicador": "perdida_osea",
+      "nombre": "Pérdida ósea estimada",
+      "unidad": "%/mes",
+      "organo": "huesos",
+      "verde": [
+        -0.5,
+        0
+      ],
+      "amarillo": [
+        -1.5,
+        0
+      ],
+      "posible": [
+        -5,
+        1
+      ],
+      "max_antiguedad_min": 43200,
+      "accion": {
+        "amarillo": "Cumple el plan diario de ejercicio de resistencia.",
+        "rojo": "Revisa el plan de ejercicio con el oficial médico."
+      },
+      "guia": "huesos_ejercicio.md",
+      "fuente": "NASA – Risk of Spaceflight-Induced Bone Changes"
+    },
+    {
+      "indicador": "vision",
+      "nombre": "Visión",
+      "unidad": "",
+      "organo": "ojos",
+      "categorias": {
+        "sin cambios": "verde",
+        "cambio leve": "amarillo",
+        "perdida brusca": "rojo"
+      },
+      "max_antiguedad_min": 10080,
+      "accion": {
+        "amarillo": "Haz la prueba de visión de la misión y registra el cambio.",
+        "rojo": "Avisa de inmediato a la tripulación."
+      },
+      "guia": "vision_sans.md",
+      "fuente": "NASA HRP – SANS"
+    }
+  ]
+}
