@@ -18,6 +18,7 @@ from pydantic import BaseModel
 
 import db
 import reglas
+import tendencias
 
 app = FastAPI(title="Asistente de salud local para astronautas", version="0.2-sqlite")
 
@@ -220,7 +221,8 @@ def estado(astronauta_id: int):
             "vencido": esta_vencido,
             "sospechoso": sospechoso,
             "accion": accion,
-            "tendencia": "desconocida",  # siguiente paso: tendencias.py
+            "tendencia": tendencias.resumen(
+                db.historial(astronauta_id, f["indicador"]))["direccion"],
         })
 
     orden = {"rojo": 3, "amarillo": 2, "verde": 1, "gris": 0}
@@ -239,11 +241,14 @@ def historial(astronauta_id: int, indicador: str = "pulso", dias: int = 7):
     desde = (ahora() - timedelta(days=dias)).isoformat()
     reales = db.historial(astronauta_id, indicador, desde)
     if reales:
+        # La linea base usa TODO el historial; la direccion, la ventana pedida
+        t = tendencias.resumen(db.historial(astronauta_id, indicador), reales)
         return {
             "astronauta_id": astronauta_id,
             "indicador": indicador,
-            "linea_base": None,  # Bloque 3: tendencias.py
-            "direccion": "desconocida",
+            "linea_base": t["linea_base"],
+            "direccion": t["direccion"],
+            "desviacion_pct": t["desviacion_pct"],
             "datos_falsos": False,
             "puntos": [{"medido_en": r["medido_en"], "valor": r["valor"],
                         "color": r["color"], "sospechoso": bool(r["sospechoso"])}
