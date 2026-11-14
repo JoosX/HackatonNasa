@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 450" role="img" aria-label="Cuerpo esquemático interactivo">
+<g fill="#426079" stroke="#7491aa" stroke-width="2"><g data-organo="cuerpo"><ellipse cx="170" cy="78" rx="35" ry="42"/><rect x="113" y="127" width="114" height="150" rx="42"/><rect x="83" y="133" width="24" height="151" rx="12" transform="rotate(9 95 133)"/><rect x="233" y="133" width="24" height="151" rx="12" transform="rotate(-9 245 133)"/><rect x="120" y="263" width="40" height="140" rx="19"/><rect x="180" y="263" width="40" height="140" rx="19"/></g>
+<ellipse data-organo="cerebro" cx="170" cy="63" rx="26" ry="18"/><g data-organo="ojos"><circle cx="157" cy="88" r="6"/><circle cx="183" cy="88" r="6"/></g>
+<g data-organo="pulmones"><ellipse cx="144" cy="174" rx="21" ry="35"/><ellipse cx="196" cy="174" rx="21" ry="35"/></g><path data-organo="corazon" d="M178 168 C162 151 151 175 178 197 C205 175 194 151 178 168Z"/>
+<ellipse data-organo="sangre" cx="170" cy="235" rx="11" ry="18"/><rect data-organo="piel" x="82" y="194" width="16" height="30" rx="7"/><rect data-organo="huesos" x="194" y="294" width="12" height="82" rx="6"/></g>
+<ellipse cx="170" cy="419" rx="70" ry="7" fill="#31546b"/>
+</svg>
