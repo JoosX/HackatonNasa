@@ -268,3 +268,91 @@ button, input { font: inherit; color: inherit; touch-action: manipulation; }
 .t-pista { color: #bdbdbd; }
 .barra-envio i { background: #e6e6e6; }
 .capa[aria-pressed="true"]::before, .capa[aria-pressed="true"]::after { color: #e6e6e6; }
+
+/* =====================================================================
+   ORI: avatar y conversación más cálida (dentro del sistema de aviónica)
+   ===================================================================== */
+.ori { flex: none; overflow: visible; }
+.ori-casco { fill: #111; stroke: #cfcfcf; stroke-width: 1.4; }
+.ori-visor { fill: #050505; stroke: #6f6f6f; stroke-width: 1; transition: stroke var(--m-in) var(--ease); }
+.ori-ojos rect { fill: #f2f2f2; transform-box: fill-box; transform-origin: center; animation: parpadear 5.5s infinite; }
+.ori-ojos rect:last-child { animation-delay: .04s; }
+.ori-escaneo { fill: #f2f2f2; opacity: 0; }
+.ori-pulso { fill: none; stroke: var(--verde); stroke-width: 1.3; stroke-linejoin: round; stroke-linecap: round; opacity: .85; stroke-dasharray: 20; stroke-dashoffset: 0; }
+.ori-mastil { stroke: #8c8c8c; stroke-width: 1.2; }
+.ori-antena { fill: var(--verde); }
+@keyframes parpadear { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+/* Pensando: los ojos se apagan y una barra recorre el visor; la antena late */
+.ori.pensando .ori-ojos { opacity: 0; }
+.ori.pensando .ori-escaneo { opacity: 1; animation: escanear 1.1s var(--ease) infinite alternate; }
+.ori.pensando .ori-antena { fill: #f2f2f2; animation: latirAntena .8s ease-in-out infinite; }
+@keyframes escanear { from { transform: translateX(0); } to { transform: translateX(13px); } }
+@keyframes latirAntena { 50% { opacity: .25; } }
+/* Hablando: la línea de pulso se dibuja */
+.ori.habla .ori-pulso { animation: pulsoORI 1.2s linear 2; }
+@keyframes pulsoORI { from { stroke-dashoffset: 20; } to { stroke-dashoffset: 0; } }
+/* Alerta: visor y antena en rojo */
+.ori.alerta .ori-visor { stroke: var(--rojo); }
+.ori.alerta .ori-antena, .ori.alerta .ori-pulso { fill: var(--rojo); stroke: var(--rojo); }
+.ori.alerta .ori-antena { animation: latirAntena .6s steps(2, jump-none) infinite; }
+
+/* Cabecera del chat */
+.chat-cabecera { justify-content: flex-start; gap: 12px; }
+.ori-grande { display: inline-flex; }
+.ori-titulo h2 { color: var(--texto); }
+.ori-estado { font: 10.5px var(--mono); color: var(--suave); letter-spacing: .04em; }
+.ori-estado::before { content: ""; display: inline-block; width: 6px; height: 6px; background: var(--verde); margin-right: 6px; vertical-align: 1px; }
+.ori-estado[data-estado="pensando"]::before { background: #f2f2f2; animation: latirAntena .8s infinite; }
+.ori-estado[data-estado="alerta"]::before { background: var(--rojo); }
+
+/* Mensajes: ORI a la izquierda con avatar; tú a la derecha */
+.msg { border-left: 0; padding-left: 0; }
+.msg::before { content: none !important; }
+.msg-ia { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; }
+.msg-yo { display: flex; justify-content: flex-end; }
+.burbuja { min-width: 0; padding: 9px 12px; border: 1px solid var(--linea-2); background: var(--panel-2); max-width: 94%; }
+.msg-yo .burbuja { background: #1b1b1b; border-color: #4a4a4a; max-width: 85%; }
+.msg-alerta .burbuja { border-color: var(--rojo); }
+.msg-error .burbuja { border-color: var(--amarillo); }
+.quien { font: 700 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--suave); margin-bottom: 3px; }
+.msg-ia .quien { color: #cfcfcf; }
+.cuerpo p { margin: 0 0 6px; }
+.cuerpo p:last-child { margin-bottom: 0; }
+.cuerpo ul { margin: 2px 0 8px; padding-left: 18px; }
+.cuerpo li { margin-bottom: 3px; }
+.cuerpo li::marker { color: var(--suave); }
+.cuerpo em { color: #cfcfcf; }
+.aparece { animation: aparecer .35s var(--ease-entrada) both; animation-delay: var(--d, 0ms); }
+@keyframes aparecer { from { opacity: 0; transform: translateY(4px); } }
+.pensando { font-family: var(--fuente); font-size: 13px; color: var(--suave); }
+.pensando::after { content: none; }
+.puntos { display: inline-flex; gap: 3px; margin-left: 6px; }
+.puntos i { width: 4px; height: 4px; background: var(--suave); animation: latirAntena 1s infinite; }
+.puntos i:nth-child(2) { animation-delay: .15s; } .puntos i:nth-child(3) { animation-delay: .3s; }
+details.fuentes { margin-top: 8px; font: 10.5px var(--mono); color: var(--suave); }
+details.fuentes summary { cursor: pointer; list-style: none; }
+details.fuentes summary::before { content: "↳ "; }
+details.fuentes ul { list-style: none; padding: 4px 0 0 14px; margin: 0; }
+.sugerencias button { font-family: var(--fuente); font-size: 12px; }
+
+/* Más espacio para la conversación con ORI */
+@media (min-width: 1101px) {
+  .ficha:not(.abierta) { max-height: 27%; }
+  .ficha.abierta { max-height: 50%; }
+  .lateral:has(.ficha.abierta) .mensajes { min-height: 110px; }
+}
+.ficha:not(.abierta) .resumen { display: none; }
+.ficha:not(.abierta) h2 { margin-bottom: 6px; }
+.organos { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; }
+.organos button { padding: 6px 2px; font-size: 13px; }
+.sugerencias { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+.sugerencias::-webkit-scrollbar { display: none; }
+.sugerencias button { flex: none; }
+.tierra { padding-top: 8px; gap: 8px; }
+.tierra .btn { padding: 6px 10px; font-size: 10px; }
+.chat { gap: 8px; }
+.demo { padding: 10px 14px; }
+.cuerpo li.sin-marca { list-style: none; margin-left: -16px; }
+/* Tira de instrumentos con clima espacial (8 celdas) */
+@media (min-width: 1101px) { .signos { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+.signos li:last-child .signo .valor { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

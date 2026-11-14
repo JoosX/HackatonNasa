@@ -1,6 +1,6 @@
 # Copiloto de salud · prototipo (NASA Space Apps 2026)
 
-Asistente de salud **local** para astronautas: monitoreo con semáforo, cuerpo 3D anatómico y asistente con IA que responde **sin conexión** citando guías de NASA. Prototipo TRL 3–4; no diagnostica.
+Asistente de salud **local** para astronautas, con **ORI**, un compañero de salud con IA: monitoreo con semáforo, cuerpo 3D anatómico y asistente con IA que responde **sin conexión** citando guías de NASA. Prototipo TRL 3–4; no diagnostica.
 
 ## Ejecutar
 
@@ -14,11 +14,15 @@ uv run --with fastapi --with uvicorn uvicorn backend.main:app --port 8000
 
 Abrir http://localhost:8000 en Chrome o Chromium (el visor 3D necesita WebGL).
 
-Atajos para la demo: `?organo=corazon` abre un órgano (la cámara lo enfoca) · `#emergencia` simula una emergencia · `#sinsenal` empieza sin conexión · `#hover-corazon` muestra la tarjeta de hover (capturas) · `?quieto` detiene el giro.
+Atajos para la demo: `?organo=corazon` abre un órgano (la cámara lo enfoca) · `#emergencia` simula una emergencia · `#sinsenal` empieza sin conexión · `#hover-corazon` muestra la tarjeta de hover (capturas) · `#preguntar=texto` le hace esa pregunta a ORI al cargar (útil para grabar la demo) · `?quieto` detiene el giro.
 
 En el visor: etiquetas anatómicas con línea guía (clic para abrir), tarjeta al pasar el mouse con valores y tendencia, capas (piel, esqueleto, vasos, órganos), pausa del giro y "Vista completa". Tipografía técnica: JetBrains Mono (OFL), incluida en `frontend/fuentes/`.
 
 El modelo de IA (Gemma 3 4B, ~3,4 GB) no está en el repositorio: cada integrante lo descarga con `ollama pull gemma3:4b` y `ollama pull nomic-embed-text`. El índice de búsqueda de las guías (`data/indice_guias.json`) sí está incluido.
+
+## Clima espacial (NASA DONKI)
+
+`data/nasa_donki.json` guarda los eventos solares reales de los últimos 30 días (llamaradas, partículas solares y tormentas geomagnéticas) de NASA DONKI. Es la "sincronización con la Tierra": se actualiza con `python scripts/actualizar_donki.py` cuando hay señal, y sin señal la app usa el último archivo y avisa su antigüedad. El nivel de radiación (verde, precaución o alerta) se calcula en `backend/clima_espacial.py` con reglas ilustrativas. Desde el 30/09/2026 el servicio está en `https://ccmc.gsfc.nasa.gov/DONKI-API/get/` (sin clave).
 
 ## Pruebas
 
@@ -26,7 +30,7 @@ El modelo de IA (Gemma 3 4B, ~3,4 GB) no está en el repositorio: cada integrant
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 ```
 
-43 pruebas: guías, reglas del semáforo, fichas (5 preguntas del reto), datos NASA OSD-575, contrato del modelo 3D, asistente sin IA (no inventa, alerta roja fija) y con IA (se saltan si Ollama está apagado), y la API.
+69 pruebas: guías, reglas del semáforo, fichas (5 preguntas del reto), datos NASA OSD-575, contrato del modelo 3D, asistente sin IA (no inventa, alerta roja fija) y con IA (se saltan si Ollama está apagado), y la API.
 
 ## Estructura y dueños
 
@@ -52,6 +56,6 @@ Se aplicaron las [Web Interface Guidelines de Vercel](https://github.com/vercel-
 ## Créditos y licencias
 
 - Anatomía: **BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International**.
-- Datos: NASA OSDR **OSD-575** (Inspiration4) y NASA Human Research Program.
+- Datos: NASA OSDR **OSD-575** (Inspiration4), **NASA DONKI** (clima espacial, CCMC / NASA GSFC) y NASA Human Research Program.
 - Visor: Three.js (MIT). Servidor: FastAPI (MIT). IA local: Ollama, Gemma 3 4B, nomic-embed-text.
 - Código y textos escritos con asistencia de IA (Claude) y revisados por el equipo; declararlo en la entrega.

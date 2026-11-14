@@ -1,0 +1,122 @@
+{
+ "fuente": "NASA DONKI – CCMC / NASA Goddard Space Flight Center",
+ "url": "https://ccmc.gsfc.nasa.gov/tools/DONKI/",
+ "sincronizado": "2026-11-14T22:25Z",
+ "desde": "2026-10-15",
+ "hasta": "2026-11-14",
+ "eventos": [
+  {
+   "tipo": "llamarada",
+   "id": "2026-10-16T15:38:00-FLR-001",
+   "inicio": "2026-10-16T15:38Z",
+   "pico": "2026-10-16T15:42Z",
+   "clase": "M1.3",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49134/-1"
+  },
+  {
+   "tipo": "llamarada",
+   "id": "2026-10-19T08:54:00-FLR-001",
+   "inicio": "2026-10-19T08:54Z",
+   "pico": "2026-10-19T09:03Z",
+   "clase": "M1.6",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49165/-1"
+  },
+  {
+   "tipo": "llamarada",
+   "id": "2026-10-23T03:43:00-FLR-001",
+   "inicio": "2026-10-23T03:43Z",
+   "pico": "2026-10-23T03:55Z",
+   "clase": "C1.3",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49214/-1"
+  },
+  {
+   "tipo": "llamarada",
+   "id": "2026-10-26T08:21:00-FLR-001",
+   "inicio": "2026-10-26T08:21Z",
+   "pico": "2026-10-26T08:38Z",
+   "clase": "C1.9",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49256/-1"
+  },
+  {
+   "tipo": "llamarada",
+   "id": "2026-10-26T18:17:00-FLR-001",
+   "inicio": "2026-10-26T18:17Z",
+   "pico": "2026-10-26T18:40Z",
+   "clase": "C2.8",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49278/-1"
+  },
+  {
+   "tipo": "tormenta_geomagnetica",
+   "id": "2026-10-31T18:00:00-GST-001",
+   "inicio": "2026-10-31T18:00Z",
+   "pico": "2026-10-31T18:00Z",
+   "clase": "Kp 6",
+   "kp": 6.0,
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/GST/49348/-1"
+  },
+  {
+   "tipo": "llamarada",
+   "id": "2026-11-05T18:21:00-FLR-001",
+   "inicio": "2026-11-05T18:21Z",
+   "pico": "2026-11-05T18:33Z",
+   "clase": "M3.5",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49391/-1"
+  },
+  {
+   "tipo": "llamarada",
+   "id": "2026-11-07T12:26:00-FLR-001",
+   "inicio": "2026-11-07T12:26Z",
+   "pico": "2026-11-07T12:43Z",
+   "clase": "M1.2",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49433/-1"
+  },
+  {
+   "tipo": "llamarada",
+   "id": "2026-11-07T17:11:00-FLR-001",
+   "inicio": "2026-11-07T17:11Z",
+   "pico": "2026-11-07T17:17Z",
+   "clase": "M1.4",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49442/-1"
+  },
+  {
+   "tipo": "llamarada",
+   "id": "2026-11-07T18:21:00-FLR-001",
+   "inicio": "2026-11-07T18:21Z",
+   "pico": "2026-11-07T18:42Z",
+   "clase": "M1.9",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49448/-1"
+  },
+  {
+   "tipo": "llamarada",
+   "id": "2026-11-08T07:33:00-FLR-001",
+   "inicio": "2026-11-08T07:33Z",
+   "pico": "2026-11-08T07:46Z",
+   "clase": "M1.7",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49453/-1"
+  },
+  {
+   "tipo": "llamarada",
+   "id": "2026-11-08T15:29:00-FLR-001",
+   "inicio": "2026-11-08T15:29Z",
+   "pico": "2026-11-08T15:37Z",
+   "clase": "M1.1",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49456/-1"
+  },
+  {
+   "tipo": "llamarada",
+   "id": "2026-11-08T18:15:00-FLR-001",
+   "inicio": "2026-11-08T18:15Z",
+   "pico": "2026-11-08T18:27Z",
+   "clase": "M1.1",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49461/-1"
+  },
+  {
+   "tipo": "llamarada",
+   "id": "2026-11-11T21:06:00-FLR-001",
+   "inicio": "2026-11-11T21:06Z",
+   "pico": "2026-11-11T21:21Z",
+   "clase": "M1.7",
+   "enlace": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49504/-1"
+  }
+ ]
+}

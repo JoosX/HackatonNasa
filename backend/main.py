@@ -22,6 +22,7 @@ from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
+import clima_espacial  # noqa: E402
 import ollama_cliente  # noqa: E402
 import rag  # noqa: E402
 from guias import RAIZ  # noqa: E402
@@ -30,15 +31,31 @@ app = FastAPI(title="Asistente de salud local para astronautas")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
+@app.on_event("startup")
+def _precalentar() -> None:
+    """Carga los modelos de Ollama en segundo plano al arrancar (la primera respuesta no espera)."""
+    import threading
+    threading.Thread(target=ollama_cliente.precalentar, daemon=True).start()
+
+
 def obtener_estado(astronauta_id: str) -> dict:
-    """TODO (P4): devolver el estado real (mismo formato que estado_ejemplo.json)."""
-    return json.loads((RAIZ / "data" / "estado_ejemplo.json").read_text(encoding="utf-8"))
+    """TODO (P4): devolver el estado real (mismo formato que estado_ejemplo.json).
+    Siempre se agrega el indicador de radiación calculado con datos reales de NASA DONKI."""
+    estado = json.loads((RAIZ / "data" / "estado_ejemplo.json").read_text(encoding="utf-8"))
+    estado["indicadores"].append(clima_espacial.indicador())
+    return estado
 
 
 class PreguntaChat(BaseModel):
     astronauta_id: str = "A1"
     pregunta: str
     estado: dict | None = None   # opcional: si viene, se usa en vez de obtener_estado()
+
+
+@app.get("/api/estado/{astronauta_id}")
+def estado(astronauta_id: str) -> dict:
+    """Estado actual del astronauta. DEMO hasta que P4 lo calcule con SQLite + reglas.json."""
+    return {**obtener_estado(astronauta_id), "origen": "demo"}
 
 
 @app.post("/api/chat")
@@ -71,6 +88,12 @@ def recargar() -> dict:
 
 def _json(nombre: str) -> dict:
     return json.loads((RAIZ / "data" / nombre).read_text(encoding="utf-8"))
+
+
+@app.get("/api/clima-espacial")
+def clima() -> dict:
+    """Clima espacial con datos reales de NASA DONKI (último archivo sincronizado) y su nivel de alerta."""
+    return clima_espacial.evaluar(clima_espacial.cargar())
 
 
 @app.get("/api/fichas")

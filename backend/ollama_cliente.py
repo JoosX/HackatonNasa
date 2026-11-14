@@ -14,6 +14,8 @@ import urllib.request
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 MODELO_CHAT = os.environ.get("MODELO_CHAT", "gemma3:4b")
 MODELO_EMBED = os.environ.get("MODELO_EMBED", "nomic-embed-text")
+# Mantener los modelos cargados en memoria (Ollama los descarga a los 5 min; la primera respuesta sería lenta).
+MANTENER = os.environ.get("OLLAMA_KEEP_ALIVE", "60m")
 
 
 class OllamaNoDisponible(Exception):
@@ -43,7 +45,7 @@ def disponible() -> bool:
 
 def embeber(textos: list[str], timeout: float = 120) -> list[list[float]]:
     """Convierte textos en vectores con el modelo de embeddings."""
-    r = _post("/api/embed", {"model": MODELO_EMBED, "input": textos}, timeout)
+    r = _post("/api/embed", {"model": MODELO_EMBED, "input": textos, "keep_alive": MANTENER}, timeout)
     if "embeddings" not in r:
         raise OllamaNoDisponible(r.get("error", "respuesta sin embeddings"))
     return r["embeddings"]
@@ -57,6 +59,7 @@ def chatear(mensajes: list[dict], timeout: float = 180) -> str:
             "model": MODELO_CHAT,
             "messages": mensajes,
             "stream": False,
+            "keep_alive": MANTENER,
             "options": {"temperature": 0.2},
         },
         timeout,
@@ -64,3 +67,12 @@ def chatear(mensajes: list[dict], timeout: float = 180) -> str:
     if "message" not in r:
         raise OllamaNoDisponible(r.get("error", "respuesta sin mensaje"))
     return r["message"]["content"].strip()
+
+
+def precalentar() -> None:
+    """Carga los modelos en memoria al iniciar el servidor para que la primera pregunta sea rápida."""
+    try:
+        embeber(["precalentar"])
+        chatear([{"role": "user", "content": "Responde solo: listo"}], timeout=120)
+    except OllamaNoDisponible:
+        pass

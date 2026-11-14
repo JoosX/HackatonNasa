@@ -4,73 +4,110 @@
   "fichas": {
     "corazon": {
       "nombre": "Corazón",
-      "indicadores": ["pulso", "presion_arterial"],
+      "indicadores": [
+        "pulso",
+        "presion_arterial"
+      ],
       "como_medir": "Sujétate, descansa 5 minutos, brazo a la altura del corazón, sin hablar. Mide a una hora parecida cada día.",
       "por_que": "El pulso y la presión muestran cómo trabaja el corazón y detectan estrés, deshidratación o un problema cardiovascular.",
       "efecto_espacio": "Sin gravedad, la sangre se desplaza hacia el pecho y la cabeza; el corazón y los vasos se adaptan y la presión y el pulso pueden cambiar.",
       "a_quien_avisar": "Amarillo: repite la medición. Rojo o dolor de pecho: avisa de inmediato a la tripulación.",
       "prevencion": "Hidratación según el plan, ejercicio diario y buen descanso.",
-      "guia": "presion_cardiovascular.md", "fuente": "NASA HRP – Cardiovascular Adaptations"
+      "guia": "presion_cardiovascular.md",
+      "fuente": "NASA HRP – Cardiovascular Adaptations"
     },
     "cerebro": {
       "nombre": "Cerebro, sueño y ánimo",
-      "indicadores": ["sueno", "animo", "estres"],
+      "indicadores": [
+        "sueno",
+        "animo",
+        "estres"
+      ],
       "como_medir": "Registra cada día tus horas de sueño y tu ánimo y estrés del 1 al 5. Importa la tendencia de varios días.",
       "por_que": "El sueño y el ánimo influyen en la atención, las decisiones y el trabajo en equipo.",
       "efecto_espacio": "El aislamiento, el encierro y los horarios irregulares afectan el sueño y el ánimo; en la Estación se duerme unas 6 horas.",
       "a_quien_avisar": "Varios días de poco sueño o ánimo bajo: oficial médico. Pensamientos de hacerte daño: avisa de inmediato.",
       "prevencion": "Horario fijo de sueño, poca luz de pantallas antes de dormir, rutinas y contacto con la familia cuando haya señal.",
-      "guia": "animo_estres.md", "fuente": "NASA HRP – Behavioral Health; Sleep"
+      "guia": "animo_estres.md",
+      "fuente": "NASA HRP – Behavioral Health; Sleep"
     },
     "pulmones": {
       "nombre": "Pulmones y oxígeno",
-      "indicadores": ["oxigeno"],
+      "indicadores": [
+        "oxigeno"
+      ],
       "como_medir": "Oxímetro en un dedo limpio y tibio; quédate quieto hasta que el número se estabilice.",
       "por_que": "Muestra si el cuerpo recibe suficiente oxígeno y alerta sobre problemas del aire de la nave.",
       "efecto_espacio": "El aire de la nave se recicla: CO₂ alto u oxígeno bajo causan dolor de cabeza y cansancio.",
       "a_quien_avisar": "Varios tripulantes con síntomas o falta de aire: avisa de inmediato.",
       "prevencion": "Vigilar los indicadores de aire de la nave y reportar síntomas temprano.",
-      "guia": "oxigeno_aire.md", "fuente": "NASA HRP – Hypoxia; Closed Environments"
+      "guia": "oxigeno_aire.md",
+      "fuente": "NASA HRP – Hypoxia; Closed Environments"
     },
     "sangre": {
       "nombre": "Sangre y glucosa",
-      "indicadores": ["glucosa"],
+      "indicadores": [
+        "glucosa"
+      ],
       "como_medir": "Glucómetro del kit; anota si fue en ayunas o después de comer.",
       "por_que": "La glucosa refleja la energía disponible y el metabolismo.",
       "efecto_espacio": "La dieta, el estrés y el sueño la alteran; en la tripulación de Inspiration4 cada persona varió distinto respecto a su propio normal.",
       "a_quien_avisar": "Valor muy bajo con síntomas: protocolo de a bordo y avisar a la tripulación.",
       "prevencion": "Comidas regulares según el plan de la misión y repetir mediciones extrañas.",
-      "guia": "glucosa.md", "fuente": "NASA OSDR OSD-575 (Inspiration4)"
+      "guia": "glucosa.md",
+      "fuente": "NASA OSDR OSD-575 (Inspiration4)"
     },
     "huesos": {
       "nombre": "Huesos y músculos",
-      "indicadores": ["perdida_osea"],
+      "indicadores": [
+        "perdida_osea"
+      ],
       "como_medir": "La densidad se mide antes y después de la misión; a bordo registra el ejercicio diario y el dolor.",
       "por_que": "Huesos débiles aumentan el riesgo de fracturas al volver a la gravedad o al llegar a Marte.",
       "efecto_espacio": "Se pierde entre 1 y 1,5 % de densidad ósea por mes; con ejercicio de resistencia, cerca de 0,3 a 0,5 %.",
       "a_quien_avisar": "Golpe con dolor fuerte o deformidad: inmoviliza y avisa a la tripulación.",
       "prevencion": "Ejercicio de resistencia y cardiovascular todos los días.",
-      "guia": "huesos_ejercicio.md", "fuente": "NASA – Spaceflight-Induced Bone Changes"
+      "guia": "huesos_ejercicio.md",
+      "fuente": "NASA – Spaceflight-Induced Bone Changes"
     },
     "ojos": {
       "nombre": "Ojos y visión",
-      "indicadores": ["vision"],
+      "indicadores": [
+        "vision"
+      ],
       "como_medir": "Prueba de visión periódica de la misión; anota cualquier visión borrosa nueva.",
       "por_que": "Una buena visión es clave para leer instrumentos y procedimientos.",
       "efecto_espacio": "El desplazamiento de líquidos hacia la cabeza puede cambiar el ojo (síndrome SANS).",
       "a_quien_avisar": "Cambio nuevo: oficial médico. Visión borrosa con dolor de cabeza fuerte: avisa de inmediato.",
       "prevencion": "Hacer las pruebas de visión programadas y reportar cambios temprano.",
-      "guia": "vision_sans.md", "fuente": "NASA HRP – SANS"
+      "guia": "vision_sans.md",
+      "fuente": "NASA HRP – SANS"
     },
     "piel": {
       "nombre": "Piel y temperatura",
-      "indicadores": ["temperatura"],
+      "indicadores": [
+        "temperatura"
+      ],
       "como_medir": "Termómetro del kit siempre del mismo modo; revisa la piel con buena luz.",
       "por_que": "La temperatura detecta infecciones; la piel muestra irritaciones o alergias.",
       "efecto_espacio": "Las erupciones en la piel son el evento médico más común en la Estación (alrededor de 1,1 por año de vuelo).",
       "a_quien_avisar": "Fiebre o erupción que crece: oficial médico de la tripulación.",
       "prevencion": "Piel limpia y seca, no rascar y comparar con días anteriores.",
-      "guia": "piel_temperatura.md", "fuente": "Crucian et al. 2016"
+      "guia": "piel_temperatura.md",
+      "fuente": "Crucian et al. 2016"
+    },
+    "radiacion": {
+      "nombre": "Radiación (clima espacial)",
+      "indicadores": [
+        "radiacion"
+      ],
+      "como_medir": "Revisa tu dosímetro personal y los avisos de clima espacial. La app usa los eventos solares reales de NASA DONKI sincronizados en la última conexión.",
+      "por_que": "Las llamaradas y los eventos de partículas solares pueden aumentar la dosis de radiación en pocas horas.",
+      "efecto_espacio": "Fuera de la protección de la Tierra la radiación es mayor; en 6 meses en la Estación se reciben de 80 a 160 mSv, frente a 2–3,6 mSv al año en la Tierra.",
+      "a_quien_avisar": "Evento de partículas solares: ve al área protegida y avisa a la tripulación. Llamarada fuerte reciente: vigila el dosímetro.",
+      "prevencion": "Conocer la ruta al área protegida, revisar el dosímetro y sincronizar el clima espacial cada vez que haya señal.",
+      "guia": "radiacion.md",
+      "fuente": "NASA DONKI (CCMC / NASA GSFC) + NASA HRP – Space Radiation"
     }
   }
 }

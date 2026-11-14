@@ -63,20 +63,22 @@
 
     <section id="chat" class="tarjeta chat" aria-labelledby="t-chat" tabindex="-1" data-entrar style="--i:3">
       <div class="chat-cabecera">
-        <h2 id="t-chat">Asistente a bordo</h2>
-        <span class="chip">Local · sin internet</span>
+        <span id="oriGrande" class="ori-grande"></span>
+        <div class="ori-titulo">
+          <h2 id="t-chat">ORI · compañero de salud</h2>
+          <p id="oriEstado" class="ori-estado" aria-live="polite">En línea · sin internet</p>
+        </div>
       </div>
-      <ol id="mensajes" class="mensajes" aria-live="polite">
-        <li class="msg msg-ia">Hola. Pregúntame por tus síntomas o tus datos. Respondo con las guías de salud de NASA guardadas en la nave y te digo de dónde saco cada recomendación.</li>
-      </ol>
+      <ol id="mensajes" class="mensajes" aria-live="polite"></ol>
       <div id="sugerencias" class="sugerencias" aria-label="Preguntas sugeridas">
-        <button type="button" data-pregunta="Me duele la cabeza y dormí 4 horas, ¿qué hago?">Dolor de cabeza</button>
-        <button type="button" data-pregunta="¿Por qué mi presión está en amarillo?">Mi presión</button>
+        <button type="button" data-pregunta="¿Cómo estoy?">¿Cómo estoy?</button>
+        <button type="button" data-pregunta="Me duele la cabeza y dormí 4 horas, ¿qué hago?">Me duele la cabeza</button>
         <button type="button" data-pregunta="Llevo varios días con el ánimo bajo">Ánimo bajo</button>
+        <button type="button" data-pregunta="¿Qué puedes hacer?">¿Qué puedes hacer?</button>
       </div>
       <form id="formChat" class="form-chat">
         <label for="pregunta" class="sr-only">Escribe tu pregunta</label>
-        <input id="pregunta" name="pregunta" type="text" autocomplete="off" placeholder="Ej.: Siento el corazón muy rápido…" required>
+        <input id="pregunta" name="pregunta" type="text" autocomplete="off" placeholder="Cuéntale a ORI cómo te sientes…" required>
         <button id="enviar" type="submit" class="btn btn-primario">Enviar</button>
       </form>
       <div class="tierra">
@@ -91,6 +93,7 @@
       <input id="pulso" name="pulso" type="range" min="35" max="170" step="1">
       <div class="botones">
         <button id="btnEmergencia" type="button" class="btn btn-peligro">Simular emergencia</button>
+        <button id="btnTormenta" type="button" class="btn btn-peligro">Tormenta solar</button>
         <button id="btnReiniciar" type="button" class="btn">Reiniciar datos</button>
       </div>
     </details>
@@ -98,7 +101,7 @@
 </main>
 
 <footer class="pie">
-  Prototipo TRL 3–4 · no diagnostica · rangos ilustrativos. Anatomía: BodyParts3D, © The Database Center for Life Science, CC BY 4.0. Datos: NASA OSDR OSD-575 y NASA Human Research Program. Visor: Three.js (MIT).
+  Prototipo TRL 3–4 · no diagnostica · rangos ilustrativos. Anatomía: BodyParts3D, © The Database Center for Life Science, CC BY 4.0. Datos: NASA OSDR OSD-575, NASA DONKI (clima espacial) y NASA Human Research Program. Visor: Three.js (MIT).
 </footer>
 
 <script type="module" src="js/app.js"></script>

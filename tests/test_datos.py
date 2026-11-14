@@ -76,11 +76,11 @@ def test_estado_ejemplo_respeta_las_reglas(raiz, reglas):
 
 def test_fichas_completas(raiz, fichas, reglas):
     nombres = {r["indicador"] for r in reglas["indicadores"]}
-    assert set(fichas["fichas"]) == ORGANOS_CONTRATO
+    assert ORGANOS_CONTRATO <= set(fichas["fichas"])   # + "radiacion" (clima espacial, sin malla 3D)
     for organo, f in fichas["fichas"].items():
         for campo in CAMPOS_FICHA:
             assert f.get(campo), f"{organo}: falta '{campo}' (pregunta del reto)"
-        assert set(f["indicadores"]) <= nombres, organo
+        assert set(f["indicadores"]) <= nombres | {"radiacion"}, organo
         assert (raiz / "data" / "guias" / f["guia"]).exists(), organo
 
 

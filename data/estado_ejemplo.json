@@ -1,11 +1,79 @@
 {
   "astronauta_id": "A1",
-  "nota": "Estado de ejemplo para probar el chat mientras P4 termina GET /api/estado. Mismo formato que debe devolver P4.",
+  "nota": "Estado de DEMOSTRACIÓN servido por GET /api/estado mientras P4 implementa el estado real (SQLite + reglas). Mismo formato.",
   "indicadores": [
-    {"indicador": "presion_arterial", "valor": "142/92", "unidad": "mmHg", "color": "amarillo", "antiguedad_min": 12, "tendencia": "sube"},
-    {"indicador": "pulso", "valor": 96, "unidad": "lpm", "color": "verde", "antiguedad_min": 12, "tendencia": "estable"},
-    {"indicador": "sueno", "valor": 4.5, "unidad": "horas", "color": "amarillo", "antiguedad_min": 480, "tendencia": "baja"},
-    {"indicador": "animo", "valor": 2, "unidad": "escala 1-5", "color": "amarillo", "antiguedad_min": 30}
+    {
+      "indicador": "pulso",
+      "valor": 96,
+      "unidad": "lpm",
+      "color": "verde",
+      "antiguedad_min": 12
+    },
+    {
+      "indicador": "presion_arterial",
+      "valor": "142/92",
+      "unidad": "mmHg",
+      "color": "amarillo",
+      "antiguedad_min": 12
+    },
+    {
+      "indicador": "sueno",
+      "valor": 4.5,
+      "unidad": "h",
+      "color": "amarillo",
+      "antiguedad_min": 480
+    },
+    {
+      "indicador": "animo",
+      "valor": 2,
+      "unidad": "/5",
+      "color": "amarillo",
+      "antiguedad_min": 30
+    },
+    {
+      "indicador": "estres",
+      "valor": 3,
+      "unidad": "/5",
+      "color": "verde",
+      "antiguedad_min": 30
+    },
+    {
+      "indicador": "oxigeno",
+      "valor": 97,
+      "unidad": "%",
+      "color": "verde",
+      "antiguedad_min": 12
+    },
+    {
+      "indicador": "glucosa",
+      "valor": 103,
+      "unidad": "mg/dL",
+      "color": "amarillo",
+      "antiguedad_min": 90
+    },
+    {
+      "indicador": "temperatura",
+      "valor": 36.8,
+      "unidad": "°C",
+      "color": "verde",
+      "antiguedad_min": 60
+    },
+    {
+      "indicador": "perdida_osea",
+      "valor": "-1,1",
+      "unidad": "%/mes",
+      "color": "amarillo",
+      "antiguedad_min": 10080
+    },
+    {
+      "indicador": "vision",
+      "valor": "sin cambios",
+      "unidad": "",
+      "color": "verde",
+      "antiguedad_min": 4320
+    }
   ],
-  "notas": ["4 noches seguidas durmiendo menos de 6 horas"]
+  "notas": [
+    "4 noches seguidas durmiendo menos de 6 horas"
+  ]
 }

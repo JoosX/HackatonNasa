@@ -53,7 +53,7 @@ def test_alerta_roja_la_deciden_las_reglas(sin_ollama):
 
 def test_resumen_de_estado():
     texto, rojo = rag.resumir_estado(ESTADO_ROJO)
-    assert "pulso" in texto and "ROJO" in texto and rojo
+    assert "Pulso" in texto and "en alerta" in texto and rojo
     assert rag.resumir_estado(None) == ("Sin datos recientes del astronauta.", False)
 
 
@@ -81,7 +81,7 @@ def cliente():
 
 
 def test_api_fichas_reglas_y_nasa(cliente):
-    assert len(cliente.get("/api/fichas").json()["fichas"]) == 7
+    assert len(cliente.get("/api/fichas").json()["fichas"]) == 8
     assert len(cliente.get("/api/reglas").json()["indicadores"]) >= 10
     assert "C001" in cliente.get("/api/nasa/osd575").json()["tripulantes"]
 
@@ -97,3 +97,70 @@ def test_api_sirve_el_frontend(cliente):
     r = cliente.get("/")
     assert r.status_code == 200 and "Copiloto de salud" in r.text
     assert cliente.get("/modelos/cuerpo.glb").status_code == 200
+
+
+# ---------- Comprensión de preguntas naturales (errores reportados en la revisión) ----------
+
+@pytest.mark.parametrize("pregunta,intencion", [
+    ("hola", "saludo"), ("Buenas tardes", "saludo"), ("gracias", "gracias"),
+    ("¿qué puedes hacer?", "ayuda"), ("¿cómo estoy?", "estado"), ("dame un resumen", "estado"),
+    ("¿qué significa el color amarillo?", "colores"),
+    ("hola, me duele la cabeza", None),   # saludo + síntoma: va a las guías
+])
+def test_intenciones(pregunta, intencion):
+    assert rag.detectar_intencion(pregunta) == intencion
+
+
+def test_saludo_no_parece_un_error(sin_ollama):
+    r = rag.responder("hola", ESTADO_VERDE)
+    assert r["modo"] == "conversacion" and "No tengo información" not in r["respuesta"]
+
+
+def test_como_estoy_resume_lo_que_esta_fuera_de_rango(sin_ollama):
+    estado = {"indicadores": [
+        {"indicador": "pulso", "valor": 150, "unidad": "lpm", "color": "rojo"},
+        {"indicador": "sueno", "valor": 4.5, "unidad": "h", "color": "amarillo"},
+        {"indicador": "oxigeno", "valor": 97, "unidad": "%", "color": "verde"}]}
+    r = rag.responder("¿cómo estoy?", estado)
+    assert r["modo"] == "resumen"
+    assert "Pulso" in r["respuesta"] and "alerta" in r["respuesta"] and "precaución" in r["respuesta"]
+    assert r["respuesta"].index("Pulso") < r["respuesta"].index("Sueño")   # lo rojo primero
+    assert r["fuentes"]
+
+
+@pytest.mark.parametrize("pregunta,guia", [
+    ("me siento mareado", "Presión arterial y pulso en microgravedad"),
+    ("estoy estresado", "Ánimo, estrés y salud mental"),
+    ("me cuesta respirar", "Oxígeno en sangre y aire de la nave"),
+    ("me duele el pecho", "Presión arterial y pulso en microgravedad"),
+    ("hola, me duele la cabeza", "Dolor de cabeza en el espacio"),
+    ("tengo frío", "Temperatura corporal y piel"),
+])
+def test_entiende_como_habla_el_astronauta(sin_ollama, pregunta, guia):
+    r = rag.responder(pregunta, ESTADO_VERDE)
+    assert r["fuentes"] and r["fuentes"][0]["guia"] == guia
+
+
+def test_sintoma_sin_guia_dice_que_hacer_mientras(sin_ollama):
+    r = rag.responder("me sangra la nariz", ESTADO_VERDE)
+    assert r["modo"] == "sin_informacion"
+    assert "Mientras tanto" in r["respuesta"] and "avisa de inmediato" in r["respuesta"]
+
+
+def test_api_estado_existe(cliente):
+    d = cliente.get("/api/estado/A1").json()
+    assert len(d["indicadores"]) == 11 and d["origen"] == "demo"
+    assert any(i["indicador"] == "radiacion" for i in d["indicadores"])
+
+
+def test_los_pasos_salen_textuales_de_la_guia(sin_ollama):
+    """Los pasos y el 'cuándo avisar' se copian de la guía de NASA: la IA no puede inventarlos."""
+    r = rag.responder("Llevo varios días con el ánimo bajo", ESTADO_VERDE)
+    pasos = rag._pasos_de_la_guia("animo_estres.md")
+    assert pasos and all(p in r["respuesta"] for p in pasos[:3])
+    assert "Cuándo avisar a la tripulación" in r["respuesta"] and "Alerta" in r["respuesta"]
+
+
+def test_pregunta_mixta_usa_dos_guias(sin_ollama):
+    r = rag.responder("Me duele la cabeza y dormí 4 horas, ¿qué hago?", ESTADO_VERDE)
+    assert {"Dolor de cabeza en el espacio", "Sueño y fatiga en misiones espaciales"} <= {f["guia"] for f in r["fuentes"]}

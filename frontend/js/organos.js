@@ -37,6 +37,11 @@ export const ORGANOS = {
     espacio: "La glucosa refleja energía y metabolismo; la dieta, el estrés y el sueño la alteran.",
     fuente: "NASA OSDR OSD-575 (Inspiration4, panel metabólico)",
   },
+  radiacion: {
+    nombre: "Radiación (clima espacial)", indicadores: ["radiacion"],
+    espacio: "Las llamaradas y los eventos de partículas solares aumentan la dosis de radiación en pocas horas.",
+    fuente: "NASA DONKI (CCMC / NASA GSFC)",
+  },
   piel: {
     nombre: "Piel y temperatura", indicadores: ["temperatura"],
     espacio: "Las erupciones en la piel son el evento médico más común en la Estación Espacial (1,12 por año de vuelo).",
@@ -47,7 +52,7 @@ export const ORGANOS = {
 export const NOMBRES_INDICADORES = {
   pulso: "Pulso", presion_arterial: "Presión arterial", animo: "Ánimo", estres: "Estrés",
   sueno: "Sueño", oxigeno: "Oxígeno", perdida_osea: "Pérdida ósea", vision: "Visión",
-  glucosa: "Glucosa", temperatura: "Temperatura",
+  glucosa: "Glucosa", temperatura: "Temperatura", radiacion: "Clima espacial",
 };
 
 // Estado de demostración (mismo formato que GET /api/estado de P4).

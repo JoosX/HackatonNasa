@@ -5,20 +5,20 @@ import {
   ORGANOS, COLORES, NOMBRES_INDICADORES, cargarEstado, cargarFichas, colorOrgano, indicador,
   colorPulso, antiguedadTexto, historial, sparkline, valorNumerico,
 } from "./organos.js";
-import { crearChat } from "./chat.js";
+import { crearChat, avatarORI } from "./chat.js";
 import { crearHud } from "./hud.js";
 
 const $ = (s) => document.querySelector(s);
 const reducir = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const CORTO = { presion_arterial: "Presión", temperatura: "Temp." };   // rótulos de la tira de instrumentos
-const SIGNOS = ["pulso", "presion_arterial", "oxigeno", "glucosa", "temperatura", "sueno", "animo"];
+const CORTO = { presion_arterial: "Presión", temperatura: "Temp.", radiacion: "Radiación" };   // rótulos de la tira de instrumentos
+const SIGNOS = ["pulso", "presion_arterial", "oxigeno", "glucosa", "temperatura", "sueno", "animo", "radiacion"];
 const ETIQUETA_ESTADO = { verde: "Normal", amarillo: "Precaución", rojo: "Alerta", "sin dato": "Sin dato" };
 const PREGUNTAS = [
   ["como_medir", "Cómo medir a bordo"], ["por_que", "Por qué importa"], ["efecto_espacio", "Efecto del espacio"],
   ["a_quien_avisar", "Cuándo avisar"], ["prevencion", "Prevención"],
 ];
 
-let estado, inicial, fichas = {}, reglas = {}, nasa = null;
+let estado, inicial, fichas = {}, reglas = {}, nasa = null, clima = null;
 let visor = null, hud = null, chat = null, seleccionado = null, conectado = true, enCola = 0, primeraVez = true;
 
 const escapar = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -39,8 +39,10 @@ function pintarSignos() {
     return `<li><button class="signo" type="button" data-organo="${organo}" style="--c:${c}"
         aria-pressed="${organo === seleccionado}" aria-label="${NOMBRES_INDICADORES[n]}: ${i.valor} ${i.unidad}, ${ETIQUETA_ESTADO[i.color]}">
       <span class="etiqueta"><span class="punto-estado" aria-hidden="true"></span><span>${CORTO[n] ?? NOMBRES_INDICADORES[n]}</span></span>
-      <span class="valor"><span data-valor="${escapar(i.valor)}">${numero(i.valor)}</span><small>${escapar(i.unidad)}</small></span>
-      <span class="pie-signo"><span class="edad">${antiguedadTexto(i.antiguedad_min)}</span>${sparkline(historial(estado, n), c)}</span>
+      <span class="valor">${n === "radiacion"
+        ? escapar(String(i.valor).split(" hace ")[0])
+        : `<span data-valor="${escapar(i.valor)}">${numero(i.valor)}</span><small>${escapar(i.unidad)}</small>`}</span>
+      <span class="pie-signo"><span class="edad">${n === "radiacion" && String(i.valor).includes(" hace ") ? "evento hace " + escapar(String(i.valor).split(" hace ")[1]) : antiguedadTexto(i.antiguedad_min)}</span>${sparkline(historial(estado, n), c)}</span>
     </button></li>`;
   }).join("");
   if (primeraVez && !reducir) contar();
@@ -85,12 +87,43 @@ function grafica({ serie, etiquetas, verde, color, titulo, nota }) {
     ${nota ? `<p class="g-nota">${nota}</p>` : ""}</figure>`;
 }
 
+// Línea de tiempo de eventos solares reales (NASA DONKI): altura y color según intensidad.
+function lineaClima() {
+  if (!clima?.eventos?.length) return "";
+  const W = 320, H = 110, iz = 8, de = 8, base = 82;
+  const t0 = new Date(clima.desde + "T00:00Z").getTime(), t1 = new Date(clima.hasta + "T23:59Z").getTime();
+  const X = (t) => iz + ((t - t0) / (t1 - t0)) * (W - iz - de);
+  const marcas = clima.eventos.map((e) => {
+    const t = new Date((e.pico || e.inicio).slice(0, 16) + "Z").getTime();
+    if (!Number.isFinite(t)) return "";
+    const clase = String(e.clase || "");
+    let alto = 14, color = "#6b6b6b";
+    if (e.tipo === "particulas") { alto = 64; color = COLORES.rojo; }
+    else if (e.tipo === "tormenta_geomagnetica") { alto = 10 + 6 * (e.kp || 4); color = "#bdbdbd"; }
+    else if (clase.startsWith("X")) { alto = 60; color = COLORES.rojo; }
+    else if (clase.startsWith("M")) { alto = 26 + 3 * parseFloat(clase.slice(1) || 1); color = COLORES.amarillo; }
+    const x = X(t);
+    const forma = e.tipo === "tormenta_geomagnetica"
+      ? `<rect x="${x - 3}" y="${base - alto}" width="6" height="${alto}" fill="none" stroke="${color}"/>`
+      : `<rect x="${x - 1.5}" y="${base - alto}" width="3" height="${alto}" fill="${color}"/>`;
+    return `<g>${forma}<title>${escapar(clase)} · ${escapar((e.pico || e.inicio).replace("T", " ").replace("Z", " UTC"))}</title></g>`;
+  }).join("");
+  const dias = [0, 10, 20, 30].map((d) => { const t = t0 + (d / 30) * (t1 - t0); return `<text x="${X(t)}" y="${H - 8}" text-anchor="middle">${new Date(t).toLocaleDateString("es", { day: "numeric", month: "short", timeZone: "UTC" })}</text>`; }).join("");
+  const sync = clima.sincronizado ? new Date(clima.sincronizado.replace("Z", ":00Z")).toLocaleString("es", { dateStyle: "medium", timeStyle: "short" }) : "—";
+  return `<figure class="grafica" style="--c:${COLORES.amarillo}">
+    <figcaption><span>Eventos solares · últimos 30 días</span><span class="g-ley">NASA DONKI</span></figcaption>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Eventos solares de los últimos 30 días">
+      <line x1="${iz}" y1="${base}" x2="${W - de}" y2="${base}" stroke="#3a3a3a"/>${marcas}${dias}</svg>
+    <p class="g-nota">${escapar(clima.motivo || "")} Barras: llamaradas (ámbar = clase M, rojo = clase X), rojo alto = partículas solares, contorno = tormenta geomagnética. Sincronizado: ${escapar(sync)}. Se actualiza cuando vuelve la señal con la Tierra.</p></figure>`;
+}
+
 function rangoVerde(n) {
   const r = reglas[n];
   return r?.verde ?? r?.componentes?.sistolica?.verde ?? null;
 }
 
 function graficasDe(organo) {
+  if (organo === "radiacion") return lineaClima();
   const ind = (fichas[organo]?.indicadores ?? ORGANOS[organo].indicadores).find((n) => indicador(estado, n) && valorNumerico(indicador(estado, n).valor) != null);
   let html = "";
   if (ind) {
@@ -177,7 +210,7 @@ function refrescar() {
   const cuenta = { rojo: 0, amarillo: 0 };
   for (const i of estado.indicadores) if (cuenta[i.color] != null) cuenta[i.color] += 1;
   $("#cw").innerHTML = `<span class="cw-rojo${cuenta.rojo ? " activo" : " cw-off"}">${cuenta.rojo} alerta${cuenta.rojo === 1 ? "" : "s"}</span>
-    <span class="${cuenta.amarillo ? "cw-amarillo" : "cw-off"}">${cuenta.amarillo} precaución${cuenta.amarillo === 1 ? "" : "es"}</span>`;
+    <span class="${cuenta.amarillo ? "cw-amarillo" : "cw-off"}">${cuenta.amarillo} ${cuenta.amarillo === 1 ? "precaución" : "precauciones"}</span>`;
   const rojos = cuenta.rojo > 0;
   $("#rotuloEstado").textContent = rojos ? "Alerta" : cuenta.amarillo ? "Precaución" : "Normal";
   $("#rotuloEstado").style.color = COLORES[rojos ? "rojo" : cuenta.amarillo ? "amarillo" : "verde"];
@@ -227,14 +260,22 @@ function enviarTierra() {
 
 // ---------- Inicio ----------
 async function iniciar() {
-  const [e, f, r, n] = await Promise.all([cargarEstado(), cargarFichas(), json("/api/reglas"), json("/api/nasa/osd575")]);
-  estado = e; fichas = f; nasa = n;
+  const [e, f, r, n, c] = await Promise.all([cargarEstado(), cargarFichas(), json("/api/reglas"), json("/api/nasa/osd575"), json("/api/clima-espacial")]);
+  estado = e; fichas = f; nasa = n; clima = c;
   reglas = Object.fromEntries((r?.indicadores ?? []).map((x) => [x.indicador, x]));
   inicial = structuredClone(estado);
 
+  $("#oriGrande").innerHTML = avatarORI(40);
   chat = crearChat({
     lista: $("#mensajes"), formulario: $("#formChat"), entrada: $("#pregunta"), boton: $("#enviar"),
     sugerencias: $("#sugerencias"), obtenerEstado: () => estado,
+    estadoORI: (e, texto) => {
+      const av = $("#oriGrande .ori");
+      av.classList.toggle("pensando", e === "pensando");
+      av.classList.toggle("alerta", e === "alerta");
+      $("#oriEstado").textContent = texto;
+      $("#oriEstado").dataset.estado = e;
+    },
   });
 
   const lienzo = $("#lienzo");
@@ -292,6 +333,11 @@ async function iniciar() {
     fijar("pulso", 148, "rojo"); fijar("oxigeno", 88, "rojo"); fijar("animo", 1, "rojo");
     refrescar(); seleccionar("corazon");
   });
+  $("#btnTormenta").addEventListener("click", () => {
+    const i = indicador(estado, "radiacion");
+    if (i) Object.assign(i, { valor: "SEP · ahora", color: "rojo", antiguedad_min: 0, motivo: "Evento de partículas solares (simulado).", accion: "Ve al área protegida de la nave según el protocolo y revisa tu dosímetro." });
+    refrescar(); seleccionar("radiacion");
+  });
   $("#btnReiniciar").addEventListener("click", () => { estado = structuredClone(inicial); refrescar(); seleccionar(null); });
 
   reloj();
@@ -304,6 +350,9 @@ async function iniciar() {
   }
   if (location.hash === "#emergencia") $("#btnEmergencia").click();
   if (location.hash === "#sinsenal") $("#btnSenal").click();
+  // Atajo para la demo: #preguntar=texto hace la pregunta al cargar.
+  const auto = location.hash.match(/^#preguntar=(.+)/);
+  if (auto) chat.preguntar(decodeURIComponent(auto[1]));
   document.documentElement.classList.add("listo");
 }
 
