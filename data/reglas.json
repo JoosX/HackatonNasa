@@ -1,0 +1,41 @@
+[
+  {"indicador": "pulso", "unidad": "lpm", "verde": [50, 100], "amarillo": [40, 120], "posible": [25, 220],
+   "max_antiguedad_min": 120, "max_salto": 60,
+   "accion": {"amarillo": "Repite en reposo en 15 min", "rojo": "Avisa a la tripulacion"},
+   "fuente": "NASA HRP (provisional, ilustrativo)"},
+
+  {"indicador": "presion", "unidad": "mmHg", "verde": [90, 130], "amarillo": [80, 140], "posible": [50, 250],
+   "max_antiguedad_min": 240, "max_salto": 60,
+   "accion": {"amarillo": "Repite en reposo en 15 min", "rojo": "Avisa a la tripulacion"},
+   "fuente": "NASA HRP (provisional, ilustrativo)"},
+
+  {"indicador": "glucosa", "unidad": "mg/dL", "verde": [70, 140], "amarillo": [55, 180], "posible": [20, 600],
+   "max_antiguedad_min": 480, "max_salto": 150,
+   "accion": {"amarillo": "Repite la medicion y revisa tu ultima comida", "rojo": "Avisa a la tripulacion"},
+   "fuente": "NASA HRP (provisional, ilustrativo)"},
+
+  {"indicador": "temperatura", "unidad": "C", "verde": [36.0, 37.5], "amarillo": [35.0, 38.5], "posible": [30, 43],
+   "max_antiguedad_min": 240, "max_salto": 3,
+   "accion": {"amarillo": "Descansa, toma liquidos y repite en 30 min", "rojo": "Avisa a la tripulacion"},
+   "fuente": "NASA HRP (provisional, ilustrativo)"},
+
+  {"indicador": "oxigeno", "unidad": "%", "verde": [95, 100], "amarillo": [90, 100], "posible": [50, 100],
+   "max_antiguedad_min": 120, "max_salto": 10,
+   "accion": {"amarillo": "Respira profundo y repite en 5 min", "rojo": "Avisa a la tripulacion de inmediato"},
+   "fuente": "NASA HRP (provisional, ilustrativo)"},
+
+  {"indicador": "sueno", "unidad": "h", "verde": [7, 10], "amarillo": [6, 12], "posible": [0, 24],
+   "max_antiguedad_min": 1440,
+   "accion": {"amarillo": "Intenta acostarte antes y reduce la luz", "rojo": "Avisa a la tripulacion"},
+   "fuente": "NASA HRP (provisional, ilustrativo)"},
+
+  {"indicador": "animo", "unidad": "1-5", "verde": [3, 5], "amarillo": [2, 5], "posible": [1, 5],
+   "max_antiguedad_min": 1440,
+   "accion": {"amarillo": "Habla con alguien de la tripulacion", "rojo": "Avisa a la tripulacion"},
+   "fuente": "NASA HRP (provisional, ilustrativo)"},
+
+  {"indicador": "estres", "unidad": "1-10", "verde": [1, 4], "amarillo": [1, 7], "posible": [1, 10],
+   "max_antiguedad_min": 720,
+   "accion": {"amarillo": "Haz una pausa y respira lento 5 min", "rojo": "Avisa a la tripulacion"},
+   "fuente": "NASA HRP (provisional, ilustrativo)"}
+]
