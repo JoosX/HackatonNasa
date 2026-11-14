@@ -16,9 +16,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import json
+
 import db
 import reglas
+import sync
 import tendencias
+
+DATA = Path(__file__).resolve().parent.parent / "data"
+
+
+def leer_json(nombre: str):
+    """Lee data/<nombre>. Devuelve None si no existe o esta mal formado."""
+    try:
+        with open(DATA / nombre, encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
 
 app = FastAPI(title="Asistente de salud local para astronautas", version="0.2-sqlite")
 
@@ -137,9 +151,6 @@ NASA_OSD575_FALSO = {
     ],
 }
 
-# Estado simulado de la sincronizacion
-SYNC = {"conectado": False, "retraso_min": 14, "pendientes": 3, "ultima_sync": hace(180)}
-
 
 # ---------------------------------------------------------------- Endpoints
 @app.post("/api/mediciones")
@@ -172,6 +183,14 @@ def crear_medicion(m: MedicionIn):
                                   ev["mensaje"], ev["accion"], guardado["id"])
             alerta = {"id": aid, "nivel": ev["color"], "mensaje": ev["mensaje"]}
     ev["alerta"] = alerta
+
+    # Todo lo que se guarda debe viajar a la Tierra (o quedar en cola si no hay senal)
+    sync.registrar("medicion", {"id": guardado["id"], "astronauta_id": m.astronauta_id,
+                                "indicador": m.indicador, "valor": m.valor,
+                                "medido_en": guardado["medido_en"], "color": ev["color"]})
+    if alerta:
+        sync.registrar("alerta", {**alerta, "astronauta_id": m.astronauta_id,
+                                  "indicador": m.indicador})
 
     return {
         "ok": True,
@@ -281,7 +300,14 @@ def alertas(astronauta_id: int):
 
 @app.get("/api/fichas")
 def fichas():
-    return {"fichas": FICHAS_FALSAS}
+    datos = leer_json("fichas.json")
+    if datos is None:
+        return {"datos_falsos": True, "fichas": FICHAS_FALSAS}
+    if isinstance(datos, dict) and "fichas" in datos:
+        return {"datos_falsos": False, **datos}
+    if isinstance(datos, dict):  # {"pulso": {...}, "sueno": {...}}
+        datos = [{"indicador": k, **v} for k, v in datos.items()]
+    return {"datos_falsos": False, "fichas": datos}
 
 
 @app.post("/api/chat")
@@ -297,21 +323,23 @@ def chat(c: ChatIn):
 
 @app.get("/api/sync")
 def sync_estado():
-    return SYNC
+    return sync.estado()
 
 
 @app.post("/api/sync/simular")
-def sync_simular(conectado: Optional[bool] = None):
-    SYNC["conectado"] = (not SYNC["conectado"]) if conectado is None else conectado
-    if SYNC["conectado"]:
-        SYNC["pendientes"] = 0
-        SYNC["ultima_sync"] = ahora().isoformat()
-    return SYNC
+def sync_simular(conectado: Optional[bool] = None, retraso_min: Optional[int] = None):
+    """Sin parametros alterna conectado/desconectado. Opcional: ?conectado=false&retraso_min=40"""
+    return sync.simular(conectado, retraso_min)
 
 
 @app.get("/api/nasa/osd575")
 def nasa_osd575():
-    return NASA_OSD575_FALSO
+    datos = leer_json("nasa_osd575.json")
+    if datos is None:
+        return {"datos_falsos": True, **NASA_OSD575_FALSO}
+    if isinstance(datos, dict):
+        return {"datos_falsos": False, **datos}
+    return {"datos_falsos": False, "series": datos}
 
 
 # ---------------------------------------------------------------- Frontend

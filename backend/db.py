@@ -65,6 +65,10 @@ def init_db() -> None:
                 activa INTEGER NOT NULL DEFAULT 1,
                 medicion_id INTEGER
             );
+            CREATE TABLE IF NOT EXISTS config (
+                clave TEXT PRIMARY KEY,
+                valor TEXT NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS cola_sync (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 tipo TEXT NOT NULL,
@@ -172,3 +176,40 @@ def cerrar_alertas(astronauta_id: int, indicador: str) -> None:
             "UPDATE alertas SET activa = 0 WHERE astronauta_id = ? AND indicador = ? AND activa = 1",
             (astronauta_id, indicador),
         )
+
+
+# ------------------------------------------------------------ Config y cola de sincronizacion
+def get_config(clave: str, defecto: str | None = None) -> str | None:
+    with conectar() as con:
+        f = con.execute("SELECT valor FROM config WHERE clave = ?", (clave,)).fetchone()
+    return f["valor"] if f else defecto
+
+
+def set_config(clave: str, valor: str) -> None:
+    with conectar() as con:
+        con.execute(
+            "INSERT INTO config (clave, valor) VALUES (?, ?) "
+            "ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
+            (clave, valor),
+        )
+
+
+def encolar(tipo: str, payload_json: str) -> int:
+    with conectar() as con:
+        cur = con.execute(
+            "INSERT INTO cola_sync (tipo, payload, creada_en) VALUES (?, ?, ?)",
+            (tipo, payload_json, ahora_iso()),
+        )
+        return cur.lastrowid
+
+
+def contar_pendientes() -> int:
+    with conectar() as con:
+        return con.execute("SELECT COUNT(*) FROM cola_sync WHERE enviada = 0").fetchone()[0]
+
+
+def enviar_pendientes() -> int:
+    """Marca como enviados todos los pendientes y devuelve cuantos eran."""
+    with conectar() as con:
+        cur = con.execute("UPDATE cola_sync SET enviada = 1 WHERE enviada = 0")
+        return cur.rowcount
