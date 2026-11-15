@@ -9,6 +9,8 @@
 <link rel="preload" href="fuentes/JetBrainsMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/nasa.css">
+<link rel="stylesheet" href="css/registro.css">
+<script type="module" src="js/registro.js"></script>
 <script type="importmap">
 { "imports": { "three": "./lib/three/three.module.js", "three/addons/": "./lib/three/addons/" } }
 </script>
@@ -37,6 +39,7 @@
 
 <nav class="nasa-acceso" aria-label="Evidencia científica">
   <span><strong>NASA OSD-575</strong> · Análisis reales de Inspiration4</span>
+  <button type="button" class="btn" id="abrirRegistro">Registro e historial · A1</button>
   <button type="button" class="btn" data-nasa-open disabled>Explorar datos reales ↗</button>
 </nav>
 
@@ -46,6 +49,30 @@
     <form method="dialog"><button class="btn" aria-label="Cerrar explorador de datos NASA">Cerrar ×</button></form>
   </header>
   <div id="nasaContenido"></div>
+</dialog>
+
+<dialog id="registroDialogo" class="nasa-dialogo" aria-labelledby="registroTitulo">
+  <header class="nasa-cabecera"><div><p class="rotulo">Tripulante A1 / archivo local</p><h2 id="registroTitulo">Registro e historial</h2></div>
+    <form method="dialog"><button class="btn" aria-label="Cerrar registro e historial">Cerrar ×</button></form></header>
+  <div class="registro-contenido">
+    <p class="registro-aviso">Mediciones ingresadas manualmente y guardadas en esta máquina. El panel principal continúa en modo demostración; este historial no clasifica tu salud.</p>
+    <form id="registroForm" class="registro-form">
+      <label>Indicador<select id="registroIndicador" name="indicador"><option value="pulso">Pulso</option><option value="presion_arterial">Presión arterial</option><option value="oxigeno">Oxígeno</option><option value="glucosa">Glucosa</option><option value="temperatura">Temperatura</option><option value="sueno">Sueño diario</option><option value="animo">Ánimo</option><option value="estres">Estrés</option></select></label>
+      <label>Fecha y hora de la medición<input id="registroFecha" name="fecha" type="datetime-local" required><small>Hora local de tu dispositivo.</small></label>
+      <label><span id="registroValorEtiqueta">Valor (lpm)</span><input id="registroValor" name="valor" type="number" step="any" required inputmode="decimal"></label>
+      <label id="registroDiastolicaGrupo" hidden>Diastólica (mmHg)<input id="registroDiastolica" name="diastolica" type="number" step="any" inputmode="decimal"></label>
+      <label>Contexto<select name="contexto"><option value="sin_especificar">Sin especificar</option><option value="reposo">En reposo</option><option value="despues_ejercicio">Después de ejercicio</option><option value="ayunas">En ayunas</option><option value="despues_comida">Después de comer</option><option value="otro">Otro</option></select></label>
+      <label class="registro-nota">Notas opcionales<textarea name="nota" maxlength="1000" rows="2" placeholder="Equipo utilizado, síntomas o detalles de la medición"></textarea></label>
+      <p class="registro-nota" id="registroEscala" hidden>Escala de demostración, no validada clínicamente: ánimo 1 = muy bajo, 5 = muy bueno; estrés 1 = muy bajo, 5 = muy alto.</p>
+      <div class="registro-nota"><button type="submit" class="btn btn-primario" id="registroGuardar">Guardar medición</button></div>
+    </form>
+    <p id="registroMensaje" role="status" aria-live="polite"></p>
+    <section aria-labelledby="historialTitulo" class="registro-historial"><h3 id="historialTitulo">Mediciones guardadas</h3>
+      <div class="registro-filtros"><label>Filtrar historial<select id="historialFiltro"><option value="">Todos los indicadores</option></select></label><button type="button" class="btn" id="historialRecargar">Actualizar historial</button></div>
+      <p id="historialEstado" role="status"></p><div class="nasa-tabla" id="historialTabla"></div>
+      <div class="botones"><button type="button" class="btn" id="historialAnterior">Anterior</button><span id="historialPagina"></span><button type="button" class="btn" id="historialSiguiente">Siguiente</button></div>
+    </section>
+  </div>
 </dialog>
 
 <main class="app">

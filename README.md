@@ -4,6 +4,26 @@ Asistente de salud **local** para astronautas, con **ORI**, un compañero de sal
 
 ## Ejecutar
 
+### Registro e historial local
+
+El acceso **Registro e historial · A1** permite guardar ocho indicadores manuales, con fecha,
+contexto y notas. La presión conserva sistólica y diastólica por separado. El historial se filtra
+por indicador y se pagina de 20 en 20, ordenado por fecha de medición. Ánimo y estrés usan una
+escala de demostración de 1 a 5; no son instrumentos clínicos validados.
+
+La API ofrece `POST /api/mediciones` y `GET /api/historial/{astronauta_id}` con parámetros
+`indicador`, `limite` (1–100) y `offset`. Las fechas requieren zona horaria y se guardan en UTC;
+la interfaz presenta la hora local. El identificador de cada envío permite reintentar sin duplicarlo.
+
+SQLite utiliza la biblioteca estándar de Python, sin instalaciones nuevas. El archivo se crea en
+`data/local/mediciones.sqlite3`, excluido de Git. `APELOGIC_DB_PATH` permite otra ubicación.
+Los registros permanecen al reiniciar el servidor y el navegador. Para conservarlos al cambiar
+de máquina, hay que conservar ese archivo; no se sincronizan automáticamente con otros equipos.
+
+El registro funciona sin internet con FastAPI activo. Esta entrega almacena y consulta datos;
+el panel y ORI conservan su estado de demostración, sin mezclar los registros con OSD-575.
+No se implementan aquí clasificación clínica, modificación ni borrado de registros.
+
 Requisitos: Python 3, [uv](https://docs.astral.sh/uv/) (o `pip install -r requirements.txt`) y, para la IA, Ollama con `gemma3:4b` y `nomic-embed-text` (ver `IA_LOCAL.md`).
 
 Desde la raíz del repositorio:
@@ -52,7 +72,7 @@ La suite Python también verifica las 20 series frente al CSV original incluido.
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 ```
 
-70 pruebas Python: guías, reglas del semáforo, fichas (5 preguntas del reto), datos NASA OSD-575 y procedencia del CSV, contrato del modelo 3D, asistente sin IA (no inventa, alerta roja fija) y con IA (se saltan si Ollama está apagado), y la API.
+85 pruebas Python: registro local (persistencia, reintentos, filtros, paginación y validación), guías, reglas del semáforo, fichas (5 preguntas del reto), datos NASA OSD-575 y procedencia del CSV, contrato del modelo 3D, asistente sin IA y con IA (se saltan si Ollama está apagado), y la API.
 
 ## Estructura y dueños
 

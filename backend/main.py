@@ -18,13 +18,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from fastapi import FastAPI  # noqa: E402
+from fastapi import FastAPI, HTTPException, Query  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 import clima_espacial  # noqa: E402
 import ollama_cliente  # noqa: E402
 import rag  # noqa: E402
+import mediciones  # noqa: E402
 from guias import RAIZ  # noqa: E402
 
 app = FastAPI(title="Asistente de salud local para astronautas")
@@ -112,6 +113,22 @@ def reglas() -> dict:
 def osd575() -> dict:
     """Panel metabólico real de la tripulación de Inspiration4 (NASA OSDR OSD-575)."""
     return _json("nasa_osd575.json")
+
+
+@app.post("/api/mediciones", status_code=201)
+def registrar_medicion(m: mediciones.Medicion):
+    try:
+        return mediciones.guardar(m)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.get("/api/historial/{astronauta_id}")
+def historial_mediciones(astronauta_id: str, indicador: str | None = None,
+                        limite: int = Query(100, ge=1, le=100), offset: int = Query(0, ge=0)):
+    if indicador is not None and indicador not in mediciones.CATALOGO:
+        raise HTTPException(status_code=422, detail="Indicador desconocido.")
+    return mediciones.historial(astronauta_id, indicador, limite, offset)
 
 
 # El frontend se sirve desde el mismo servidor (va al final para no tapar /api).
