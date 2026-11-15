@@ -12,4 +12,5 @@
 .registro-filtros label { flex: 1; min-width: 170px; }
 .registro-historial .nasa-tabla td:last-child { white-space: normal; overflow-wrap: anywhere; min-width: 160px; font-family: var(--fuente); }
 .registro-historial .botones { align-items: center; font-size: 12px; }
+@media(min-width:1101px) { .signos { grid-template-columns: repeat(3,minmax(0,1fr)); } .lienzo { min-height:220px; } }
 @media(max-width:600px) { .registro-contenido { padding: 18px; } .registro-form { grid-template-columns: 1fr; } }

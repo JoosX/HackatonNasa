@@ -2,13 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { colorOrgano, historial } from '../frontend/js/organos.js';
 
-test('el corazón representa el pulso local y no la presión demo', () => {
+test('el corazón no se marca normal con presión ausente ni usa un rojo de demostración', () => {
   const estado = { indicadores: [
     { indicador:'pulso', valor:82, color:'verde', calidad:'vigente', historial:[{valor:74},{valor:82}] },
     { indicador:'presion_arterial', color:'rojo', origen:'demo' },
   ] };
-  assert.equal(colorOrgano(estado,'corazon'), 'verde');
+  assert.equal(colorOrgano(estado,'corazon'), 'sin dato');
   assert.deepEqual(historial(estado,'pulso'), [74,82]);
+  Object.assign(estado.indicadores[1], {origen:'registro_manual',calidad:'vigente',color:'rojo'});
+  assert.equal(colorOrgano(estado,'corazon'), 'rojo');
+  estado.indicadores[1].color = 'verde';
+  assert.equal(colorOrgano(estado,'corazon'), 'verde');
   estado.indicadores[0].calidad = 'vencido'; estado.indicadores[0].color = 'sin dato';
   assert.equal(colorOrgano(estado,'corazon'), 'sin dato');
 });

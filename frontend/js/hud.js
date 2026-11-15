@@ -7,7 +7,7 @@ const NS = "http://www.w3.org/2000/svg";
 const ESTADO_TXT = { verde: "Normal", amarillo: "Precaución", rojo: "Alerta", "sin dato": "Sin dato" };
 const ORDEN = ["cerebro", "ojos", "pulmones", "corazon", "sangre", "huesos", "piel"];
 const escapar = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const num = (v) => (typeof v === "number" ? v.toLocaleString("es", { maximumFractionDigits: 1 }) : escapar(v));
+const num = (v) => (v == null ? 'Sin dato' : typeof v === "number" ? v.toLocaleString("es", { maximumFractionDigits: 1 }) : escapar(v));
 
 export function crearHud({ contenedor, obtenerEstado, obtenerFichas, onSeleccion }) {
   const svg = document.createElementNS(NS, "svg");
@@ -48,7 +48,7 @@ export function crearHud({ contenedor, obtenerEstado, obtenerFichas, onSeleccion
     const f = obtenerFichas()[o];
     const c = colorOrgano(e, o);
     const principal = (f?.indicadores ?? ORGANOS[o].indicadores).map((n) => indicador(e, n)).find(Boolean);
-    const dato = principal ? `${num(principal.valor)}<small>${escapar(principal.unidad)}</small>` : "";
+    const dato = principal?.valor != null ? `${num(principal.valor)}<small>${escapar(principal.unidad)}</small>` : 'Sin dato';
     etiquetas[o].style.setProperty("--c", COLORES[c]);
     etiquetas[o].dataset.estado = c;
     etiquetas[o].setAttribute("aria-label", `${f?.nombre ?? ORGANOS[o].nombre}: ${ESTADO_TXT[c]}`);

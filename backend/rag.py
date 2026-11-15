@@ -52,7 +52,9 @@ Escribe SOLO dos o tres frases (máximo 55 palabras), sin listas ni viñetas:
 
 No des pasos ni recomendaciones, no digas a quién avisar ni cuándo: eso lo agrega la app desde la guía.
 No inventes datos, nombres ni conclusiones: por ejemplo, una llamarada solar es un evento en el Sol,
-no significa que el astronauta recibió radiación. Sin corchetes ni etiquetas en mayúsculas."""
+no significa que el astronauta recibió radiación. Los rangos y escalas son ilustrativos: no diagnostiques.
+Un dato ausente, vencido, sospechoso o sin contexto suficiente no permite afirmar normalidad.
+Sin corchetes ni etiquetas en mayúsculas."""
 
 _cache: dict = {}
 
@@ -153,18 +155,19 @@ def resumen_estado(estado: dict | None) -> tuple[str, list[dict]]:
     if not estado or not estado.get("indicadores"):
         return "Todavía no tengo mediciones tuyas. Cuando registres tus signos vitales, te cuento cómo vas. 🙂", []
     indicadores = [i for i in estado['indicadores'] if i.get('origen') != 'demo']
-    incompletos = [i for i in indicadores if i.get('calidad') in ('ausente', 'vencido', 'sospechoso', 'error')]
+    incompletos = [i for i in indicadores if i.get('calidad') in ('ausente', 'vencido', 'sospechoso', 'error', 'contexto_pendiente')]
     aviso = '\n'.join(f"- {i.get('nombre', i['indicador'])}: {i.get('motivo', 'No hay un dato actual confiable.')}" for i in incompletos)
     estado = {**estado, 'indicadores': [i for i in indicadores if i not in incompletos]}
     reglas = _reglas()
     orden = {"rojo": 0, "amarillo": 1}
     fuera = sorted((i for i in estado["indicadores"] if i.get("color") in orden), key=lambda i: orden[i["color"]])
+    recientes = [i for i in estado['indicadores'] if i.get('origen') == 'registro_manual']
+    valores = '\n'.join(f"- {i['nombre']}: **{i['valor']:g} {i['unidad']}**" if isinstance(i['valor'], (int, float)) else f"- {i['nombre']}: **{i['valor']} {i['unidad']}**" for i in recientes)
     if not fuera:
         if aviso:
-            return 'No puedo afirmar que todo esté normal:\n' + aviso + '\nLos demás indicadores personales de demostración no se evalúan como mediciones tuyas.', []
+            return ('Registros recientes:\n' + valores + '\n\n' if valores else '') + 'No puedo afirmar que todo esté normal:\n' + aviso + '\nUn dato ausente o vencido no es una medición normal.', []
         if any(i.get('regla_ilustrativa') for i in indicadores):
-            pulso = next(i for i in indicadores if i.get('indicador') == 'pulso')
-            return f"El pulso registrado es **{pulso['valor']:g} {pulso['unidad']}**, dentro del rango ilustrativo. Esto no es un diagnóstico ni una evaluación completa de tu salud. Los otros indicadores personales siguen en demostración.", []
+            return 'Registros dentro del rango ilustrativo:\n' + valores + '\nEsto no es un diagnóstico ni una evaluación completa de tu salud.', []
         return "¡Buenas noticias! 🟢 Todos tus indicadores están **normales**. Sigue así con tu rutina de sueño, ejercicio y mediciones.", []
     lineas, fuentes, vistas = [], [], set()
     for i in fuera:
@@ -366,6 +369,8 @@ def resumir_estado(estado: dict | None) -> tuple[str, bool]:
         nombre = _reglas().get(ind.get("indicador"), {}).get("nombre", ind.get("nombre", ind.get("indicador")))
         if ind.get("motivo"):
             edad = f" ({ind['motivo'].rstrip('.')})"
+        if ind.get('contexto'):
+            edad += f", contexto registrado: {ind['contexto']}"
         lineas.append(f"- {nombre}: {ind.get('valor')} {ind.get('unidad', '')}, {palabra}{tend}{edad}")
     for nota in estado.get("notas", []):
         lineas.append(f"- {nota}")

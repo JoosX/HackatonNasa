@@ -98,28 +98,46 @@ def historial(astronauta_id, indicador=None, limite=100, offset=0):
         conn.close()
 
 
-def estado_pulso(astronauta_id, ahora=None):
+def estado_indicador(astronauta_id, nombre, ahora=None):
     ahora = ahora or dt.datetime.now(dt.timezone.utc)
-    regla = next(r for r in json.loads((Path(__file__).resolve().parent.parent / 'data/reglas.json').read_text(encoding='utf-8'))['indicadores'] if r['indicador'] == 'pulso')
-    filas = historial(astronauta_id, 'pulso', 100)['mediciones']
-    base = {'indicador': 'pulso', 'nombre': 'Pulso', 'valor': None, 'unidad': 'lpm', 'color': 'sin dato',
+    regla = next(r for r in json.loads((Path(__file__).resolve().parent.parent / 'data/reglas.json').read_text(encoding='utf-8'))['indicadores'] if r['indicador'] == nombre)
+    filas = historial(astronauta_id, nombre, 100)['mediciones']
+    def componentes(m):
+        if nombre == 'presion_arterial':
+            return [(m['valor'], regla['componentes']['sistolica']), (m['diastolica'], regla['componentes']['diastolica'])]
+        return [(m['valor'], regla)]
+    def sospechoso(m):
+        return any(v is None or not r['posible'][0] <= v <= r['posible'][1] for v, r in componentes(m))
+    base = {'indicador': nombre, 'nombre': CATALOGO[nombre][0], 'valor': None, 'unidad': CATALOGO[nombre][1], 'color': 'sin dato',
             'origen': 'registro_manual', 'calidad': 'ausente', 'antiguedad_min': None,
-            'motivo': 'Sin mediciones de pulso guardadas. Registra una medición.', 'historial': [],
+            'motivo': f'Sin mediciones de {CATALOGO[nombre][0].lower()} guardadas. Registra una medición.', 'historial': [],
             'regla_ilustrativa': True, 'fuente': regla['fuente']}
-    base['historial'] = [{'valor': m['valor'], 'fecha': m['fecha'],
-                          'sospechoso': not regla['posible'][0] <= m['valor'] <= regla['posible'][1]} for m in reversed(filas)]
+    base['historial'] = [{'valor': m['valor'], 'diastolica': m['diastolica'], 'fecha': m['fecha'], 'contexto': m['contexto'],
+                          'sospechoso': sospechoso(m)} for m in reversed(filas)]
     if not filas:
         return base
     ultima = filas[0]
     edad = max(0, int((ahora - dt.datetime.fromisoformat(ultima['fecha'])).total_seconds() // 60))
-    base.update(valor=ultima['valor'], fecha=ultima['fecha'], antiguedad_min=edad)
-    if not regla['posible'][0] <= ultima['valor'] <= regla['posible'][1]:
+    v = f"{ultima['valor']:g}/{ultima['diastolica']:g}" if nombre == 'presion_arterial' else ultima['valor']
+    base.update(valor=v, diastolica=ultima['diastolica'], fecha=ultima['fecha'], antiguedad_min=edad, contexto=ultima['contexto'])
+    if sospechoso(ultima):
         base.update(calidad='sospechoso', motivo='Valor fuera del intervalo de plausibilidad ilustrativo. Comprueba la medición; no se clasifica como normal.')
     elif edad > regla['max_antiguedad_min']:
         base.update(calidad='vencido', motivo=f'Medición vencida según el límite ilustrativo de {regla["max_antiguedad_min"]} minutos. Registra una nueva; no describe el estado actual.')
+    elif nombre == 'glucosa' and ultima['contexto'] != 'ayunas':
+        base.update(calidad='contexto_pendiente', motivo='El rango ilustrativo de glucosa no está adaptado a comidas u otros contextos. Conservamos el valor sin clasificar; registra si fue en ayunas.')
     else:
-        v = ultima['valor']
-        color = 'verde' if regla['verde'][0] <= v <= regla['verde'][1] else 'amarillo' if regla['amarillo'][0] <= v <= regla['amarillo'][1] else 'rojo'
-        base.update(calidad='vigente', color=color, motivo='Registro manual reciente. Clasificación con rangos ilustrativos, no diagnóstico.',
+        def clasificar(v, r):
+            return 'verde' if r['verde'][0] <= v <= r['verde'][1] else 'amarillo' if r['amarillo'][0] <= v <= r['amarillo'][1] else 'rojo'
+        color = max((clasificar(v, r) for v, r in componentes(ultima)), key=['verde','amarillo','rojo'].index)
+        base.update(calidad='vigente', color=color, motivo='Registro manual reciente.',
                     accion=regla['accion'].get(color, 'Consulta el contexto y la evolución de tu medición.'))
     return base
+
+
+def estado_pulso(astronauta_id, ahora=None):
+    return estado_indicador(astronauta_id, 'pulso', ahora)
+
+
+def estado_personal(astronauta_id):
+    return [estado_indicador(astronauta_id, nombre) for nombre in CATALOGO]

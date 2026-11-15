@@ -1,8 +1,8 @@
 """API local del asistente de salud (FastAPI).
 
 Sirve la interfaz, el registro e historial SQLite y el asistente local.
-El pulso del estado se calcula desde los registros con reglas ilustrativas;
-los demás indicadores personales aún son de demostración.
+Los ocho indicadores personales registrados se calculan con reglas ilustrativas;
+visión y huesos aún no tienen registro integrado.
 
 Ejecutar desde la carpeta asistente-salud:
     uvicorn backend.main:app --reload --port 8000
@@ -40,13 +40,12 @@ def _precalentar() -> None:
 
 
 def obtener_estado(astronauta_id: str) -> dict:
-    """Pulso de SQLite; los otros indicadores personales siguen siendo demostración."""
+    """Ocho indicadores de SQLite; visión y huesos aún no tienen registro integrado."""
     estado = json.loads((RAIZ / "data" / "estado_ejemplo.json").read_text(encoding="utf-8"))
     estado['astronauta_id'] = astronauta_id
     estado['origen'] = 'mixto'
     estado['notas'] = []
-    estado['indicadores'] = [dict(i, origen='demo') for i in estado['indicadores'] if i['indicador'] != 'pulso']
-    estado['indicadores'].insert(0, mediciones.estado_pulso(astronauta_id))
+    estado['indicadores'] = mediciones.estado_personal(astronauta_id) + [dict(i, origen='demo', valor=None, color='sin dato', antiguedad_min=None, motivo='Sin registro integrado para este sistema.') for i in estado['indicadores'] if i['indicador'] not in mediciones.CATALOGO]
     estado["indicadores"].append(clima_espacial.indicador())
     return estado
 
@@ -67,8 +66,8 @@ def chat(p: PreguntaChat) -> dict:
     inicio = time.time()
     estado = p.estado or obtener_estado(p.astronauta_id)
     if not estado.get('modo_demo'):
-        # El cliente puede tener un dato antiguo. ORI usa el pulso actual de SQLite.
-        estado = {**estado, 'indicadores': [i for i in estado.get('indicadores', []) if i.get('indicador') != 'pulso'] + [mediciones.estado_pulso(p.astronauta_id)]}
+        # No confiar en valores personales antiguos o simulados enviados por el cliente.
+        estado = obtener_estado(p.astronauta_id)
     resultado = rag.responder(p.pregunta, estado)
     resultado["segundos"] = round(time.time() - inicio, 2)
     return resultado

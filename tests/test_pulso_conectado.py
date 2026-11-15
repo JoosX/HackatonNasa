@@ -77,4 +77,5 @@ def test_chat_recarga_el_pulso_guardado_aunque_el_cliente_envie_un_valor_antiguo
     assert captura['indicadores'][0]['valor'] == 83
     estado = cliente.get('/api/estado/A1').json()
     assert estado['indicadores'][0]['valor'] == 83
-    assert all(i['origen'] == 'demo' for i in estado['indicadores'][1:-1])
+    assert all(i['origen'] == 'registro_manual' for i in estado['indicadores'][:8])
+    assert all(i['calidad'] == 'ausente' for i in estado['indicadores'][1:8])

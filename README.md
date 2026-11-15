@@ -20,15 +20,19 @@ SQLite utiliza la biblioteca estándar de Python, sin instalaciones nuevas. El a
 Los registros permanecen al reiniciar el servidor y el navegador. Para conservarlos al cambiar
 de máquina, hay que conservar ese archivo; no se sincronizan automáticamente con otros equipos.
 
-El registro funciona sin internet con FastAPI activo. El **pulso** ya se conecta al panel, al
-corazón 3D, a la gráfica y a ORI. Los demás indicadores personales del panel siguen en demo,
-identificados como tales y excluidos de la evaluación personal de ORI. OSD-575 permanece separado.
-La clasificación del pulso reutiliza los rangos **ilustrativos** de `data/reglas.json`; no es diagnóstico.
+El registro funciona sin internet con FastAPI activo. Los **ocho indicadores** se conectan al panel,
+a los órganos correspondientes, a sus gráficas y a ORI. Visión y huesos no tienen registro integrado
+y se muestran sin datos. OSD-575 permanece como explorador histórico separado.
+La clasificación reutiliza los rangos **ilustrativos** de `data/reglas.json`; no es diagnóstico.
+En presión, se evalúan ambos componentes y se muestran dos series. El color de un órgano toma la
+alerta conocida más alta; si no hay alerta pero faltan datos actuales de ese sistema, se muestra gris.
+Glucosa conserva el valor sin clasificar si el contexto no es ayunas: el rango disponible no está
+adaptado a otras condiciones. Ánimo y estrés siguen siendo escalas de demostración, no validadas.
 Ausencia, antigüedad superior al límite o valor fuera de plausibilidad dan estado gris. La gráfica
 usa hasta 100 registros reales y corta el trazo ante muestras sospechosas, sin puntos generados.
 Guardar actualiza el panel; también se refresca cada minuto y al volver a la ventana. Los controles
 de simulación conservan una etiqueta explícita y «Reiniciar datos» vuelve a leer el registro local.
-El chat relee el pulso de SQLite antes de responder, salvo en modo de simulación explícito.
+El chat relee los ocho indicadores de SQLite antes de responder, salvo en simulación explícita.
 No se implementan aquí modificación ni borrado de registros.
 
 Requisitos: Python 3, [uv](https://docs.astral.sh/uv/) (o `pip install -r requirements.txt`) y, para la IA, Ollama con `gemma3:4b` y `nomic-embed-text` (ver `IA_LOCAL.md`).
@@ -79,7 +83,7 @@ La suite Python también verifica las 20 series frente al CSV original incluido.
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 ```
 
-94 pruebas Python: registro local, conexión del pulso y calidad de los datos, guías, reglas del semáforo, fichas, datos NASA y procedencia del CSV, modelo 3D, asistente y API. Las dos pruebas con el modelo se saltan si Ollama está apagado. Las pruebas JavaScript se ejecutan con `node --test tests/*.test.mjs`.
+119 pruebas Python: registro local, conexión de ocho indicadores y calidad de los datos, guías, reglas del semáforo, fichas, datos NASA y procedencia del CSV, modelo 3D, asistente y API. Las dos pruebas con el modelo se saltan si Ollama está apagado. Las pruebas JavaScript se ejecutan con `node --test tests/*.test.mjs`.
 
 ## Estructura y dueños
 
@@ -94,7 +98,7 @@ uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 | `scripts/` | Indexar guías, convertir OSD-575, construir el modelo en Blender | P5 / P6 |
 | `tests/` | Pruebas automáticas | P6 |
 
-`GET /api/estado/{id}` combina el pulso guardado con los demás indicadores personales de demostración y el clima espacial. Conectar los otros indicadores registrados al panel sigue pendiente. El chat excluye los indicadores personales marcados como demo de su evaluación.
+`GET /api/estado/{id}` combina los ocho indicadores guardados, dos sistemas sin registro integrado y el clima espacial. Cada indicador incluye calidad, origen, fecha, motivo e historial de hasta 100 muestras. Los controles de demostración son explícitos y no modifican los registros guardados.
 
 ## Diseño
 

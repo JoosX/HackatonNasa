@@ -89,8 +89,7 @@ export async function cargarEstado(id = "A1") {
     if (r.ok) return await r.json();
   } catch (_) { /* sin backend: modo demo */ }
   const respaldo = structuredClone(ESTADO_DEMO);
-  respaldo.indicadores.forEach(i => i.origen = 'demo');
-  Object.assign(respaldo.indicadores.find(i => i.indicador === 'pulso'), { valor: null, color: 'sin dato', origen: 'registro_manual', calidad: 'error', historial: [], antiguedad_min: null, motivo: 'No se pudo cargar el pulso del servidor local.' });
+  respaldo.indicadores.forEach(i => Object.assign(i, { valor: null, color: 'sin dato', origen: 'registro_manual', calidad: 'error', historial: [], antiguedad_min: null, motivo: 'No se pudieron cargar los registros del servidor local.' }));
   return { ...respaldo, origen: 'error' };
 }
 
@@ -100,8 +99,12 @@ export function indicador(estado, nombre) {
 
 // Color de un órgano = el peor color de sus indicadores.
 export function colorOrgano(estado, organo) {
-  const pulso = indicador(estado, 'pulso');
-  if (organo === 'corazon' && pulso?.calidad && !estado.modo_demo) return pulso.color;
+  if (!estado.modo_demo && ORGANOS[organo].indicadores.some(n => indicador(estado,n)?.calidad)) {
+    const datos = ORGANOS[organo].indicadores.map(n => indicador(estado,n)).map(i => i?.origen === 'demo' ? null : i);
+    if (datos.some(i => i?.color === 'rojo')) return 'rojo';
+    if (datos.some(i => i?.color === 'amarillo')) return 'amarillo';
+    return datos.every(i => i?.calidad === 'vigente' && i.color === 'verde') ? 'verde' : 'sin dato';
+  }
   let peor = "sin dato";
   for (const n of ORGANOS[organo].indicadores) {
     const c = indicador(estado, n)?.color ?? "sin dato";
@@ -129,7 +132,7 @@ const AMPLITUD = { pulso: 9, presion_arterial: 10, oxigeno: 1.2, glucosa: 9, tem
 const DERIVA = { verde: 0, amarillo: 1, rojo: 2.2 };
 export function historial(estado, nombre, dias = 7) {
   const i = indicador(estado, nombre);
-  if (nombre === 'pulso' && i?.calidad && !estado.modo_demo) return (i.historial ?? []).map(m => m.sospechoso ? null : m.valor);
+  if (i?.calidad && !estado.modo_demo) return (i.historial ?? []).map(m => m.sospechoso ? null : m.valor);
   const actual = valorNumerico(i?.valor);
   if (actual == null) return [];
   const amp = AMPLITUD[nombre] ?? 1;
