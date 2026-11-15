@@ -1,0 +1,41 @@
+"""Biblioteca ilustrativa expuesta sin inferencia ni acceso a archivos arbitrarios."""
+import json
+from guias import RAIZ, CARPETA_GUIAS, leer_guia, fragmentar
+from mediciones import CATALOGO
+
+EQUIPOS = {
+    'pulso': 'Monitor de pulso disponible en el kit de la misión; sigue su manual.',
+    'presion_arterial': 'Tensiómetro y manguito adecuados del kit de la misión.',
+    'oxigeno': 'Oxímetro del kit de la misión.',
+    'glucosa': 'Glucómetro y material del kit; sigue el manual y el protocolo de la misión.',
+    'temperatura': 'Termómetro del kit; registra también el método de medición.',
+    'sueno': 'Registro diario de horas de sueño; indica si es estimación o lectura de un dispositivo.',
+    'animo': 'Autorreporte: escala de demostración 1 = muy bajo, 5 = muy bueno; no validada clínicamente.',
+    'estres': 'Autorreporte: escala de demostración 1 = muy bajo, 5 = muy alto; no validada clínicamente.',
+}
+
+
+def biblioteca():
+    reglas = json.loads((RAIZ / 'data/reglas.json').read_text(encoding='utf-8'))['indicadores']
+    salida = {}
+    for nombre in CATALOGO:
+        regla = next(r for r in reglas if r['indicador'] == nombre)
+        meta, cuerpo = leer_guia(CARPETA_GUIAS / regla['guia'])
+        secciones = {f['seccion']: f['texto'] for f in fragmentar(meta,cuerpo)}
+        medir = secciones.get('Cómo medir a bordo', '')
+        if nombre == 'sueno':
+            medir = 'Registra las horas dormidas de cada día y su fecha. Usa el mismo criterio entre días y anota si el dato es estimado o proviene de un dispositivo.'
+        if nombre == 'pulso':
+            medir = 'Utiliza el monitor del kit según su manual. Registra si estabas en reposo o después de ejercicio y conserva la lectura en latidos por minuto.'
+        salida[nombre] = {
+            'indicador': nombre, 'nombre': CATALOGO[nombre][0], 'unidad': CATALOGO[nombre][1],
+            'equipo': EQUIPOS[nombre], 'como_medir': medir, 'por_que': secciones.get('Por qué importa',''),
+            'espacio': secciones.get('Qué pasa en el espacio',''),
+            'pasos_guia': [l.lstrip('- ').strip() for l in secciones.get('Qué hacer','').splitlines() if l.startswith('- ')],
+            'senales': secciones.get('Señales de alerta',''), 'cuando_avisar': secciones.get('Cuándo avisar',''),
+            'archivo': regla['guia'], 'titulo': meta['titulo'], 'fuente': meta.get('fuente',''),
+            'url': meta.get('url',''), 'version': meta.get('version',''),
+            'estado_revision': meta.get('estado','ilustrativo, sin revisión clínica'),
+            'autor_contenido': 'Adaptación del equipo basada en las fuentes indicadas; no es un protocolo oficial NASA.',
+        }
+    return {'indicadores':salida}

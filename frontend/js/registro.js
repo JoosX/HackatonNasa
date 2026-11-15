@@ -15,6 +15,7 @@ function horaLocal() {
 }
 
 function prepararIndicador() {
+  $('#registroComoMedir').dataset.orientacion = indicador.value;
   const presion = indicador.value === 'presion_arterial', escala = ['animo','estres'].includes(indicador.value);
   $('#registroValorEtiqueta').textContent = presion ? 'Sistólica (mmHg)' : `Valor (${unidades[indicador.value]})`;
   $('#registroDiastolicaGrupo').hidden = !presion;
@@ -74,6 +75,16 @@ $('#abrirRegistro').addEventListener('click', () => {
   dialogo.showModal(); cargarHistorial();
 });
 indicador.addEventListener('change', prepararIndicador);
+document.addEventListener('apelogic:abrir-registro', ev => {
+  if(!unidades[ev.detail?.indicador])return;
+  if(indicador.value!==ev.detail.indicador) {valor.value='';$('#registroDiastolica').value='';}
+  indicador.value=ev.detail.indicador;
+  prepararIndicador();
+  if(!fecha.value)fecha.value=horaLocal();
+  fecha.max=horaLocal();
+  if(!dialogo.open)dialogo.showModal();
+  cargarHistorial();
+});
 filtro.addEventListener('change', () => { offset = 0; cargarHistorial(); });
 $('#historialRecargar').addEventListener('click', () => { offset = 0; cargarHistorial(); });
 $('#historialAnterior').addEventListener('click', () => { offset = Math.max(0, offset - limite); cargarHistorial(); });
@@ -99,6 +110,8 @@ form.addEventListener('submit', async ev => {
     pendiente = null;
     informar('Medición guardada. Permanecerá disponible al cerrar la aplicación.');
     document.dispatchEvent(new CustomEvent('apelogic:medicion-guardada', { detail: { indicador: cuerpo.indicador } }));
+    $('#registroOrientacion').hidden=false;
+    $('#registroOrientacion').dataset.orientacion=cuerpo.indicador;
     valor.value = ''; $('#registroDiastolica').value = ''; form.elements.nota.value = ''; fecha.value = horaLocal();
     offset = 0; filtro.value = cuerpo.indicador; await cargarHistorial();
   } catch (e) {

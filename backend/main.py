@@ -26,6 +26,7 @@ import clima_espacial  # noqa: E402
 import ollama_cliente  # noqa: E402
 import rag  # noqa: E402
 import mediciones  # noqa: E402
+import orientacion  # noqa: E402
 from guias import RAIZ  # noqa: E402
 
 app = FastAPI(title="Asistente de salud local para astronautas")
@@ -118,6 +119,11 @@ def reglas() -> dict:
 def osd575() -> dict:
     """Panel metabólico real de la tripulación de Inspiration4 (NASA OSDR OSD-575)."""
     return _json("nasa_osd575.json")
+
+
+@app.get('/api/orientacion')
+def orientacion_local():
+    return orientacion.biblioteca()
 
 
 @app.post("/api/mediciones", status_code=201)

@@ -173,7 +173,7 @@ function pintarFicha() {
     const i = indicador(estado, n);
     if (!i) return `<li><span>${NOMBRES_INDICADORES[n] ?? n}</span><span class="num">sin dato</span></li>`;
     return `<li style="--c:${COLORES[i.color]}"><span>${NOMBRES_INDICADORES[n]}<span class="edad">${i.calidad ? escapar(i.calidad) + ' · ' : ''}${antiguedadTexto(i.antiguedad_min)}</span></span>
-      <span class="num">${numero(i.valor)} ${escapar(i.unidad)}</span></li>`;
+      <span class="num">${numero(i.valor)} ${escapar(i.unidad)}</span></li>${i.origen === 'registro_manual' ? `<li><button type="button" class="btn orientacion-enlace" data-orientacion="${escapar(n)}">Orientación de ${escapar(NOMBRES_INDICADORES[n])}</button></li>` : ''}`;
   }).join("");
   const preguntas = PREGUNTAS.filter(([k]) => f[k]).map(([k, t]) => `<div><h3>${t}</h3><p>${escapar(f[k])}</p></div>`).join("");
   caja.innerHTML = `<p class="rotulo">Sistema seleccionado</p>

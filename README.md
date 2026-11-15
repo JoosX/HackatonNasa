@@ -57,6 +57,25 @@ El modelo de IA (Gemma 3 4B, ~3,4 GB) no está en el repositorio: cada integrant
 
 ## Pruebas
 
+### Medir, comprender y actuar
+
+La ficha de cada indicador abre una orientación con la medición actual, equipo o entrada,
+instrucciones, motivo de calidad del dato, siguiente paso y cuándo avisar. También se abre
+desde **Cómo tomar esta medida** en el registro y desde **Ver orientación del indicador**
+después de guardar. El botón **Registrar medición** vuelve al formulario con el indicador elegido.
+
+**Orientación urgente** abre inmediatamente un aviso para contactar con la tripulación y seguir
+el protocolo de a bordo sin esperar a ORI. En esa vista no se usa una lectura en rango para
+tranquilizar ni se pide completar mediciones antes de pedir ayuda. No implementa reanimación,
+medicamentos ni dosis; muestra las señales y avisos del borrador local.
+
+La biblioteca usa `GET /api/orientacion`, sin invocar Ollama. Expone los Markdown locales con
+archivo, fuente de contexto, versión y estado de revisión. Son **adaptaciones ilustrativas del
+equipo**, pendientes de revisión clínica; enlazar NASA no las convierte en protocolos oficiales.
+Sueño y pulso incluyen instrucciones de registro adaptadas al prototipo. No se cambiaron las
+guías usadas por RAG ni su índice. Los textos funcionan sin internet con FastAPI activo. Si la
+biblioteca no carga, el aviso urgente permanece y se ofrece reintentar; la fuente externa sí requiere internet.
+
 ### Explorador de datos reales de Inspiration4
 
 El botón **Explorar datos reales** abre una vista independiente del estado de salud de la app.
@@ -83,7 +102,7 @@ La suite Python también verifica las 20 series frente al CSV original incluido.
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 ```
 
-119 pruebas Python: registro local, conexión de ocho indicadores y calidad de los datos, guías, reglas del semáforo, fichas, datos NASA y procedencia del CSV, modelo 3D, asistente y API. Las dos pruebas con el modelo se saltan si Ollama está apagado. Las pruebas JavaScript se ejecutan con `node --test tests/*.test.mjs`.
+129 pruebas Python: registro local, conexión de ocho indicadores y calidad de los datos, biblioteca de orientación sin IA, guías, reglas del semáforo, fichas, datos NASA y procedencia del CSV, modelo 3D, asistente y API. Las dos pruebas con el modelo se saltan si Ollama está apagado. Las pruebas JavaScript se ejecutan con `node --test tests/*.test.mjs`.
 
 ## Estructura y dueños
 
