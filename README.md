@@ -13,7 +13,7 @@
 NASA Space Apps Challenge 2026 · Moquegua, Peru<br>
 **English** · [Español](README.es.md)
 
-[Challenge](https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/) · [Quick start](#quick-start) · [Local AI](IA_LOCAL.md) · [60-second pitch](frontend/pitch/) · [Pitch script (ES)](frontend/pitch/guion-60-segundos.txt)
+[Challenge](https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/) · [Quick start](#quick-start) · [Local AI](IA_LOCAL.md)
 
 </div>
 
@@ -47,8 +47,6 @@ uv run --with fastapi --with uvicorn uvicorn backend.main:app --host 127.0.0.1 -
 ```
 
 Open **http://127.0.0.1:8000**. Use **ES | EN** to switch languages.
-
-The new Spanish pitch is at **http://127.0.0.1:8000/pitch/**, or open `frontend/pitch/index.html` directly. It includes a 60-second automatic presentation, speaker notes and a script.
 
 For model-generated conversation, install and start [Ollama](https://ollama.com/download), then download:
 

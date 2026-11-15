@@ -13,7 +13,7 @@
 NASA Space Apps Challenge 2026 · Moquegua, Perú<br>
 [English](README.md) · **Español**
 
-[El desafío](https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/) · [Inicio rápido](#inicio-rápido) · [IA local](IA_LOCAL.es.md) · [Pitch de 60 segundos](frontend/pitch/) · [Guion](frontend/pitch/guion-60-segundos.txt)
+[El desafío](https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/) · [Inicio rápido](#inicio-rápido) · [IA local](IA_LOCAL.es.md)
 
 </div>
 
@@ -47,8 +47,6 @@ uv run --with fastapi --with uvicorn uvicorn backend.main:app --host 127.0.0.1 -
 ```
 
 Abre **http://127.0.0.1:8000**. Cambia el idioma con **ES | EN**.
-
-El nuevo pitch está en **http://127.0.0.1:8000/pitch/**. También puedes abrir `frontend/pitch/index.html` directamente. Incluye avance automático de 60 segundos, notas del expositor y guion.
 
 Para conversar con el modelo local, instala e inicia [Ollama](https://ollama.com/download) y descarga:
 
