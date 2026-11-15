@@ -8,6 +8,7 @@
 <title>Copiloto de salud · Prototipo</title>
 <link rel="preload" href="fuentes/JetBrainsMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/nasa.css">
 <script type="importmap">
 { "imports": { "three": "./lib/three/three.module.js", "three/addons/": "./lib/three/addons/" } }
 </script>
@@ -33,6 +34,19 @@
     <span class="punto" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="txtSenal">Enlace con la Tierra</span>
   </button>
 </header>
+
+<nav class="nasa-acceso" aria-label="Evidencia científica">
+  <span><strong>NASA OSD-575</strong> · Análisis reales de Inspiration4</span>
+  <button type="button" class="btn" data-nasa-open disabled>Explorar datos reales ↗</button>
+</nav>
+
+<dialog id="nasaExplorador" class="nasa-dialogo" aria-labelledby="nasaTitulo">
+  <header class="nasa-cabecera">
+    <div><p class="rotulo">Archivo científico / NASA OSDR</p><h2 id="nasaTitulo">La salud, antes y después del vuelo</h2></div>
+    <form method="dialog"><button class="btn" aria-label="Cerrar explorador de datos NASA">Cerrar ×</button></form>
+  </header>
+  <div id="nasaContenido"></div>
+</dialog>
 
 <main class="app">
   <section class="visor" aria-labelledby="t-visor">

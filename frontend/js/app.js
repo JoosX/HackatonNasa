@@ -7,6 +7,7 @@ import {
 } from "./organos.js";
 import { crearChat, avatarORI } from "./chat.js";
 import { crearHud } from "./hud.js";
+import { crearExploradorNasa } from "./nasa.js";
 
 const $ = (s) => document.querySelector(s);
 const reducir = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -134,14 +135,10 @@ function graficasDe(organo) {
       nota: "Historial de demostración: lo reemplaza el historial real guardado a bordo.",
     });
   }
-  // Datos reales de NASA para la glucosa: el "normal" de un tripulante de Inspiration4.
-  const real = nasa?.tripulantes?.C003?.glucosa;
-  if (organo === "sangre" && real) {
-    html += grafica({
-      serie: nasa.momentos.map((m) => real.valores[m]), etiquetas: nasa.momentos, verde: real.rango, color: COLORES.amarillo,
-      titulo: "Glucosa real · tripulante C003 de Inspiration4",
-      nota: `Dato real de <span translate="no">NASA OSDR OSD-575</span>. L = días antes del lanzamiento, R = días después del regreso. El valor de R+45 sale muy bajo en 3 de 4 tripulantes: probablemente un problema de la muestra, por eso la app pide repetir mediciones sospechosas.`,
-    });
+  if (organo === "sangre" && nasa?.tripulantes) {
+    html += `<aside class="nasa-contexto"><p class="rotulo">Evidencia histórica · OSD-575</p>
+      <p>Explora los análisis publicados de cuatro tripulantes de Inspiration4, antes y después de su misión.</p>
+      <button type="button" class="btn" data-nasa-open>Explorar datos reales ↗</button></aside>`;
   }
   return html;
 }
@@ -264,6 +261,7 @@ async function iniciar() {
   estado = e; fichas = f; nasa = n; clima = c;
   reglas = Object.fromEntries((r?.indicadores ?? []).map((x) => [x.indicador, x]));
   inicial = structuredClone(estado);
+  crearExploradorNasa({ datos: nasa });
 
   $("#oriGrande").innerHTML = avatarORI(40);
   chat = crearChat({

@@ -26,11 +26,33 @@ El modelo de IA (Gemma 3 4B, ~3,4 GB) no está en el repositorio: cada integrant
 
 ## Pruebas
 
+### Explorador de datos reales de Inspiration4
+
+El botón **Explorar datos reales** abre una vista independiente del estado de salud de la app.
+Permite seleccionar C001–C004 y glucosa, calcio, sodio, potasio o creatinina; comparar muestras
+antes/después; consultar todos los valores y exportar la serie elegida a CSV.
+La gráfica usa días proporcionales (R+ se cuenta desde el regreso, al día 3), corta el trazo
+ante faltantes y presenta el rango del laboratorio como referencia, sin clasificar al usuario.
+No se imputan valores, se atribuyen anomalías a errores de muestra ni se infiere causalidad del vuelo.
+
+Usa el contrato existente `GET /api/nasa/osd575` y el dataset incluido, sin cambiar endpoints,
+dependencias Python, modelos de Ollama ni datos enviados al chat. Si falla la carga, muestra
+un aviso al abrir el explorador. Funciona sin internet con el servidor local activo; el enlace
+al estudio NASA requiere conexión. Los datos históricos nunca reemplazan el estado del panel.
+
+Validación adicional (Node.js para pruebas, no necesario para ejecutar la app):
+
+```bash
+node --test tests/nasa-datos.test.mjs
+```
+
+La suite Python también verifica las 20 series frente al CSV original incluido.
+
 ```bash
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 ```
 
-69 pruebas: guías, reglas del semáforo, fichas (5 preguntas del reto), datos NASA OSD-575, contrato del modelo 3D, asistente sin IA (no inventa, alerta roja fija) y con IA (se saltan si Ollama está apagado), y la API.
+70 pruebas Python: guías, reglas del semáforo, fichas (5 preguntas del reto), datos NASA OSD-575 y procedencia del CSV, contrato del modelo 3D, asistente sin IA (no inventa, alerta roja fija) y con IA (se saltan si Ollama está apagado), y la API.
 
 ## Estructura y dueños
 

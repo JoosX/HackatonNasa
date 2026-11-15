@@ -1,0 +1,49 @@
+/* Explorador aislado: usa los tokens de la interfaz de David, sin dependencias nuevas. */
+.nasa-acceso { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px var(--borde-pagina); border-bottom: 1px solid var(--linea); background: var(--panel); font: 11px var(--mono); color: var(--suave); }
+.nasa-acceso strong { color: var(--texto); }
+.nasa-acceso .btn { font-size: 11px; }
+.nasa-contexto { display: grid; gap: 9px; margin: 14px 0; padding: 14px; border: 1px solid var(--linea-2); }
+.nasa-contexto .btn { justify-self: start; }
+.nasa-dialogo { width: min(1100px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 1px solid var(--linea-2); background: var(--panel); color: var(--texto); overflow: auto; }
+.nasa-dialogo::backdrop { background: #000c; }
+.nasa-cabecera { display: flex; justify-content: space-between; align-items: start; gap: 20px; padding: 24px 28px; border-bottom: 1px solid var(--linea); }
+.nasa-cabecera h2 { font-size: clamp(20px, 3vw, 28px); margin-top: 6px; }
+.nasa-cabecera form { margin: 0; }
+#nasaContenido { padding: 24px 28px; }
+.nasa-intro { display: grid; gap: 8px; margin-bottom: 20px; max-width: 85ch; color: #b8b8b8; }
+.nasa-etiquetas { display: flex; flex-wrap: wrap; gap: 8px; font: 10px var(--mono); text-transform: uppercase; }
+.nasa-etiquetas span { border: 1px solid var(--linea-2); padding: 5px 8px; color: var(--texto); }
+.nasa-controles { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+.nasa-dialogo label { display: grid; gap: 7px; font: 11px var(--mono); color: #b8b8b8; }
+.nasa-dialogo select { width: 100%; padding: 11px; background: var(--panel-2); color: var(--texto); border: 1px solid var(--linea-2); font: 13px var(--mono); }
+.nasa-descripcion { color: #b8b8b8; margin-bottom: 16px; }
+.nasa-estadisticas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--linea-2); margin: 16px 0; }
+.nasa-estadisticas > div { padding: 16px; border-right: 1px solid var(--linea); }
+.nasa-estadisticas > div:last-child { border-right: 0; }
+.nasa-estadisticas dt { font: 10px var(--mono); text-transform: uppercase; color: #b8b8b8; margin-bottom: 8px; }
+.nasa-estadisticas dd { margin: 0; font: 700 clamp(16px, 2vw, 23px) var(--mono); font-variant-numeric: tabular-nums; }
+.nasa-estadisticas small { font: 10px var(--mono); color: var(--suave); }
+.nasa-chart { padding: 18px 16px; border: 1px solid var(--linea); background: var(--negro); margin: 18px 0; }
+.nasa-chart figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font: 11px var(--mono); color: #b8b8b8; }
+.nasa-chart svg { width: 100%; height: auto; display: block; margin: 12px 0; }
+.nasa-chart svg text { font: 11px var(--mono); fill: #a8a8a8; }
+.nasa-chart p, .nasa-limites, .nasa-procedencia { color: #b8b8b8; font-size: 12px; line-height: 1.65; }
+.nasa-limites { padding: 14px 16px; border-left: 2px solid var(--amarillo); background: var(--panel-2); }
+.nasa-tabla { overflow-x: auto; margin: 20px 0; }
+.nasa-tabla table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+.nasa-tabla caption { text-align: left; font-weight: 700; padding-bottom: 12px; }
+.nasa-tabla th, .nasa-tabla td { padding: 10px; border-bottom: 1px solid var(--linea); white-space: nowrap; }
+.nasa-tabla tbody th, .nasa-tabla td:last-child { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.nasa-procedencia { border-top: 1px solid var(--linea); padding-top: 16px; display: grid; gap: 10px; }
+.nasa-procedencia p { overflow-wrap: anywhere; }
+.nasa-procedencia a { color: var(--texto); text-underline-offset: 3px; }
+.nasa-procedencia .botones { flex-wrap: wrap; }
+.nasa-error { padding: 20px; color: var(--amarillo); }
+@media (max-width: 600px) {
+  .nasa-acceso { flex-wrap: wrap; }
+  .nasa-cabecera, #nasaContenido { padding: 18px; }
+  .nasa-controles { grid-template-columns: 1fr; }
+  .nasa-estadisticas { grid-template-columns: 1fr; }
+  .nasa-estadisticas > div { border-right: 0; border-bottom: 1px solid var(--linea); }
+  .nasa-estadisticas > div:last-child { border-bottom: 0; }
+}
