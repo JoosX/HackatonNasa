@@ -23,7 +23,7 @@ let estado, inicial, fichas = {}, reglas = {}, nasa = null, clima = null;
 let visor = null, hud = null, chat = null, seleccionado = null, conectado = true, enCola = 0, primeraVez = true;
 
 const escapar = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const numero = (v) => (typeof v === "number" ? v.toLocaleString("es", { maximumFractionDigits: 1 }) : escapar(v));
+const numero = (v) => (v == null ? 'Sin dato' : typeof v === "number" ? v.toLocaleString("es", { maximumFractionDigits: 1 }) : escapar(v));
 const nombreOrgano = (o) => fichas[o]?.nombre ?? ORGANOS[o].nombre;
 
 async function json(url) {
@@ -38,12 +38,13 @@ function pintarSignos() {
     const organo = Object.keys(ORGANOS).find((o) => ORGANOS[o].indicadores.includes(n));
     const c = COLORES[i.color];
     return `<li><button class="signo" type="button" data-organo="${organo}" style="--c:${c}"
-        aria-pressed="${organo === seleccionado}" aria-label="${NOMBRES_INDICADORES[n]}: ${i.valor} ${i.unidad}, ${ETIQUETA_ESTADO[i.color]}">
+        title="${escapar(i.fecha ? new Date(i.fecha).toLocaleString('es') : i.motivo ?? '')}"
+        aria-pressed="${organo === seleccionado}" aria-label="${NOMBRES_INDICADORES[n]}: ${i.valor ?? 'sin dato'} ${i.unidad}, ${i.calidad ?? ETIQUETA_ESTADO[i.color]}">
       <span class="etiqueta"><span class="punto-estado" aria-hidden="true"></span><span>${CORTO[n] ?? NOMBRES_INDICADORES[n]}</span></span>
       <span class="valor">${n === "radiacion"
         ? escapar(String(i.valor).split(" hace ")[0])
-        : `<span data-valor="${escapar(i.valor)}">${numero(i.valor)}</span><small>${escapar(i.unidad)}</small>`}</span>
-      <span class="pie-signo"><span class="edad">${n === "radiacion" && String(i.valor).includes(" hace ") ? "evento hace " + escapar(String(i.valor).split(" hace ")[1]) : antiguedadTexto(i.antiguedad_min)}</span>${sparkline(historial(estado, n), c)}</span>
+        : `<span data-valor="${i.valor == null ? '--' : escapar(i.valor)}">${numero(i.valor)}</span><small>${escapar(i.unidad)}</small>`}</span>
+      <span class="pie-signo"><span class="edad">${n === 'pulso' && i.calidad ? escapar(i.calidad) + ' · ' : ''}${n === "radiacion" && String(i.valor).includes(" hace ") ? "evento hace " + escapar(String(i.valor).split(" hace ")[1]) : antiguedadTexto(i.antiguedad_min)}</span>${sparkline(historial(estado, n), c)}</span>
     </button></li>`;
   }).join("");
   if (primeraVez && !reducir) contar();
@@ -123,7 +124,29 @@ function rangoVerde(n) {
   return r?.verde ?? r?.componentes?.sistolica?.verde ?? null;
 }
 
+function graficaPulso() {
+  const pulso = indicador(estado, 'pulso'), puntos = pulso?.historial ?? [];
+  const validos = puntos.filter(p => !p.sospechoso);
+  const aviso = `<p class="registro-aviso">${escapar(pulso?.motivo)} El color del corazón refleja solo el pulso registrado; la presión y otros indicadores aún son demo. Rangos ilustrativos, no diagnóstico.</p>`;
+  if (!validos.length) return aviso + '<p>Sin muestras de pulso confiables para graficar.</p>';
+  const W = 400, H = 145, t0 = new Date(puntos[0].fecha).getTime(), t1 = new Date(puntos.at(-1).fecha).getTime();
+  const vals = validos.map(p => p.valor), lo = Math.min(...vals), hi = Math.max(...vals), pad = (hi-lo)*.15 || 5;
+  const X = p => t1 === t0 ? W/2 : 40 + (new Date(p.fecha).getTime()-t0)/(t1-t0)*(W-60);
+  const Y = p => 15 + (hi+pad-p.valor)/(hi-lo+2*pad)*95;
+  let d = '', segmento = false;
+  for (const p of puntos) { if (p.sospechoso) { segmento=false; continue; } d += `${segmento?'L':'M'}${X(p)},${Y(p)} `; segmento=true; }
+  const fecha = f => new Date(f).toLocaleString('es', {dateStyle:'short',timeStyle:'short'});
+  return aviso + `<figure class="grafica" style="--c:${COLORES[pulso.color]}"><figcaption>Pulso · últimas ${puntos.length} mediciones guardadas</figcaption>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Historial real de pulso, eje horizontal proporcional al tiempo"><path d="${d}" class="g-linea" pathLength="1"/>
+    ${validos.map(p=>`<circle cx="${X(p)}" cy="${Y(p)}" r="3"><title>${escapar(fecha(p.fecha))}: ${numero(p.valor)} lpm</title></circle>`).join('')}
+    <text x="8" y="25">${numero(hi)}</text><text x="8" y="108">${numero(lo)}</text>
+    <text x="40" y="138">${escapar(fecha(puntos[0].fecha))}</text></svg>
+    <p>Solo registros manuales; sin puntos generados. Los segmentos unen muestras, no representan medición continua. Los valores sospechosos cortan el trazo.</p>
+    <p>Última muestra: ${escapar(pulso.fecha ? fecha(pulso.fecha) : 'sin dato')}. Consulta valores y fechas en Registro e historial.</p></figure>`;
+}
+
 function graficasDe(organo) {
+  if (organo === 'corazon' && indicador(estado,'pulso')?.calidad && !estado.modo_demo) return graficaPulso();
   if (organo === "radiacion") return lineaClima();
   const ind = (fichas[organo]?.indicadores ?? ORGANOS[organo].indicadores).find((n) => indicador(estado, n) && valorNumerico(indicador(estado, n).valor) != null);
   let html = "";
@@ -196,6 +219,7 @@ function seleccionar(organo) {
 }
 
 function refrescar() {
+  $('#estadoOrigen').textContent = estado.modo_demo ? 'SIMULACIÓN ACTIVA · No modifica tus registros locales' : 'Pulso local · Otros indicadores: demo · Rangos ilustrativos';
   visor?.aplicarEstado(estado);
   hud?.actualizar();
   pintarSignos();
@@ -215,8 +239,9 @@ function refrescar() {
 }
 
 function fijar(nombre, valor, color) {
+  estado.modo_demo = true;
   const i = indicador(estado, nombre);
-  if (i) Object.assign(i, { valor, color, antiguedad_min: 0 });
+  if (i) { Object.assign(i, { valor, color, antiguedad_min: 0, origen: 'simulacion' }); delete i.calidad; }
 }
 
 // ---------- Reloj de misión ----------
@@ -262,6 +287,17 @@ async function iniciar() {
   reglas = Object.fromEntries((r?.indicadores ?? []).map((x) => [x.indicador, x]));
   inicial = structuredClone(estado);
   crearExploradorNasa({ datos: nasa });
+  let versionEstado = 0;
+  async function recargarPulso() {
+    const version = ++versionEstado;
+    const nuevo = await cargarEstado();
+    if (version !== versionEstado) return;
+    estado = nuevo;
+    refrescar();
+  }
+  document.addEventListener('apelogic:medicion-guardada', () => recargarPulso());
+  window.addEventListener('focus', () => { if (!estado.modo_demo) recargarPulso(); });
+  setInterval(() => { if (!estado.modo_demo) recargarPulso(); }, 60000);
 
   $("#oriGrande").innerHTML = avatarORI(40);
   chat = crearChat({
@@ -332,11 +368,12 @@ async function iniciar() {
     refrescar(); seleccionar("corazon");
   });
   $("#btnTormenta").addEventListener("click", () => {
+    estado.modo_demo = true;
     const i = indicador(estado, "radiacion");
     if (i) Object.assign(i, { valor: "SEP · ahora", color: "rojo", antiguedad_min: 0, motivo: "Evento de partículas solares (simulado).", accion: "Ve al área protegida de la nave según el protocolo y revisa tu dosímetro." });
     refrescar(); seleccionar("radiacion");
   });
-  $("#btnReiniciar").addEventListener("click", () => { estado = structuredClone(inicial); refrescar(); seleccionar(null); });
+  $("#btnReiniciar").addEventListener("click", async () => { await recargarPulso(); seleccionar(null); });
 
   reloj();
   pintarSenal();

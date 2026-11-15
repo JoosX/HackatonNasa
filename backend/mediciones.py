@@ -1,5 +1,6 @@
 """Registro manual local. No clasifica resultados ni modifica el estado de demostración."""
 import datetime as dt
+import json
 import os
 import sqlite3
 from pathlib import Path
@@ -95,3 +96,30 @@ def historial(astronauta_id, indicador=None, limite=100, offset=0):
         return {"mediciones": [serializar(f) for f in filas], "total": total, "limite": limite, "offset": offset}
     finally:
         conn.close()
+
+
+def estado_pulso(astronauta_id, ahora=None):
+    ahora = ahora or dt.datetime.now(dt.timezone.utc)
+    regla = next(r for r in json.loads((Path(__file__).resolve().parent.parent / 'data/reglas.json').read_text(encoding='utf-8'))['indicadores'] if r['indicador'] == 'pulso')
+    filas = historial(astronauta_id, 'pulso', 100)['mediciones']
+    base = {'indicador': 'pulso', 'nombre': 'Pulso', 'valor': None, 'unidad': 'lpm', 'color': 'sin dato',
+            'origen': 'registro_manual', 'calidad': 'ausente', 'antiguedad_min': None,
+            'motivo': 'Sin mediciones de pulso guardadas. Registra una medición.', 'historial': [],
+            'regla_ilustrativa': True, 'fuente': regla['fuente']}
+    base['historial'] = [{'valor': m['valor'], 'fecha': m['fecha'],
+                          'sospechoso': not regla['posible'][0] <= m['valor'] <= regla['posible'][1]} for m in reversed(filas)]
+    if not filas:
+        return base
+    ultima = filas[0]
+    edad = max(0, int((ahora - dt.datetime.fromisoformat(ultima['fecha'])).total_seconds() // 60))
+    base.update(valor=ultima['valor'], fecha=ultima['fecha'], antiguedad_min=edad)
+    if not regla['posible'][0] <= ultima['valor'] <= regla['posible'][1]:
+        base.update(calidad='sospechoso', motivo='Valor fuera del intervalo de plausibilidad ilustrativo. Comprueba la medición; no se clasifica como normal.')
+    elif edad > regla['max_antiguedad_min']:
+        base.update(calidad='vencido', motivo=f'Medición vencida según el límite ilustrativo de {regla["max_antiguedad_min"]} minutos. Registra una nueva; no describe el estado actual.')
+    else:
+        v = ultima['valor']
+        color = 'verde' if regla['verde'][0] <= v <= regla['verde'][1] else 'amarillo' if regla['amarillo'][0] <= v <= regla['amarillo'][1] else 'rojo'
+        base.update(calidad='vigente', color=color, motivo='Registro manual reciente. Clasificación con rangos ilustrativos, no diagnóstico.',
+                    accion=regla['accion'].get(color, 'Consulta el contexto y la evolución de tu medición.'))
+    return base

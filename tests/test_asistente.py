@@ -87,7 +87,7 @@ def test_api_fichas_reglas_y_nasa(cliente):
 
 
 def test_api_chat_usa_el_estado_enviado(cliente, sin_ollama):
-    r = cliente.post("/api/chat", json={"pregunta": "Siento el corazón rápido", "estado": ESTADO_ROJO}).json()
+    r = cliente.post("/api/chat", json={"pregunta": "Siento el corazón rápido", "estado": {**ESTADO_ROJO, 'modo_demo': True}}).json()
     for clave in ("respuesta", "fuentes", "datos_usados", "modo", "alerta_roja", "segundos"):
         assert clave in r
     assert r["alerta_roja"] is True
@@ -149,7 +149,7 @@ def test_sintoma_sin_guia_dice_que_hacer_mientras(sin_ollama):
 
 def test_api_estado_existe(cliente):
     d = cliente.get("/api/estado/A1").json()
-    assert len(d["indicadores"]) == 11 and d["origen"] == "demo"
+    assert len(d["indicadores"]) == 11 and d["origen"] == "mixto"
     assert any(i["indicador"] == "radiacion" for i in d["indicadores"])
 
 

@@ -14,6 +14,11 @@ sys.path.insert(0, str(RAIZ))
 ORGANOS_CONTRATO = {"corazon", "cerebro", "pulmones", "huesos", "ojos", "sangre", "piel"}
 
 
+@pytest.fixture(autouse=True)
+def base_local_aislada(tmp_path, monkeypatch):
+    monkeypatch.setenv('APELOGIC_DB_PATH', str(tmp_path / 'mediciones.sqlite3'))
+
+
 @pytest.fixture(scope="session")
 def raiz() -> Path:
     return RAIZ

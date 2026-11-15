@@ -152,10 +152,19 @@ def resumen_estado(estado: dict | None) -> tuple[str, list[dict]]:
     """Resumen determinista (sin IA) de los indicadores fuera de rango, con la acción de reglas.json."""
     if not estado or not estado.get("indicadores"):
         return "Todavía no tengo mediciones tuyas. Cuando registres tus signos vitales, te cuento cómo vas. 🙂", []
+    indicadores = [i for i in estado['indicadores'] if i.get('origen') != 'demo']
+    incompletos = [i for i in indicadores if i.get('calidad') in ('ausente', 'vencido', 'sospechoso', 'error')]
+    aviso = '\n'.join(f"- {i.get('nombre', i['indicador'])}: {i.get('motivo', 'No hay un dato actual confiable.')}" for i in incompletos)
+    estado = {**estado, 'indicadores': [i for i in indicadores if i not in incompletos]}
     reglas = _reglas()
     orden = {"rojo": 0, "amarillo": 1}
     fuera = sorted((i for i in estado["indicadores"] if i.get("color") in orden), key=lambda i: orden[i["color"]])
     if not fuera:
+        if aviso:
+            return 'No puedo afirmar que todo esté normal:\n' + aviso + '\nLos demás indicadores personales de demostración no se evalúan como mediciones tuyas.', []
+        if any(i.get('regla_ilustrativa') for i in indicadores):
+            pulso = next(i for i in indicadores if i.get('indicador') == 'pulso')
+            return f"El pulso registrado es **{pulso['valor']:g} {pulso['unidad']}**, dentro del rango ilustrativo. Esto no es un diagnóstico ni una evaluación completa de tu salud. Los otros indicadores personales siguen en demostración.", []
         return "¡Buenas noticias! 🟢 Todos tus indicadores están **normales**. Sigue así con tu rutina de sueño, ejercicio y mediciones.", []
     lineas, fuentes, vistas = [], [], set()
     for i in fuera:
@@ -179,6 +188,10 @@ def resumen_estado(estado: dict | None) -> tuple[str, list[dict]]:
     cierre = ("Avisa a la tripulación ya; no tienes que manejarlo solo." if hay_alerta else
               "Nada de esto es para alarmarse, pero vale la pena cuidarlo hoy. ¿Quieres que veamos alguno en detalle?")
     texto = intro + "\n" + "\n".join(lineas) + "\n\n" + cierre
+    if aviso:
+        texto += '\n\nDatos pendientes de comprobar:\n' + aviso
+    if any(i.get('regla_ilustrativa') for i in indicadores):
+        texto += '\nClasificación ilustrativa; no es diagnóstico. Otros indicadores personales de demostración se excluyen.'
     return texto, fuentes
 
 
@@ -342,12 +355,14 @@ def resumir_estado(estado: dict | None) -> tuple[str, bool]:
         return "Sin datos recientes del astronauta.", False
     lineas, hay_rojo = [], False
     for ind in estado.get("indicadores", []):
+        if ind.get('origen') == 'demo':
+            continue
         color = ind.get("color", "sin dato")
         hay_rojo |= color == "rojo"
         tend = f", tendencia {ind['tendencia']}" if ind.get("tendencia") else ""
         m = ind.get("antiguedad_min")
         edad = "" if m is None else (f", medido hace {m} min" if m < 60 else f", medido hace {round(m / 60)} h" if m < 2880 else f", medido hace {round(m / 1440)} días")
-        palabra = {"verde": "normal", "amarillo": "en precaución", "rojo": "en alerta"}.get(color, "sin dato")
+        palabra = {"verde": "en rango ilustrativo" if ind.get('regla_ilustrativa') else "normal", "amarillo": "en precaución", "rojo": "en alerta"}.get(color, "sin dato")
         nombre = _reglas().get(ind.get("indicador"), {}).get("nombre", ind.get("nombre", ind.get("indicador")))
         if ind.get("motivo"):
             edad = f" ({ind['motivo'].rstrip('.')})"

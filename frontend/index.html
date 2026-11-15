@@ -38,7 +38,7 @@
 </header>
 
 <nav class="nasa-acceso" aria-label="Evidencia científica">
-  <span><strong>NASA OSD-575</strong> · Análisis reales de Inspiration4</span>
+  <span id="estadoOrigen"><strong>Pulso local</strong> · Otros indicadores: demo · Rangos ilustrativos</span>
   <button type="button" class="btn" id="abrirRegistro">Registro e historial · A1</button>
   <button type="button" class="btn" data-nasa-open disabled>Explorar datos reales ↗</button>
 </nav>
@@ -55,7 +55,7 @@
   <header class="nasa-cabecera"><div><p class="rotulo">Tripulante A1 / archivo local</p><h2 id="registroTitulo">Registro e historial</h2></div>
     <form method="dialog"><button class="btn" aria-label="Cerrar registro e historial">Cerrar ×</button></form></header>
   <div class="registro-contenido">
-    <p class="registro-aviso">Mediciones ingresadas manualmente y guardadas en esta máquina. El panel principal continúa en modo demostración; este historial no clasifica tu salud.</p>
+    <p class="registro-aviso">Mediciones guardadas en esta máquina. El pulso se conecta al panel, corazón y ORI con rangos ilustrativos; los demás indicadores del panel siguen en demostración.</p>
     <form id="registroForm" class="registro-form">
       <label>Indicador<select id="registroIndicador" name="indicador"><option value="pulso">Pulso</option><option value="presion_arterial">Presión arterial</option><option value="oxigeno">Oxígeno</option><option value="glucosa">Glucosa</option><option value="temperatura">Temperatura</option><option value="sueno">Sueño diario</option><option value="animo">Ánimo</option><option value="estres">Estrés</option></select></label>
       <label>Fecha y hora de la medición<input id="registroFecha" name="fecha" type="datetime-local" required><small>Hora local de tu dispositivo.</small></label>

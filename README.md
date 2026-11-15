@@ -20,9 +20,16 @@ SQLite utiliza la biblioteca estándar de Python, sin instalaciones nuevas. El a
 Los registros permanecen al reiniciar el servidor y el navegador. Para conservarlos al cambiar
 de máquina, hay que conservar ese archivo; no se sincronizan automáticamente con otros equipos.
 
-El registro funciona sin internet con FastAPI activo. Esta entrega almacena y consulta datos;
-el panel y ORI conservan su estado de demostración, sin mezclar los registros con OSD-575.
-No se implementan aquí clasificación clínica, modificación ni borrado de registros.
+El registro funciona sin internet con FastAPI activo. El **pulso** ya se conecta al panel, al
+corazón 3D, a la gráfica y a ORI. Los demás indicadores personales del panel siguen en demo,
+identificados como tales y excluidos de la evaluación personal de ORI. OSD-575 permanece separado.
+La clasificación del pulso reutiliza los rangos **ilustrativos** de `data/reglas.json`; no es diagnóstico.
+Ausencia, antigüedad superior al límite o valor fuera de plausibilidad dan estado gris. La gráfica
+usa hasta 100 registros reales y corta el trazo ante muestras sospechosas, sin puntos generados.
+Guardar actualiza el panel; también se refresca cada minuto y al volver a la ventana. Los controles
+de simulación conservan una etiqueta explícita y «Reiniciar datos» vuelve a leer el registro local.
+El chat relee el pulso de SQLite antes de responder, salvo en modo de simulación explícito.
+No se implementan aquí modificación ni borrado de registros.
 
 Requisitos: Python 3, [uv](https://docs.astral.sh/uv/) (o `pip install -r requirements.txt`) y, para la IA, Ollama con `gemma3:4b` y `nomic-embed-text` (ver `IA_LOCAL.md`).
 
@@ -72,7 +79,7 @@ La suite Python también verifica las 20 series frente al CSV original incluido.
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 ```
 
-85 pruebas Python: registro local (persistencia, reintentos, filtros, paginación y validación), guías, reglas del semáforo, fichas (5 preguntas del reto), datos NASA OSD-575 y procedencia del CSV, contrato del modelo 3D, asistente sin IA y con IA (se saltan si Ollama está apagado), y la API.
+94 pruebas Python: registro local, conexión del pulso y calidad de los datos, guías, reglas del semáforo, fichas, datos NASA y procedencia del CSV, modelo 3D, asistente y API. Las dos pruebas con el modelo se saltan si Ollama está apagado. Las pruebas JavaScript se ejecutan con `node --test tests/*.test.mjs`.
 
 ## Estructura y dueños
 
@@ -87,7 +94,7 @@ uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 | `scripts/` | Indexar guías, convertir OSD-575, construir el modelo en Blender | P5 / P6 |
 | `tests/` | Pruebas automáticas | P6 |
 
-**Pendiente de P4:** `GET /api/estado/{id}` (estado real calculado con `reglas.json`). Mientras no exista, el frontend usa datos de demostración y los envía al chat.
+`GET /api/estado/{id}` combina el pulso guardado con los demás indicadores personales de demostración y el clima espacial. Conectar los otros indicadores registrados al panel sigue pendiente. El chat excluye los indicadores personales marcados como demo de su evaluación.
 
 ## Diseño
 

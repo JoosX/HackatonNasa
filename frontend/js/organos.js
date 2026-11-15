@@ -86,9 +86,12 @@ export async function cargarFichas() {
 export async function cargarEstado(id = "A1") {
   try {
     const r = await fetch(`/api/estado/${id}`, { signal: AbortSignal.timeout(1500) });
-    if (r.ok) return { ...(await r.json()), origen: "api" };
+    if (r.ok) return await r.json();
   } catch (_) { /* sin backend: modo demo */ }
-  return { ...structuredClone(ESTADO_DEMO), origen: "demo" };
+  const respaldo = structuredClone(ESTADO_DEMO);
+  respaldo.indicadores.forEach(i => i.origen = 'demo');
+  Object.assign(respaldo.indicadores.find(i => i.indicador === 'pulso'), { valor: null, color: 'sin dato', origen: 'registro_manual', calidad: 'error', historial: [], antiguedad_min: null, motivo: 'No se pudo cargar el pulso del servidor local.' });
+  return { ...respaldo, origen: 'error' };
 }
 
 export function indicador(estado, nombre) {
@@ -97,6 +100,8 @@ export function indicador(estado, nombre) {
 
 // Color de un órgano = el peor color de sus indicadores.
 export function colorOrgano(estado, organo) {
+  const pulso = indicador(estado, 'pulso');
+  if (organo === 'corazon' && pulso?.calidad && !estado.modo_demo) return pulso.color;
   let peor = "sin dato";
   for (const n of ORGANOS[organo].indicadores) {
     const c = indicador(estado, n)?.color ?? "sin dato";
@@ -124,6 +129,7 @@ const AMPLITUD = { pulso: 9, presion_arterial: 10, oxigeno: 1.2, glucosa: 9, tem
 const DERIVA = { verde: 0, amarillo: 1, rojo: 2.2 };
 export function historial(estado, nombre, dias = 7) {
   const i = indicador(estado, nombre);
+  if (nombre === 'pulso' && i?.calidad && !estado.modo_demo) return (i.historial ?? []).map(m => m.sospechoso ? null : m.valor);
   const actual = valorNumerico(i?.valor);
   if (actual == null) return [];
   const amp = AMPLITUD[nombre] ?? 1;
@@ -141,6 +147,7 @@ export function historial(estado, nombre, dias = 7) {
 
 // Mini gráfica SVG (línea + último punto).
 export function sparkline(serie, color, ancho = 72, alto = 22) {
+  if (serie.some(v => v == null)) return '';
   if (serie.length < 2) return "";
   const min = Math.min(...serie), max = Math.max(...serie), rango = max - min || 1;
   const pts = serie.map((v, k) => [(k / (serie.length - 1)) * (ancho - 4) + 2, alto - 3 - ((v - min) / rango) * (alto - 6)]);

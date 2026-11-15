@@ -98,6 +98,7 @@ form.addEventListener('submit', async ev => {
     await api('/api/mediciones', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ...cuerpo, id: pendiente.id }) });
     pendiente = null;
     informar('Medición guardada. Permanecerá disponible al cerrar la aplicación.');
+    document.dispatchEvent(new CustomEvent('apelogic:medicion-guardada', { detail: { indicador: cuerpo.indicador } }));
     valor.value = ''; $('#registroDiastolica').value = ''; form.elements.nota.value = ''; fecha.value = horaLocal();
     offset = 0; filtro.value = cuerpo.indicador; await cargarHistorial();
   } catch (e) {

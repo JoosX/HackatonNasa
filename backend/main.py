@@ -1,8 +1,8 @@
 """API local del asistente de salud (FastAPI).
 
-Por ahora contiene la parte de IA (P5). P4 agrega aquí sus endpoints
-(mediciones, estado, historial, alertas, fichas, sync) y reemplaza
-obtener_estado() por el estado real calculado con las reglas.
+Sirve la interfaz, el registro e historial SQLite y el asistente local.
+El pulso del estado se calcula desde los registros con reglas ilustrativas;
+los demás indicadores personales aún son de demostración.
 
 Ejecutar desde la carpeta asistente-salud:
     uvicorn backend.main:app --reload --port 8000
@@ -40,9 +40,13 @@ def _precalentar() -> None:
 
 
 def obtener_estado(astronauta_id: str) -> dict:
-    """TODO (P4): devolver el estado real (mismo formato que estado_ejemplo.json).
-    Siempre se agrega el indicador de radiación calculado con datos reales de NASA DONKI."""
+    """Pulso de SQLite; los otros indicadores personales siguen siendo demostración."""
     estado = json.loads((RAIZ / "data" / "estado_ejemplo.json").read_text(encoding="utf-8"))
+    estado['astronauta_id'] = astronauta_id
+    estado['origen'] = 'mixto'
+    estado['notas'] = []
+    estado['indicadores'] = [dict(i, origen='demo') for i in estado['indicadores'] if i['indicador'] != 'pulso']
+    estado['indicadores'].insert(0, mediciones.estado_pulso(astronauta_id))
     estado["indicadores"].append(clima_espacial.indicador())
     return estado
 
@@ -55,14 +59,16 @@ class PreguntaChat(BaseModel):
 
 @app.get("/api/estado/{astronauta_id}")
 def estado(astronauta_id: str) -> dict:
-    """Estado actual del astronauta. DEMO hasta que P4 lo calcule con SQLite + reglas.json."""
-    return {**obtener_estado(astronauta_id), "origen": "demo"}
+    return obtener_estado(astronauta_id)
 
 
 @app.post("/api/chat")
 def chat(p: PreguntaChat) -> dict:
     inicio = time.time()
     estado = p.estado or obtener_estado(p.astronauta_id)
+    if not estado.get('modo_demo'):
+        # El cliente puede tener un dato antiguo. ORI usa el pulso actual de SQLite.
+        estado = {**estado, 'indicadores': [i for i in estado.get('indicadores', []) if i.get('indicador') != 'pulso'] + [mediciones.estado_pulso(p.astronauta_id)]}
     resultado = rag.responder(p.pregunta, estado)
     resultado["segundos"] = round(time.time() - inicio, 2)
     return resultado

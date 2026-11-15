@@ -229,9 +229,10 @@ export async function crearVisor(contenedor, { onSeleccion = () => {}, onHover =
   const latido = (f) => Math.exp(-(((f - 0.12) / 0.05) ** 2)) + 0.6 * Math.exp(-(((f - 0.34) / 0.05) ** 2));
   renderer.setAnimationLoop(() => {
     const t = reloj.getElapsedTime();
-    const lpm = Number(estado && indicador(estado, "pulso")?.valor) || 70;
+    const p = estado && indicador(estado, 'pulso');
+    const lpm = p && (!p.calidad || p.calidad === 'vigente') ? Number(p.valor) : 0;
     if (corazon) {
-      const s = 1 + (reducir ? 0.04 : 0.1) * latido((t * lpm / 60) % 1);
+      const s = lpm > 0 ? 1 + (reducir ? 0.04 : 0.1) * latido((t * lpm / 60) % 1) : 1;
       corazon.scale.set(s, s, s);
     }
     if (!reducir) {
