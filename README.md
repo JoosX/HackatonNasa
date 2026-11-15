@@ -1,90 +1,105 @@
-# Copiloto de salud · prototipo (NASA Space Apps 2026)
+**English** | [Español](README.es.md)
 
-Asistente de salud **local** para astronautas, con **ORI**, un compañero de salud con IA: monitoreo con semáforo, cuerpo 3D anatómico y asistente con IA que responde **sin conexión** citando guías de NASA. Prototipo TRL 3–4; no diagnostica.
+# Health copilot · prototype (NASA Space Apps 2026)
 
-## Ejecutar
+A **local** health assistant for astronauts, featuring **ORI**, an AI health companion: traffic-light monitoring, an anatomical 3D body and an AI assistant that answers **with no connection to Earth**, citing the guide behind each piece of advice. Prototype at TRL 3–4; **it does not diagnose or prescribe**.
 
-Requisitos: Python 3, [uv](https://docs.astral.sh/uv/) (o `pip install -r requirements.txt`) y, para la IA, Ollama con `gemma3:4b` y `nomic-embed-text` (ver `IA_LOCAL.md`).
+Challenge: *Create Health Monitoring Software for Astronauts on Space Missions*.
 
-Desde la raíz del repositorio:
+## The problem
+
+> How might we help a crew with only partial medical knowledge understand what is happening with their health, and how to act, even without a connection to Earth?
+
+On the Space Station, flight surgeons on Earth answer almost in real time. On the way to Mars that model breaks down: a message takes **3 to 22 minutes one way** (up to ~44 minutes round trip), and every ~2 years a solar conjunction blocks contact for about **two weeks**. Even around the Moon, Artemis II was out of contact for about **40 minutes** behind it. Astronauts are not doctors, and an emergency cannot wait.
+
+**What the app does:** it records vital signs, compares them with each person's own normal, shows them as a traffic light on a 3D body and, through ORI, explains in plain language what is happening, what to do and whom to alert, entirely on board. When the link is back, the summary is sent to the doctors on Earth, who decide on any treatment.
+
+## Run
+
+Requirements: Python 3, [uv](https://docs.astral.sh/uv/) (or `pip install -r requirements.txt`) and, for the AI, Ollama with `gemma3:4b` and `nomic-embed-text` (see `IA_LOCAL.md`).
+
+From the repository root:
 
 ```bash
 uv run --with fastapi --with uvicorn uvicorn backend.main:app --port 8000
 ```
 
-Abrir http://localhost:8000 en Chrome o Chromium (el visor 3D necesita WebGL).
+Open http://localhost:8000 in Chrome or Chromium (the 3D viewer needs WebGL). The app opens in your browser's language; use **`?lang=en`** to force English or `?lang=es` for Spanish.
 
-Atajos para la demo: `?organo=corazon` abre un órgano (la cámara lo enfoca) · `#emergencia` simula una emergencia · `#sinsenal` empieza sin conexión · `#hover-corazon` muestra la tarjeta de hover (capturas) · `#preguntar=texto` le hace esa pregunta a ORI al cargar (útil para grabar la demo) · `?quieto` detiene el giro.
+Demo shortcuts: `?organo=corazon` opens an organ (the camera focuses on it) · `#emergencia` simulates an emergency · `#sinsenal` starts with no link to Earth · `#hover-corazon` shows the hover card (screenshots) · `#preguntar=text` asks ORI that question on load · `?quieto` stops the rotation.
 
-En el visor: etiquetas anatómicas con línea guía (clic para abrir), tarjeta al pasar el mouse con valores y tendencia, capas (piel, esqueleto, vasos, órganos), pausa del giro y "Vista completa". Tipografía técnica: JetBrains Mono (OFL), incluida en `frontend/fuentes/`.
+The AI model (Gemma 3 4B, ~3.4 GB) is not in the repository: download it with `ollama pull gemma3:4b` and `ollama pull nomic-embed-text`. The guide search indexes (`data/indice_guias.json`, `data/indice_guias_en.json`) are included.
 
-El modelo de IA (Gemma 3 4B, ~3,4 GB) no está en el repositorio: cada integrante lo descarga con `ollama pull gemma3:4b` y `ollama pull nomic-embed-text`. El índice de búsqueda de las guías (`data/indice_guias.json`) sí está incluido.
+## Languages
 
-## Base de datos de a bordo (SQLite)
+The app works in **English and Spanish** (**ES | EN** button, top right). The choice is remembered; without a choice, the browser language is used.
 
-Las mediciones se guardan en `data/mision.db` (un solo archivo, sin servidor, funciona sin internet). Al primer arranque se siembra un historial de demostración de 7 días; luego se suman las mediciones nuevas. `backend/motor.py` calcula con `data/reglas.json` el color, la tendencia, **tu normal** (promedio de tus primeras mediciones) y detecta datos sospechosos o vencidos.
+- Interface: `frontend/js/i18n.js` (`L("español", "English")` in every module).
+- Server: `backend/idioma.py` reads the `idioma` cookie (or `?lang=`) on each request; ORI, rules, cards, the rules engine, space weather and emergency protocols answer in that language. ORI recognizes phrases in both languages.
+- English content: `data/guias_en/` (11 guides with the same structure as the Spanish ones), `data/en/` (cards, rules, measurement guides) and its own index (`python scripts/indexar_guias.py` builds both).
 
-- Registrar: botón **+ Registrar medición** (o `POST /api/mediciones`). ORI comenta cada medición.
-- Sensor simulado: `python scripts/sensor_simulado.py` (o `--subida` para que el pulso llegue a alerta en la demo). La app se actualiza sola cada 15 s.
-- Reiniciar la demo: "Controles de demostración → Reiniciar datos" (o `POST /api/demo/reiniciar`).
-- ORI recuerda los últimos turnos de la conversación: entiende "¿y por qué pasa eso?".
+## Onboard database (SQLite)
 
-## Clima espacial (NASA DONKI)
+Measurements are stored in `data/mision.db` (a single file, no server, works without internet). On first start a 7-day demo history is seeded; new measurements are added on top. `backend/motor.py` uses `data/reglas.json` to compute the color, the trend, **your normal** (average of your first measurements) and the data quality (current, suspicious, outdated, or context pending, e.g. glucose measured after eating is not classified).
 
-`data/nasa_donki.json` guarda los eventos solares reales de los últimos 30 días (llamaradas, partículas solares y tormentas geomagnéticas) de NASA DONKI. Es la "sincronización con la Tierra": se actualiza con `python scripts/actualizar_donki.py` cuando hay señal, y sin señal la app usa el último archivo y avisa su antigüedad. El nivel de radiación (verde, precaución o alerta) se calcula en `backend/clima_espacial.py` con reglas ilustrativas. Desde el 30/09/2026 el servicio está en `https://ccmc.gsfc.nasa.gov/DONKI-API/get/` (sin clave).
+- Log: **+ Log measurement** button (or `POST /api/mediciones`), including the measurement context (at rest, fasting…). ORI comments on each measurement.
+- Simulated sensor: `python scripts/sensor_simulado.py` (or `--subida` so the pulse reaches warning level in the demo). The app refreshes every 15 s.
+- Reset the demo: "Demo controls → Reset data" (or `POST /api/demo/reiniciar`).
+- ORI remembers the last turns of the conversation: it understands "and why does that happen?".
 
-## Idiomas / Languages
+## Emergencies and guidance
 
-La app funciona en **español e inglés** (botón **ES | EN** arriba a la derecha). Para abrirla directamente en inglés: `http://localhost:8000/?lang=en`. Se recuerda la elección; sin elección, usa el idioma del navegador.
+- **ORI in an emergency** (`backend/emergencia.py`): for "my chest hurts", "my crewmate collapsed" or an indicator at warning level plus "what should I do?", it answers instantly and without AI: what may be happening, what you may feel, whom to call and what to say, steps with their reasons, and what to do with no link to Earth. The chat expands automatically.
+- **Urgent guidance** (red button at the top, contributed by Romario): a step-by-step walkthrough, "responding?" then "breathing?", leading to CPR and the defibrillator. It works even if the server, the AI or the link fails.
+- **Measure, understand and act** (contributed by Romario): for each indicator, the device, preparation, steps, common mistakes and what to do without the device, with sources (MedlinePlus, CDC, FDA). Opened from "How do I take this measurement?" when logging.
+- Scope and pending validation: [`docs/validacion-orientacion.md`](docs/validacion-orientacion.md) (in Spanish). None of this has clinical approval.
 
-- Interfaz: `frontend/js/i18n.js` (`L("español", "English")`).
-- Servidor: `backend/idioma.py` lee la cookie `idioma` (o `?lang=`) en cada petición; ORI, reglas, fichas y protocolos responden en ese idioma.
-- Contenido en inglés: `data/guias_en/` (11 guías, misma estructura), `data/en/` (fichas, reglas, guías de medición) y el índice `data/indice_guias_en.json` (`python scripts/indexar_guias.py` genera los dos).
+## How the AI is kept safe
 
-The app works in **Spanish and English** (**ES | EN** button, top right). Open it in English with `?lang=en`.
+- The AI only writes the human part (empathy and explanation). **Steps and "when to alert" are copied verbatim from the guides**, so they cannot be invented, and every answer shows its source.
+- **Emergencies do not use AI**: fixed, instant protocols that always answer the same way.
+- If there is no relevant guide, ORI says so instead of making something up; if a question has no related data, the AI is told not to mention any numbers.
+- Doubtful data (impossible, outdated or without context) is never presented as normal.
 
-## Emergencias y orientación
+## Space weather (NASA DONKI)
 
-- **ORI en una emergencia** (`backend/emergencia.py`): ante "me duele el pecho", "mi compañero se desmayó" o un indicador en alerta con "¿qué hago?", responde al instante y sin IA: qué puede estar pasando, qué se siente, a quién llamar y qué decirle, pasos con su porqué y qué hacer sin enlace con la Tierra. El chat se amplía solo.
-- **Orientación urgente** (botón rojo arriba, de Romario): recorrido paso a paso ¿responde? / ¿respira? hasta RCP y desfibrilador. Funciona aunque fallen el servidor, la IA o el enlace.
-- **Medir, comprender y actuar** (de Romario): por indicador, equipo, preparación, pasos, errores frecuentes y qué hacer sin equipo, con fuentes (MedlinePlus, CDC, FDA). Se abre con «¿Cómo tomo esta medida?» al registrar.
-- Alcance y validación pendiente: [`docs/validacion-orientacion.md`](docs/validacion-orientacion.md). Nada de esto tiene aprobación clínica.
+`data/nasa_donki.json` stores the real solar events of the last 30 days (flares, solar particles and geomagnetic storms) from NASA DONKI. This is the "sync with Earth": it is updated with `python scripts/actualizar_donki.py` when there is a signal; without a signal the app uses the last file and warns about its age. The radiation level (green, caution or warning) is computed in `backend/clima_espacial.py` with illustrative rules. Since 30/09/2026 the service lives at `https://ccmc.gsfc.nasa.gov/DONKI-API/get/` (no key).
 
-## Pruebas
+## Tests
 
 ```bash
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 node --test tests/*.mjs
 ```
 
-126 pruebas en Python (guías, semáforo, fichas, datos NASA, modelo 3D, base de datos, contexto y calidad del dato, protocolos de emergencia, orientación, asistente con y sin IA, API) y 11 en JavaScript (recorrido de emergencia y orientación).
+146 Python tests (guides, traffic light, cards, NASA data, 3D model, database, data context and quality, emergency protocols, guidance, both languages, assistant with and without AI, API) and 11 JavaScript tests (emergency walkthrough and guidance).
 
-## Estructura y dueños
+## Structure and owners
 
-| Carpeta / archivo | Qué es | Dueño |
+| Folder / file | What it is | Owner |
 |---|---|---|
-| `frontend/index.html`, `css/app.css`, `js/app.js` | App principal: visor, signos, ficha, chat, conexión | P2 / P3 |
-| `frontend/js/visor3d.js`, `modelos/cuerpo.glb` | Visor 3D y modelo anatómico | P3 / P5 |
-| `frontend/js/chat.js` | Chat con el asistente | P3 |
-| `backend/main.py` | API (FastAPI) y servidor del frontend | P4 |
-| `backend/rag.py`, `ollama_cliente.py`, `guias.py` | Asistente RAG local | P5 |
-| `data/guias/*.md`, `reglas.json`, `fichas.json`, `nasa_osd575.json` | Contenido y datos NASA | P6 |
-| `scripts/` | Indexar guías, convertir OSD-575, construir el modelo en Blender | P5 / P6 |
-| `backend/emergencia.py` | Protocolos de emergencia de ORI | P5 |
-| `backend/orientacion.py`, `data/medicion_guiada.json`, `frontend/js/orientacion*.js`, `emergencia.js`, `docs/validacion-orientacion.md` | Orientación urgente y guías de medición | Romario |
-| `tests/` | Pruebas automáticas | P6 |
+| `frontend/index.html`, `css/app.css`, `js/app.js` | Main app: viewer, vitals, card, chat, link to Earth | P2 / P3 |
+| `frontend/js/visor3d.js`, `modelos/cuerpo.glb` | 3D viewer and anatomical model | P3 / P5 |
+| `frontend/js/chat.js` | Chat with the assistant | P3 |
+| `frontend/js/i18n.js`, `backend/idioma.py` | Languages (English / Spanish) | P5 |
+| `backend/main.py` | API (FastAPI) and frontend server | P4 |
+| `backend/db.py`, `backend/motor.py` | Onboard database and rules engine | P4 |
+| `backend/rag.py`, `ollama_cliente.py`, `guias.py` | Local RAG assistant | P5 |
+| `backend/emergencia.py` | ORI emergency protocols | P5 |
+| `data/guias/*.md`, `data/guias_en/*.md`, `reglas.json`, `fichas.json`, `nasa_osd575.json` | Content and NASA data | P6 |
+| `backend/orientacion.py`, `data/medicion_guiada.json`, `frontend/js/orientacion*.js`, `emergencia.js`, `docs/validacion-orientacion.md` | Urgent guidance and measurement guides | Romario |
+| `scripts/` | Index guides, convert OSD-575, sync DONKI, simulated sensor, build the Blender model | P5 / P6 |
+| `tests/` | Automated tests | P6 |
 
-El estado del astronauta (`GET /api/estado/{id}`) se calcula con la base de datos y `reglas.json`; el chat siempre usa ese estado.
+## Design
 
-## Diseño
+**Art direction: crew avionics display.** Flat black, straight edges and 1 px lines (no glows, blurs or gradients), like cockpit displays. Color only carries meaning, following the flight Caution & Warning system: green = normal, amber = caution, red = warning; the selection is white and labels are neutral gray. Data in JetBrains Mono (OFL, included in `frontend/fuentes/`).
 
-**Dirección de arte: pantalla de aviónica de tripulación.** Negro plano, aristas rectas y líneas de 1 px (sin brillos, desenfoques ni degradados), como los displays de cabina. Color con significado, según el sistema de Precaución y Alerta (C&W) de vuelo: verde = normal, ámbar = precaución, rojo = alerta, magenta = seleccionado, cian = rótulos. Datos en JetBrains Mono. Barra de estado con resumen C&W y barras de enlace; softkeys en el borde del visor; tira de instrumentos; asistente como consola.
+The [Vercel Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines) were applied (accessibility, visible focus, `prefers-reduced-motion`, tabular numbers, loading states, no `transition: all`), along with principles from [taste-skill](https://github.com/leonxlnx/taste-skill) (the real product interface as the hero, one visual effect, one token system, subtle micro-interactions). They were used as references; their scripts were not installed.
 
-Se aplicaron las [Web Interface Guidelines de Vercel](https://github.com/vercel-labs/web-interface-guidelines) (accesibilidad, foco visible, `prefers-reduced-motion`, números tabulares, estados de carga, sin `transition: all`) y principios de [taste-skill](https://github.com/leonxlnx/taste-skill) (la interfaz real del producto como protagonista, un solo efecto visual, un sistema de tokens, micro-interacciones discretas). Se usaron como referencia; no se instalaron sus scripts.
+## Credits and licenses
 
-## Créditos y licencias
-
-- Anatomía: **BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International**.
-- Datos: NASA OSDR **OSD-575** (Inspiration4), **NASA DONKI** (clima espacial, CCMC / NASA GSFC) y NASA Human Research Program.
-- Visor: Three.js (MIT). Servidor: FastAPI (MIT). IA local: Ollama, Gemma 3 4B, nomic-embed-text.
-- Código y textos escritos con asistencia de IA (Claude) y revisados por el equipo; declararlo en la entrega.
+- Anatomy: **BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International**.
+- Data: NASA OSDR **OSD-575** (Inspiration4), **NASA DONKI** (space weather, CCMC / NASA GSFC) and the NASA Human Research Program. Measurement technique references: MedlinePlus, CDC, FDA; CPR references: Resuscitation Council UK (2025), DGLRM / ESAM-SMG (2020).
+- Viewer: Three.js (MIT). Server: FastAPI (MIT). Local AI: Ollama, Gemma 3 4B, nomic-embed-text.
+- **Use of AI:** code, texts and translations were written with the assistance of an AI tool (Claude) and reviewed by the team; files note it in their headers. The idea, the problem definition and the design decisions are the team's. This is a prototype: the guides are based on NASA information but are not official NASA protocols, and the color ranges are illustrative, pending review by flight medicine.
