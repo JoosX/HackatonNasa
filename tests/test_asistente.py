@@ -149,7 +149,7 @@ def test_sintoma_sin_guia_dice_que_hacer_mientras(sin_ollama):
 
 def test_api_estado_existe(cliente):
     d = cliente.get("/api/estado/A1").json()
-    assert len(d["indicadores"]) == 11 and d["origen"] == "demo"
+    assert len(d["indicadores"]) == 11 and d["origen"] == "base de datos"
     assert any(i["indicador"] == "radiacion" for i in d["indicadores"])
 
 

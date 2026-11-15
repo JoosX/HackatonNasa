@@ -28,6 +28,7 @@
     <div><dt>Tiempo de misión</dt><dd id="met">180 d 00:00:00</dd></div>
     <div><dt>Retraso con la Tierra</dt><dd>14 min</dd></div>
   </dl>
+  <div class="accion-principal"><button id="btnRegistrar" type="button" class="btn btn-primario">+ Registrar medición</button></div>
   <p id="cw" class="cw" aria-live="polite" aria-label="Resumen de precauciones y alertas"></p>
   <button id="btnSenal" class="senal" type="button" aria-pressed="true">
     <span class="punto" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="txtSenal">Enlace con la Tierra</span>
@@ -39,6 +40,15 @@
     <h1 id="t-visor" class="sr-only">Estado de salud del astronauta</h1>
     <div id="lienzo" class="lienzo" data-entrar style="--i:1">
       <p class="hud-rotulo" aria-hidden="true"><span>Cuerpo · vista 3D</span><span id="rotuloEstado">Normal</span></p>
+      <div id="guia" class="guia" hidden>
+        <p class="rotulo">Primeros pasos</p>
+        <ol>
+          <li><b>Toca un órgano</b> o una etiqueta para ver cómo está y qué significa.</li>
+          <li><b>Registra tus signos</b> con el botón <span class="tecla">+ Registrar medición</span>.</li>
+          <li><b>Cuéntale a ORI</b> cómo te sientes: te dice qué hacer, incluso sin internet.</li>
+        </ol>
+        <button id="guiaCerrar" type="button" class="btn">Entendido</button>
+      </div>
       <p id="sinWebgl" class="sin-webgl" hidden>Este equipo no tiene WebGL. Usa la lista de órganos del panel o abre la página en Chrome o Chromium.</p>
       <div class="herramientas" role="toolbar" aria-label="Vista del cuerpo">
         <div class="grupo-capas" role="group" aria-label="Capas">
@@ -99,6 +109,23 @@
     </details>
   </div>
 </main>
+
+<dialog id="dlgRegistro" class="dialogo" aria-labelledby="t-registro">
+  <form id="formRegistro" method="dialog">
+    <p class="rotulo">Base de datos de a bordo</p>
+    <h2 id="t-registro">Registrar medición</h2>
+    <label for="regIndicador" class="campo">Qué mediste</label>
+    <select id="regIndicador" name="indicador"></select>
+    <label for="regValor" class="campo">Valor</label>
+    <input id="regValor" name="valor" type="text" autocomplete="off" required>
+    <p id="regAyuda" class="ayuda-campo"></p>
+    <p id="regResultado" class="error-campo" aria-live="polite"></p>
+    <div class="botones">
+      <button id="regCancelar" type="button" class="btn">Cancelar</button>
+      <button id="regGuardar" type="submit" class="btn btn-primario">Guardar</button>
+    </div>
+  </form>
+</dialog>
 
 <footer class="pie">
   Prototipo TRL 3–4 · no diagnostica · rangos ilustrativos. Anatomía: BodyParts3D, © The Database Center for Life Science, CC BY 4.0. Datos: NASA OSDR OSD-575, NASA DONKI (clima espacial) y NASA Human Research Program. Visor: Three.js (MIT).

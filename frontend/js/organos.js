@@ -122,7 +122,14 @@ export function valorNumerico(v) {
 // P4 lo reemplaza por el historial real de SQLite.
 const AMPLITUD = { pulso: 9, presion_arterial: 10, oxigeno: 1.2, glucosa: 9, temperatura: 0.25, sueno: 1.3, animo: 0.8, estres: 0.8, perdida_osea: 0.15 };
 const DERIVA = { verde: 0, amarillo: 1, rojo: 2.2 };
+// Historial REAL guardado en la base de datos (GET /api/historial). Si no hay backend, se usa la demo.
+let SERIES = {};
+export function fijarSeries(s) { SERIES = s || {}; }
+export function serieReal(nombre) { return SERIES[nombre] || []; }
+
 export function historial(estado, nombre, dias = 7) {
+  const real = SERIES[nombre];
+  if (real?.length >= 2) return real.map((p) => p.num);
   const i = indicador(estado, nombre);
   const actual = valorNumerico(i?.valor);
   if (actual == null) return [];

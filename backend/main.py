@@ -1,8 +1,7 @@
 """API local del asistente de salud (FastAPI).
 
-Por ahora contiene la parte de IA (P5). P4 agrega aquí sus endpoints
-(mediciones, estado, historial, alertas, fichas, sync) y reemplaza
-obtener_estado() por el estado real calculado con las reglas.
+Mediciones en SQLite (db.py), estado calculado con reglas.json (motor.py),
+asistente ORI con RAG local (rag.py) y clima espacial de NASA DONKI (clima_espacial.py).
 
 Ejecutar desde la carpeta asistente-salud:
     uvicorn backend.main:app --reload --port 8000
@@ -18,11 +17,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from fastapi import FastAPI  # noqa: E402
+from fastapi import FastAPI, HTTPException  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 import clima_espacial  # noqa: E402
+import db  # noqa: E402
+import motor  # noqa: E402
 import ollama_cliente  # noqa: E402
 import rag  # noqa: E402
 from guias import RAIZ  # noqa: E402
@@ -32,16 +33,17 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 
 @app.on_event("startup")
-def _precalentar() -> None:
-    """Carga los modelos de Ollama en segundo plano al arrancar (la primera respuesta no espera)."""
+def _iniciar() -> None:
+    """Crea la base de datos (con historial de demostración si está vacía) y precarga los modelos de IA."""
+    db.sembrar("A1", valor_num=motor.valor_num)
     import threading
     threading.Thread(target=ollama_cliente.precalentar, daemon=True).start()
 
 
 def obtener_estado(astronauta_id: str) -> dict:
-    """TODO (P4): devolver el estado real (mismo formato que estado_ejemplo.json).
-    Siempre se agrega el indicador de radiación calculado con datos reales de NASA DONKI."""
-    estado = json.loads((RAIZ / "data" / "estado_ejemplo.json").read_text(encoding="utf-8"))
+    """Estado real: últimas mediciones de SQLite evaluadas con reglas.json + radiación de NASA DONKI."""
+    db.sembrar(astronauta_id, valor_num=motor.valor_num)   # no hace nada si ya hay datos
+    estado = motor.evaluar(astronauta_id)
     estado["indicadores"].append(clima_espacial.indicador())
     return estado
 
@@ -52,17 +54,55 @@ class PreguntaChat(BaseModel):
     estado: dict | None = None   # opcional: si viene, se usa en vez de obtener_estado()
 
 
+class Medicion(BaseModel):
+    astronauta_id: str = "A1"
+    indicador: str
+    valor: str
+    origen: str = "manual"   # manual | sensor
+
+
 @app.get("/api/estado/{astronauta_id}")
 def estado(astronauta_id: str) -> dict:
-    """Estado actual del astronauta. DEMO hasta que P4 lo calcule con SQLite + reglas.json."""
-    return {**obtener_estado(astronauta_id), "origen": "demo"}
+    """Estado actual del astronauta calculado desde la base de datos."""
+    return obtener_estado(astronauta_id)
+
+
+@app.post("/api/mediciones")
+def nueva_medicion(m: Medicion) -> dict:
+    """Guarda una medición, la clasifica con las reglas y devuelve el estado actualizado."""
+    try:
+        resultado = motor.registrar(m.astronauta_id, m.indicador, m.valor, m.origen)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    return {"resultado": resultado, "estado": obtener_estado(m.astronauta_id)}
+
+
+@app.get("/api/historial/{astronauta_id}")
+def historial(astronauta_id: str, dias: int = 7) -> dict:
+    """Series de los últimos días de cada indicador (para las gráficas)."""
+    return motor.historial(astronauta_id, dias)
+
+
+@app.get("/api/alertas/{astronauta_id}")
+def alertas(astronauta_id: str) -> list[dict]:
+    return db.alertas(astronauta_id)
+
+
+@app.post("/api/demo/reiniciar")
+def reiniciar_demo(astronauta_id: str = "A1") -> dict:
+    """Vuelve al historial de demostración (para repetir la demo desde cero)."""
+    db.sembrar(astronauta_id, forzar=True, valor_num=motor.valor_num)
+    return obtener_estado(astronauta_id)
 
 
 @app.post("/api/chat")
 def chat(p: PreguntaChat) -> dict:
     inicio = time.time()
     estado = p.estado or obtener_estado(p.astronauta_id)
-    resultado = rag.responder(p.pregunta, estado)
+    turnos = db.ultimos_turnos(p.astronauta_id, 4)          # memoria corta de la conversación
+    resultado = rag.responder(p.pregunta, estado, turnos)
+    db.guardar_turno(p.astronauta_id, "astronauta", p.pregunta)
+    db.guardar_turno(p.astronauta_id, "ori", resultado["respuesta"][:600])
     resultado["segundos"] = round(time.time() - inicio, 2)
     return resultado
 

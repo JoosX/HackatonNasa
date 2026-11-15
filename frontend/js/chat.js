@@ -133,5 +133,14 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
     + "Puedo decirte **cómo estás**, orientarte si te sientes mal y explicarte tus indicadores. "
     + "Funciono sin internet y te muestro de qué guía de NASA saco cada consejo.\nCuéntame, ¿cómo te sientes hoy?"));
 
-  return { preguntar };
+  // ORI comenta por iniciativa propia (al registrar una medición o si aparece una alerta).
+  function decir(texto, alerta = false) {
+    const li = mensajeORI(bloques(texto), alerta ? "msg-alerta" : "");
+    const av = li.querySelector(".ori");
+    av.classList.toggle("alerta", alerta);
+    av.classList.add("habla");
+    setTimeout(() => av.classList.remove("habla"), 2400);
+  }
+
+  return { preguntar, decir };
 }

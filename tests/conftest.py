@@ -1,9 +1,14 @@
 """Configuración común de las pruebas. Escrito con asistencia de IA (Claude); revisado por el equipo."""
 
 import json
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
+
+# Las pruebas usan una base de datos temporal: nunca tocan data/mision.db.
+os.environ.setdefault("DB_RUTA", str(Path(tempfile.mkdtemp()) / "prueba.db"))
 
 import pytest
 

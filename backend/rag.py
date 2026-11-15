@@ -49,6 +49,8 @@ Escribe SOLO dos o tres frases (máximo 55 palabras), sin listas ni viñetas:
 - Primero, una frase empática sobre lo que pregunta, con tus propias palabras.
 - Después, explica en palabras simples qué muestran SUS DATOS relacionados (si hay), usando el estado
   tal cual viene ("normal", "en precaución" o "en alerta") y copiando los números exactos.
+  Si los datos dicen cuál es "su normal" o la tendencia (sube, baja), menciónalo: ayuda a entender el cambio.
+- Si hay conversación previa, mantén la continuidad (no vuelvas a saludar ni repitas lo mismo).
 
 No des pasos ni recomendaciones, no digas a quién avisar ni cuándo: eso lo agrega la app desde la guía.
 No inventes datos, nombres ni conclusiones: por ejemplo, una llamarada solar es un evento en el Sol,
@@ -208,6 +210,17 @@ def _cuando_avisar(archivo: str) -> list[str]:
     return salida
 
 
+def explicar(texto_ia: str, archivo: str, pregunta: str) -> str:
+    """Respuesta a un '¿por qué?': la explicación de la guía, sin repetir los pasos ya dados."""
+    partes = [texto_ia.strip()]
+    for seccion, titulo in (("Qué pasa en el espacio", "Por qué pasa en el espacio"), ("Por qué importa", "Por qué importa")):
+        texto = _seccion(archivo, seccion)
+        if texto:
+            partes.append(f"**{titulo}:**\n{texto}")
+    partes.append("Si quieres, te repito qué hacer ahora o cuándo avisar.")
+    return "\n\n".join(p for p in partes if p)
+
+
 def componer(texto_ia: str, archivo: str, pregunta: str, secundaria: str | None = None) -> str:
     """Respuesta final: la parte humana (IA) + pasos y avisos copiados de la(s) guía(s) de NASA."""
     if secundaria:
@@ -346,12 +359,19 @@ def resumir_estado(estado: dict | None) -> tuple[str, bool]:
         hay_rojo |= color == "rojo"
         tend = f", tendencia {ind['tendencia']}" if ind.get("tendencia") else ""
         m = ind.get("antiguedad_min")
-        edad = "" if m is None else (f", medido hace {m} min" if m < 60 else f", medido hace {round(m / 60)} h" if m < 2880 else f", medido hace {round(m / 1440)} días")
+        edad = "" if m is None else (f" (última medición: hace {m} min)" if m < 60 else f" (última medición: hace {round(m / 60)} h)" if m < 2880 else f" (última medición: hace {round(m / 1440)} días)")
         palabra = {"verde": "normal", "amarillo": "en precaución", "rojo": "en alerta"}.get(color, "sin dato")
         nombre = _reglas().get(ind.get("indicador"), {}).get("nombre", ind.get("nombre", ind.get("indicador")))
         if ind.get("motivo"):
             edad = f" ({ind['motivo'].rstrip('.')})"
-        lineas.append(f"- {nombre}: {ind.get('valor')} {ind.get('unidad', '')}, {palabra}{tend}{edad}")
+        extra = ""
+        if ind.get("normal") is not None and ind.get("desviacion_pct") is not None and abs(ind["desviacion_pct"]) >= 10:
+            extra += f", su normal es {ind['normal']:g} ({ind['desviacion_pct']:+d} %)"
+        if ind.get("sospechoso"):
+            extra += ", valor sospechoso: hay que repetir la medición"
+        if ind.get("vencido"):
+            extra += ", medición vieja: hay que medir de nuevo"
+        lineas.append(f"- {nombre}: {ind.get('valor')} {ind.get('unidad', '')}, {palabra}{tend}{extra}{edad}")
     for nota in estado.get("notas", []):
         lineas.append(f"- {nota}")
     return "\n".join(lineas) or "Sin datos recientes del astronauta.", hay_rojo
@@ -371,7 +391,19 @@ def _fuentes(encontrados: list[tuple[float, dict]]) -> list[dict]:
     return salida
 
 
-def responder(pregunta: str, estado: dict | None = None) -> dict:
+SEGUIMIENTO = r"^(y |y$|por que|porque|que mas|algo mas|explica|explicame|entonces|eso|y eso|como asi|en serio|de verdad|cuanto|cuando|ok y|vale y|pero)"
+
+
+def _es_seguimiento(pregunta: str) -> bool:
+    t = _texto_plano(pregunta)
+    return len(t.split()) <= 6 and bool(re.search(SEGUIMIENTO, t))
+
+
+def responder(pregunta: str, estado: dict | None = None, turnos: list[dict] | None = None) -> dict:
+    turnos = turnos or []
+    anterior = next((x["texto"] for x in reversed(turnos) if x["rol"] == "astronauta"), None)
+    # Si es una pregunta de seguimiento, se busca con el tema de la pregunta anterior.
+    consulta = f"{anterior} {pregunta}" if anterior and _es_seguimiento(pregunta) else pregunta
     texto_estado, hay_rojo = resumir_estado(estado)
     avisar = (lambda r: AVISO_ROJO + "\n\n" + r) if hay_rojo else (lambda r: r)
 
@@ -386,7 +418,7 @@ def responder(pregunta: str, estado: dict | None = None) -> dict:
                 "respuesta": avisar(TEXTO_INTENCION[intencion]), "modo": "conversacion"}
 
     # 2) Búsqueda en las guías + IA local.
-    encontrados, metodo = buscar(pregunta)
+    encontrados, metodo = buscar(consulta)
     base = {"fuentes": _fuentes(encontrados), "datos_usados": texto_estado,
             "busqueda": metodo, "alerta_roja": hay_rojo}
 
@@ -405,8 +437,12 @@ def responder(pregunta: str, estado: dict | None = None) -> dict:
     guias_txt = "\n\n".join(
         f"[GUÍA: {f['guia']} – {f['seccion']}]\n{f['texto']}" for _, f in encontrados
     )
+    previos = []
+    for x in turnos[-4:]:   # últimos turnos, para que la respuesta tenga continuidad
+        previos.append({"role": "user" if x["rol"] == "astronauta" else "assistant", "content": x["texto"][:400]})
     mensajes = [
         {"role": "system", "content": SISTEMA},
+        *previos,
         {"role": "user", "content": f"DATOS DEL ASTRONAUTA (relacionados con la pregunta):\n{texto_estado}\n\n"
                                     f"TEMA DE LA GUÍA: {encontrados[0][1]['guia']}\n\nPREGUNTA: {pregunta}"},
     ]
@@ -426,6 +462,9 @@ def responder(pregunta: str, estado: dict | None = None) -> dict:
         return bool(q & tit) or len(q & cuerpo) >= 2
     otras = [f["archivo"] for _, f in encontrados if f["archivo"] != principal]
     secundaria = next((a for a in otras if toca(a)), None)
-    respuesta = componer(humano, principal, pregunta, secundaria)
+    pide_explicacion = consulta != pregunta and re.search(r"(por que|porque|explica|como asi)", _texto_plano(pregunta))
+    respuesta = explicar(humano, principal, pregunta) if pide_explicacion else componer(humano, principal, pregunta, secundaria)
+    if consulta != pregunta:
+        base["seguimiento_de"] = anterior
 
     return {**base, "respuesta": avisar(respuesta), "modo": modo}

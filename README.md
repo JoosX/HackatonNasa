@@ -20,6 +20,15 @@ En el visor: etiquetas anatómicas con línea guía (clic para abrir), tarjeta a
 
 El modelo de IA (Gemma 3 4B, ~3,4 GB) no está en el repositorio: cada integrante lo descarga con `ollama pull gemma3:4b` y `ollama pull nomic-embed-text`. El índice de búsqueda de las guías (`data/indice_guias.json`) sí está incluido.
 
+## Base de datos de a bordo (SQLite)
+
+Las mediciones se guardan en `data/mision.db` (un solo archivo, sin servidor, funciona sin internet). Al primer arranque se siembra un historial de demostración de 7 días; luego se suman las mediciones nuevas. `backend/motor.py` calcula con `data/reglas.json` el color, la tendencia, **tu normal** (promedio de tus primeras mediciones) y detecta datos sospechosos o vencidos.
+
+- Registrar: botón **+ Registrar medición** (o `POST /api/mediciones`). ORI comenta cada medición.
+- Sensor simulado: `python scripts/sensor_simulado.py` (o `--subida` para que el pulso llegue a alerta en la demo). La app se actualiza sola cada 15 s.
+- Reiniciar la demo: "Controles de demostración → Reiniciar datos" (o `POST /api/demo/reiniciar`).
+- ORI recuerda los últimos turnos de la conversación: entiende "¿y por qué pasa eso?".
+
 ## Clima espacial (NASA DONKI)
 
 `data/nasa_donki.json` guarda los eventos solares reales de los últimos 30 días (llamaradas, partículas solares y tormentas geomagnéticas) de NASA DONKI. Es la "sincronización con la Tierra": se actualiza con `python scripts/actualizar_donki.py` cuando hay señal, y sin señal la app usa el último archivo y avisa su antigüedad. El nivel de radiación (verde, precaución o alerta) se calcula en `backend/clima_espacial.py` con reglas ilustrativas. Desde el 30/09/2026 el servicio está en `https://ccmc.gsfc.nasa.gov/DONKI-API/get/` (sin clave).
@@ -30,7 +39,7 @@ El modelo de IA (Gemma 3 4B, ~3,4 GB) no está en el repositorio: cada integrant
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 ```
 
-69 pruebas: guías, reglas del semáforo, fichas (5 preguntas del reto), datos NASA OSD-575, contrato del modelo 3D, asistente sin IA (no inventa, alerta roja fija) y con IA (se saltan si Ollama está apagado), y la API.
+79 pruebas: guías, reglas del semáforo, fichas (5 preguntas del reto), datos NASA OSD-575, contrato del modelo 3D, asistente sin IA (no inventa, alerta roja fija) y con IA (se saltan si Ollama está apagado), y la API.
 
 ## Estructura y dueños
 

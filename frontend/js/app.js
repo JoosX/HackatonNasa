@@ -3,7 +3,7 @@
 
 import {
   ORGANOS, COLORES, NOMBRES_INDICADORES, cargarEstado, cargarFichas, colorOrgano, indicador,
-  colorPulso, antiguedadTexto, historial, sparkline, valorNumerico,
+  antiguedadTexto, historial, sparkline, valorNumerico, fijarSeries, serieReal,
 } from "./organos.js";
 import { crearChat, avatarORI } from "./chat.js";
 import { crearHud } from "./hud.js";
@@ -117,6 +117,14 @@ function lineaClima() {
     <p class="g-nota">${escapar(clima.motivo || "")} Barras: llamaradas (ámbar = clase M, rojo = clase X), rojo alto = partículas solares, contorno = tormenta geomagnética. Sincronizado: ${escapar(sync)}. Se actualiza cuando vuelve la señal con la Tierra.</p></figure>`;
 }
 
+// Etiquetas del eje X a partir de las fechas reales de cada medición.
+function etiquetasDe(n) {
+  const s = serieReal(n);
+  if (!s.length) return ["-6 d", "-5", "-4", "-3", "-2", "-1", "hoy"];
+  const hoy = new Date().toDateString();
+  return s.map((p) => { const d = new Date(p.ts); return d.toDateString() === hoy ? "hoy" : d.toLocaleDateString("es", { weekday: "short" }); });
+}
+
 function rangoVerde(n) {
   const r = reglas[n];
   return r?.verde ?? r?.componentes?.sistolica?.verde ?? null;
@@ -129,9 +137,11 @@ function graficasDe(organo) {
   if (ind) {
     const i = indicador(estado, ind);
     html += grafica({
-      serie: historial(estado, ind), etiquetas: ["-6 d", "-5", "-4", "-3", "-2", "-1", "hoy"], verde: rangoVerde(ind),
+      serie: historial(estado, ind), etiquetas: etiquetasDe(ind), verde: rangoVerde(ind),
       color: COLORES[i.color], titulo: `${NOMBRES_INDICADORES[ind]} · últimos 7 días${ind === "presion_arterial" ? " (sistólica)" : ""}`,
-      nota: "Historial de demostración: lo reemplaza el historial real guardado a bordo.",
+      nota: serieReal(ind).length
+        ? `${serieReal(ind).length} mediciones guardadas a bordo.${i.normal != null ? ` Tu normal: ${numero(i.normal)} ${escapar(i.unidad)}${i.desviacion_pct ? ` · hoy ${i.desviacion_pct > 0 ? "+" : ""}${i.desviacion_pct} %` : ""}.` : ""}`
+        : "Historial de demostración (sin conexión con la base de datos).",
     });
   }
   // Datos reales de NASA para la glucosa: el "normal" de un tripulante de Inspiration4.
@@ -180,7 +190,7 @@ function pintarFicha() {
     ${graficasDe(seleccionado)}
     <div class="preguntas">${preguntas}</div>
     <p class="fuente">Fuente: ${escapar(f.fuente ?? ORGANOS[seleccionado].fuente)}</p>
-    <div class="botones"><button type="button" class="btn" data-preguntar="${seleccionado}">Preguntar al asistente</button>
+    <div class="botones">${(f.indicadores ?? ORGANOS[seleccionado].indicadores).some((n) => reglas[n] && !reglas[n].categorias) ? `<button type="button" class="btn btn-primario" data-registrar="${(f.indicadores ?? ORGANOS[seleccionado].indicadores).find((n) => reglas[n] && !reglas[n].categorias)}">Registrar medición</button>` : ""}<button type="button" class="btn" data-preguntar="${seleccionado}">Preguntar a ORI</button>
       <button type="button" class="btn" data-organo="">Ver todos</button></div>`;
   caja.scrollTop = 0;
 }
@@ -215,6 +225,38 @@ function refrescar() {
   $("#rotuloEstado").textContent = rojos ? "Alerta" : cuenta.amarillo ? "Precaución" : "Normal";
   $("#rotuloEstado").style.color = COLORES[rojos ? "rojo" : cuenta.amarillo ? "amarillo" : "verde"];
   $("#lienzo").classList.toggle("en-alerta", rojos);
+}
+
+// ---------- Base de datos: estado, historial y registro de mediciones ----------
+async function recargarDatos() {
+  const [e, h] = await Promise.all([json("/api/estado/A1"), json("/api/historial/A1")]);
+  if (e) estado = e;
+  fijarSeries(h);
+  refrescar();
+}
+
+const PALABRA = { verde: "normal", amarillo: "en precaución", rojo: "en alerta" };
+async function registrar(indicadorNombre, valor, { comentar = true } = {}) {
+  const r = await fetch("/api/mediciones", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ astronauta_id: "A1", indicador: indicadorNombre, valor: String(valor) }),
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.detail || "No se pudo guardar la medición.");
+  estado = d.estado;
+  fijarSeries(await json("/api/historial/A1"));
+  refrescar();
+  const res = d.resultado;
+  if (comentar) {
+    const dato = `${res.nombre.toLowerCase()}: **${res.valor} ${res.unidad}**`.trim();
+    const texto = res.sospechoso
+      ? `Anoté tu ${dato}, pero es un valor muy inusual. ${res.mensaje}`
+      : res.color === "verde" ? `Anoté tu ${dato}. Está normal 👍 Sigue así.`
+      : res.color === "amarillo" ? `Anoté tu ${dato}, ${PALABRA.amarillo}. ${res.mensaje}\n¿Quieres que te explique qué puede estar pasando? Pregúntame *¿por qué?*`
+      : `Anoté tu ${dato} y está ${PALABRA.rojo}. ${res.mensaje} No tienes que manejarlo solo.`;
+    chat.decir(texto, res.color === "rojo" && !res.sospechoso);
+  }
+  return res;
 }
 
 function fijar(nombre, valor, color) {
@@ -258,10 +300,61 @@ function enviarTierra() {
     .finished.then(() => { caja.textContent = "Resumen recibido en la Tierra. La respuesta tardará otro tanto; mientras, sigue las indicaciones de a bordo."; });
 }
 
+// ---------- Formulario "Registrar medición" ----------
+const EJEMPLO = { pulso: "72", presion_arterial: "120/80", oxigeno: "98", glucosa: "90", temperatura: "36.6", sueno: "7", animo: "4", estres: "2" };
+function iniciarRegistro() {
+  const dlg = $("#dlgRegistro"), sel = $("#regIndicador"), val = $("#regValor"), ayuda = $("#regAyuda"), res = $("#regResultado");
+  sel.innerHTML = Object.keys(EJEMPLO).filter((n) => reglas[n]).map((n) => `<option value="${n}">${escapar(reglas[n].nombre)}${reglas[n].unidad ? ` (${escapar(reglas[n].unidad)})` : ""}</option>`).join("");
+  const organoDe = (n) => Object.keys(ORGANOS).find((o) => ORGANOS[o].indicadores.includes(n));
+  const pintarAyuda = () => {
+    const n = sel.value, r = reglas[n];
+    val.placeholder = `Ej.: ${EJEMPLO[n]}…`;
+    val.inputMode = n === "presion_arterial" ? "text" : "decimal";
+    ayuda.innerHTML = `${escapar(fichas[organoDe(n)]?.como_medir ?? "")}<br><span class="rango">Normal: ${r?.verde ? `${r.verde[0]}–${r.verde[1]}` : `${r.componentes.sistolica.verde.join("–")} / ${r.componentes.diastolica.verde.join("–")}`} ${escapar(r?.unidad ?? "")}</span>`;
+    res.textContent = "";
+  };
+  sel.addEventListener("change", pintarAyuda);
+  window.abrirRegistro = (n) => {
+    if (n && reglas[n]) sel.value = n;
+    pintarAyuda(); val.value = ""; res.textContent = "";
+    dlg.showModal(); val.focus();
+  };
+  $("#btnRegistrar").addEventListener("click", () => window.abrirRegistro(seleccionado ? (fichas[seleccionado]?.indicadores ?? [])[0] : null));
+  $("#regCancelar").addEventListener("click", () => dlg.close());
+  $("#formRegistro").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const boton = $("#regGuardar");
+    boton.disabled = true; boton.textContent = "Guardando…";
+    try {
+      const r = await registrar(sel.value, val.value);
+      dlg.close();
+      seleccionar(organoDe(r.indicador));
+    } catch (e) {
+      res.textContent = e.message;
+      val.focus();
+    } finally {
+      boton.disabled = false; boton.textContent = "Guardar";
+    }
+  });
+}
+
+// ---------- Guía de primeros pasos (se muestra una vez) ----------
+function iniciarGuia() {
+  const guia = $("#guia");
+  let visto = false;
+  try { visto = localStorage.getItem("guia-vista") === "1"; } catch { /* sin almacenamiento */ }
+  guia.hidden = visto || location.search.includes("quieto");
+  $("#guiaCerrar").addEventListener("click", () => {
+    guia.hidden = true;
+    try { localStorage.setItem("guia-vista", "1"); } catch { /* sin almacenamiento */ }
+  });
+}
+
 // ---------- Inicio ----------
 async function iniciar() {
-  const [e, f, r, n, c] = await Promise.all([cargarEstado(), cargarFichas(), json("/api/reglas"), json("/api/nasa/osd575"), json("/api/clima-espacial")]);
+  const [e, f, r, n, c, h] = await Promise.all([cargarEstado(), cargarFichas(), json("/api/reglas"), json("/api/nasa/osd575"), json("/api/clima-espacial"), json("/api/historial/A1")]);
   estado = e; fichas = f; nasa = n; clima = c;
+  fijarSeries(h);
   reglas = Object.fromEntries((r?.indicadores ?? []).map((x) => [x.indicador, x]));
   inicial = structuredClone(estado);
 
@@ -302,6 +395,8 @@ async function iniciar() {
   document.body.addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-organo]");
     if (b) seleccionar(b.dataset.organo);
+    const reg = ev.target.closest("[data-registrar]");
+    if (reg) window.abrirRegistro?.(reg.dataset.registrar);
     const p = ev.target.closest("[data-preguntar]");
     if (p) {
       chat.preguntar(`¿Cómo está mi ${nombreOrgano(p.dataset.preguntar).toLowerCase()} y qué debo hacer?`);
@@ -328,17 +423,37 @@ async function iniciar() {
 
   $("#btnSenal").addEventListener("click", () => { conectado = !conectado; pintarSenal(); if (conectado && enCola) enviarTierra(); });
   $("#btnTierra").addEventListener("click", enviarTierra);
-  $("#pulso").addEventListener("input", (ev) => { const v = Number(ev.target.value); fijar("pulso", v, colorPulso(v)); refrescar(); });
-  $("#btnEmergencia").addEventListener("click", () => {
-    fijar("pulso", 148, "rojo"); fijar("oxigeno", 88, "rojo"); fijar("animo", 1, "rojo");
-    refrescar(); seleccionar("corazon");
+  $("#pulso").addEventListener("input", (ev) => { $("#vPulso").textContent = `${ev.target.value} lpm`; });
+  $("#pulso").addEventListener("change", (ev) => registrar("pulso", ev.target.value));
+  $("#btnEmergencia").addEventListener("click", async () => {
+    await registrar("pulso", 148, { comentar: false });
+    await registrar("oxigeno", 88, { comentar: false });
+    await registrar("animo", 1, { comentar: false });
+    seleccionar("corazon");
+    chat.decir("Detecté **3 indicadores en alerta**: pulso 148 lpm, oxígeno 88 % y ánimo 1/5. Avisa ahora a la tripulación y sigue el protocolo de a bordo. Si quieres, pregúntame qué hacer mientras tanto.", true);
   });
   $("#btnTormenta").addEventListener("click", () => {
     const i = indicador(estado, "radiacion");
     if (i) Object.assign(i, { valor: "SEP · ahora", color: "rojo", antiguedad_min: 0, motivo: "Evento de partículas solares (simulado).", accion: "Ve al área protegida de la nave según el protocolo y revisa tu dosímetro." });
     refrescar(); seleccionar("radiacion");
   });
-  $("#btnReiniciar").addEventListener("click", () => { estado = structuredClone(inicial); refrescar(); seleccionar(null); });
+  $("#btnReiniciar").addEventListener("click", async () => {
+    const r = await fetch("/api/demo/reiniciar", { method: "POST" }).catch(() => null);
+    if (r?.ok) { estado = await r.json(); fijarSeries(await json("/api/historial/A1")); } else { estado = structuredClone(inicial); }
+    refrescar(); seleccionar(null);
+  });
+  iniciarRegistro();
+  iniciarGuia();
+  // Actualización en vivo (sensor simulado o registros desde otro equipo): cada 15 s si la pestaña está visible.
+  setInterval(async () => {
+    if (document.hidden) return;
+    const e = await json("/api/estado/A1");
+    if (!e || JSON.stringify(e.indicadores.map((i) => [i.indicador, i.valor])) === JSON.stringify(estado.indicadores.map((i) => [i.indicador, i.valor]))) return;
+    const rojosAntes = new Set(estado.indicadores.filter((i) => i.color === "rojo").map((i) => i.indicador));
+    estado = e; fijarSeries(await json("/api/historial/A1")); refrescar();
+    const nuevos = e.indicadores.filter((i) => i.color === "rojo" && !rojosAntes.has(i.indicador));
+    if (nuevos.length) chat.decir(`Ojo: tu **${NOMBRES_INDICADORES[nuevos[0].indicador] ?? nuevos[0].indicador}** acaba de pasar a alerta (${nuevos[0].valor} ${nuevos[0].unidad}). Avisa a la tripulación y sigue el protocolo de a bordo.`, true);
+  }, 15000);
 
   reloj();
   pintarSenal();
