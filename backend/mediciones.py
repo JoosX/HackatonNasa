@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
+from evolucion import describir
 
 CATALOGO = {
     "pulso": ("Pulso", "lpm"), "presion_arterial": ("Presión arterial", "mmHg"),
@@ -101,7 +102,8 @@ def historial(astronauta_id, indicador=None, limite=100, offset=0):
 def estado_indicador(astronauta_id, nombre, ahora=None):
     ahora = ahora or dt.datetime.now(dt.timezone.utc)
     regla = next(r for r in json.loads((Path(__file__).resolve().parent.parent / 'data/reglas.json').read_text(encoding='utf-8'))['indicadores'] if r['indicador'] == nombre)
-    filas = historial(astronauta_id, nombre, 100)['mediciones']
+    registros = historial(astronauta_id, nombre, 100)
+    filas = registros['mediciones']
     def componentes(m):
         if nombre == 'presion_arterial':
             return [(m['valor'], regla['componentes']['sistolica']), (m['diastolica'], regla['componentes']['diastolica'])]
@@ -115,6 +117,8 @@ def estado_indicador(astronauta_id, nombre, ahora=None):
     base['historial'] = [{'valor': m['valor'], 'diastolica': m['diastolica'], 'fecha': m['fecha'], 'contexto': m['contexto'],
                           'sospechoso': sospechoso(m)} for m in reversed(filas)]
     if not filas:
+        if nombre in ('pulso','sueno'):
+            base['evolucion'] = describir(base,ahora,registros['total']>100)
         return base
     ultima = filas[0]
     edad = max(0, int((ahora - dt.datetime.fromisoformat(ultima['fecha'])).total_seconds() // 60))
@@ -132,6 +136,8 @@ def estado_indicador(astronauta_id, nombre, ahora=None):
         color = max((clasificar(v, r) for v, r in componentes(ultima)), key=['verde','amarillo','rojo'].index)
         base.update(calidad='vigente', color=color, motivo='Registro manual reciente.',
                     accion=regla['accion'].get(color, 'Consulta el contexto y la evolución de tu medición.'))
+    if nombre in ('pulso','sueno'):
+        base['evolucion'] = describir(base,ahora,registros['total']>100)
     return base
 
 

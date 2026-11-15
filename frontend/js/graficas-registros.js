@@ -1,3 +1,4 @@
+import { renderEvolucion } from './evolucion.js';
 const escapar = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const numero = v => Number(v).toLocaleString('es',{maximumFractionDigits:2});
 const fecha = f => new Date(f).toLocaleString('es',{dateStyle:'short',timeStyle:'short'});
@@ -5,7 +6,7 @@ const fecha = f => new Date(f).toLocaleString('es',{dateStyle:'short',timeStyle:
 export function graficaRegistro(i, color) {
   const puntos = i.historial ?? [], validos = puntos.filter(p=>!p.sospechoso);
   const presion = i.indicador === 'presion_arterial';
-  const aviso = `<p class="registro-aviso"><strong>${escapar(i.nombre)} · ${escapar(i.calidad)}</strong><br>${escapar(i.motivo)} Rangos ilustrativos; no diagnóstico.</p>`;
+  const aviso = `<p class="registro-aviso"><strong>${escapar(i.nombre)} · ${escapar(i.calidad)}</strong><br>${escapar(i.motivo)} Rangos ilustrativos; no diagnóstico.</p>` + renderEvolucion(i);
   if (!validos.length) return aviso + '<p>Sin muestras confiables para graficar este indicador.</p>';
   const W=400,H=160,t0=new Date(puntos[0].fecha).getTime(),t1=new Date(puntos.at(-1).fecha).getTime();
   const vals=validos.flatMap(p=>presion ? [p.valor,p.diastolica] : [p.valor]);

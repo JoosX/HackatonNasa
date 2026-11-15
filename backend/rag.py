@@ -150,7 +150,7 @@ def _reglas() -> dict:
     return _cache["reglas"]
 
 
-def resumen_estado(estado: dict | None) -> tuple[str, list[dict]]:
+def _resumen_estado_base(estado: dict | None) -> tuple[str, list[dict]]:
     """Resumen determinista (sin IA) de los indicadores fuera de rango, con la acción de reglas.json."""
     if not estado or not estado.get("indicadores"):
         return "Todavía no tengo mediciones tuyas. Cuando registres tus signos vitales, te cuento cómo vas. 🙂", []
@@ -189,12 +189,26 @@ def resumen_estado(estado: dict | None) -> tuple[str, list[dict]]:
              f"Te cuento cómo vas: la mayoría va bien ({verdes} en normal), pero "
              f"{'hay algo' if len(fuera) == 1 else f'hay {len(fuera)} cosas'} que conviene vigilar:")
     cierre = ("Avisa a la tripulación ya; no tienes que manejarlo solo." if hay_alerta else
-              "Nada de esto es para alarmarse, pero vale la pena cuidarlo hoy. ¿Quieres que veamos alguno en detalle?")
+              "Consulta la guía y el contexto de la medición. Si hay síntomas importantes, sigue el protocolo de a bordo.")
     texto = intro + "\n" + "\n".join(lineas) + "\n\n" + cierre
     if aviso:
         texto += '\n\nDatos pendientes de comprobar:\n' + aviso
     if any(i.get('regla_ilustrativa') for i in indicadores):
         texto += '\nClasificación ilustrativa; no es diagnóstico. Otros indicadores personales de demostración se excluyen.'
+    return texto, fuentes
+
+
+def resumen_estado(estado: dict | None) -> tuple[str, list[dict]]:
+    texto, fuentes = _resumen_estado_base(estado)
+    cambios=[]
+    for i in (estado or {}).get('indicadores',[]):
+        e=i.get('evolucion')
+        if not e or i.get('origen')!='registro_manual' or (estado or {}).get('modo_demo'):
+            continue
+        etiqueta='' if e['resumen'].startswith(i['nombre']+':') else i['nombre']+': '
+        cambios.append(f"{etiqueta}{e['resumen']} ({e['muestras_usadas']} muestras seleccionadas, {e['registros_validos']} registros válidos en los últimos 7 días)." + ('\n'+'\n'.join(e['advertencias']) if e['advertencias'] else ''))
+    if cambios:
+        texto+='\n\nCambios observados, sin diagnóstico ni atribución de causas:\n'+'\n\n'.join(cambios)
     return texto, fuentes
 
 
@@ -372,6 +386,9 @@ def resumir_estado(estado: dict | None) -> tuple[str, bool]:
         if ind.get('contexto'):
             edad += f", contexto registrado: {ind['contexto']}"
         lineas.append(f"- {nombre}: {ind.get('valor')} {ind.get('unidad', '')}, {palabra}{tend}{edad}")
+        if ind.get('evolucion'):
+            e=ind['evolucion']
+            lineas.append(f"Cambio histórico descriptivo ({e['muestras_usadas']} muestras): {e['resumen']} No demuestra causas ni diagnóstico. " + ' '.join(e['advertencias']))
     for nota in estado.get("notas", []):
         lineas.append(f"- {nota}")
     return "\n".join(lineas) or "Sin datos recientes del astronauta.", hay_rojo

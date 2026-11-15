@@ -57,6 +57,24 @@ El modelo de IA (Gemma 3 4B, ~3,4 GB) no está en el repositorio: cada integrant
 
 ## Pruebas
 
+### Resumen descriptivo de evolución
+
+Pulso y sueño incluyen `evolucion` en `GET /api/estado/{id}`. Se observan los últimos siete días
+(ventana de 168 horas), revisando hasta los 100 registros más recientes. No se establecen valores
+normales personales, causas, predicciones ni diagnósticos. El color clínico ilustrativo no cambia
+por el signo de una diferencia. La ficha muestra fechas, cantidades, límites y acceso a la guía.
+
+Para pulso se comparan las dos últimas lecturas válidas; se advierte si el contexto es distinto o
+no se especificó. Con horas idénticas no se establece una secuencia. Para sueño se usa el último
+registro de cada día UTC, sin sumar duplicados; se compara entre los dos últimos días registrados
+y se explicitan los días intermedios sin datos. Son días de registro UTC, no noches inferidas ni
+fechas locales. Una ventana de 168 horas puede abarcar porciones de ocho fechas UTC.
+
+Las muestras sospechosas y futuras se excluyen. Si la última medición es sospechosa o está ausente,
+no se calcula un cambio actual usando en su lugar datos antiguos. Un dato vencido solo permite una
+comparación identificada como histórica. ORI recibe y presenta este mismo resumen determinista,
+sin depender del modelo para calcular las diferencias. La biblioteca de orientación sigue separada.
+
 ### Medir, comprender y actuar
 
 La ficha de cada indicador abre una orientación con la medición actual, equipo o entrada,
@@ -102,7 +120,7 @@ La suite Python también verifica las 20 series frente al CSV original incluido.
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 ```
 
-129 pruebas Python: registro local, conexión de ocho indicadores y calidad de los datos, biblioteca de orientación sin IA, guías, reglas del semáforo, fichas, datos NASA y procedencia del CSV, modelo 3D, asistente y API. Las dos pruebas con el modelo se saltan si Ollama está apagado. Las pruebas JavaScript se ejecutan con `node --test tests/*.test.mjs`.
+137 pruebas Python: registro local, conexión de ocho indicadores y calidad de los datos, resúmenes descriptivos de evolución, biblioteca de orientación sin IA, guías, reglas del semáforo, fichas, datos NASA y procedencia del CSV, modelo 3D, asistente y API. Las dos pruebas con el modelo se saltan si Ollama está apagado. Las pruebas JavaScript se ejecutan con `node --test tests/*.test.mjs`.
 
 ## Estructura y dueños
 

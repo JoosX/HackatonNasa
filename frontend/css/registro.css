@@ -12,5 +12,15 @@
 .registro-filtros label { flex: 1; min-width: 170px; }
 .registro-historial .nasa-tabla td:last-child { white-space: normal; overflow-wrap: anywhere; min-width: 160px; font-family: var(--fuente); }
 .registro-historial .botones { align-items: center; font-size: 12px; }
+.evolucion-tarjeta { border:1px solid var(--linea-2); padding:16px; display:grid; gap:10px; margin:14px 0; background:var(--panel-2); }
+.evolucion-tarjeta h3 { font-size:16px; }
+.evolucion-tarjeta p,.evolucion-tarjeta summary,.evolucion-avisos { font-size:12px; line-height:1.6; }
+.evolucion-tarjeta summary { cursor:pointer; }
+.evolucion-conteo { color:var(--suave); }
+.evolucion-comparacion { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:0; }
+.evolucion-comparacion dt { font-size:10px; color:#b8b8b8; }
+.evolucion-comparacion dd { font:700 17px var(--mono); margin:6px 0; overflow-wrap:anywhere; }
+.evolucion-avisos { border-left:2px solid var(--amarillo); padding-left:20px; margin:0; color:#d9c7a7; }
+@media(max-width:600px) { .evolucion-comparacion { grid-template-columns:1fr; } }
 @media(min-width:1101px) { .signos { grid-template-columns: repeat(3,minmax(0,1fr)); } .lienzo { min-height:220px; } }
 @media(max-width:600px) { .registro-contenido { padding: 18px; } .registro-form { grid-template-columns: 1fr; } }
