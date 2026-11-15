@@ -6,6 +6,8 @@ Asistente de salud **local** para astronautas, con **ORI**, un compañero de sal
 
 Reto: *Create Health Monitoring Software for Astronauts on Space Missions*.
 
+![Copiloto de salud: cuerpo 3D anatómico, signos vitales y ORI, el compañero de salud a bordo](docs/img/overview-es.jpg)
+
 ## La problemática
 
 > ¿Cómo podríamos permitir que una tripulación con conocimientos médicos parciales sepa qué está pasando con su salud y cómo actuar, aun sin conexión con la Tierra?
@@ -13,6 +15,14 @@ Reto: *Create Health Monitoring Software for Astronauts on Space Missions*.
 En la Estación Espacial, los médicos de vuelo en la Tierra responden casi en tiempo real. Rumbo a Marte ese modelo deja de funcionar: un mensaje tarda **de 3 a 22 minutos solo de ida** (hasta ~44 minutos ida y vuelta), y cada ~2 años una conjunción solar corta la comunicación durante **unas dos semanas**. Incluso alrededor de la Luna, Artemis II estuvo **unos 40 minutos** sin contacto detrás de ella. Los astronautas no son médicos y una emergencia no puede esperar.
 
 **Qué hace la app:** registra los signos vitales, los compara con el normal de cada persona, los muestra como un semáforo en un cuerpo 3D y, con ORI, explica en palabras simples qué está pasando, qué hacer y a quién avisar, todo dentro de la nave. Cuando vuelve el enlace, el resumen se envía a los médicos en la Tierra, que son quienes deciden cualquier tratamiento.
+
+## Capturas
+
+<table>
+<tr><td width="50%" valign="top"><img src="docs/img/organ-es.jpg" alt="Ficha de un órgano"><br><b>Ficha de un órgano</b><br>Al pasar el mouse sobre un órgano se ven sus valores y tendencia; la ficha agrega la gráfica de 7 días con la banda normal.</td><td width="50%" valign="top"><img src="docs/img/emergency-es.jpg" alt="Emergencia sin enlace con la Tierra"><br><b>Emergencia sin enlace con la Tierra</b><br>Con una alerta y sin señal, ORI explica qué pasa, qué puedes sentir, a quién llamar y qué hacer.</td></tr>
+<tr><td width="50%" valign="top"><img src="docs/img/walkthrough-es.jpg" alt="Recorrido de emergencia paso a paso"><br><b>Recorrido de emergencia paso a paso</b><br>¿Responde? ¿Respira? Botones grandes que llevan a la RCP y al desfibrilador; funciona aunque falle todo lo demás.</td><td width="50%" valign="top"><img src="docs/img/ori-ai-es.jpg" alt="ORI con la IA local"><br><b>ORI con la IA local</b><br>Empatía y explicación de tus propios datos, más pasos copiados de la guía, sin internet.</td></tr>
+<tr><td width="50%" valign="top"><img src="docs/img/measure-es.jpg" alt="Medir, comprender y actuar"><br><b>Medir, comprender y actuar</b><br>Cómo tomar cada medida, por qué importa y cuándo avisar, con sus fuentes.</td><td width="50%" valign="top"><img src="docs/img/overview-es.jpg" alt="Vista general"><br><b>Vista general</b><br>Cuerpo 3D con los colores del panel de alarmas de una nave, tira de signos vitales y estado general.</td></tr>
+</table>
 
 ## Ejecutar
 
@@ -24,7 +34,7 @@ Desde la raíz del repositorio:
 uv run --with fastapi --with uvicorn uvicorn backend.main:app --port 8000
 ```
 
-Abrir http://localhost:8000 en Chrome o Chromium (el visor 3D necesita WebGL). La app se abre en el idioma del navegador; con **`?lang=es`** se fuerza el español y con `?lang=en` el inglés.
+Abrir http://localhost:8000 en Chrome o Chromium (el visor 3D necesita WebGL). La app se abre **en inglés por defecto**; con `?lang=es` (o el botón **ES | EN**) se cambia a español.
 
 Atajos para la demo: `?organo=corazon` abre un órgano (la cámara lo enfoca) · `#emergencia` simula una emergencia · `#sinsenal` empieza sin conexión · `#hover-corazon` muestra la tarjeta de hover (capturas) · `#preguntar=texto` le hace esa pregunta a ORI al cargar · `?quieto` detiene el giro.
 
@@ -32,7 +42,7 @@ El modelo de IA (Gemma 3 4B, ~3,4 GB) no está en el repositorio: se descarga co
 
 ## Idiomas
 
-La app funciona en **español e inglés** (botón **ES | EN** arriba a la derecha). Se recuerda la elección; sin elección, usa el idioma del navegador.
+La app funciona en **español e inglés** (botón **ES | EN** arriba a la derecha). Por defecto está en inglés; la elección se recuerda en el navegador.
 
 - Interfaz: `frontend/js/i18n.js` (`L("español", "English")` en todos los módulos).
 - Servidor: `backend/idioma.py` lee la cookie `idioma` (o `?lang=`) en cada petición; ORI, reglas, fichas, el motor de reglas, el clima espacial y los protocolos de emergencia responden en ese idioma. ORI reconoce frases en los dos idiomas.

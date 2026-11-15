@@ -4,11 +4,13 @@
 import { ORGANOS, COLORES, NOMBRES_INDICADORES, colorOrgano, indicador, historial, sparkline, antiguedadTexto } from "./organos.js";
 
 const NS = "http://www.w3.org/2000/svg";
-import { L } from "./i18n.js";
+import { L, LOCALE, EN } from "./i18n.js";
 const ESTADO_TXT = { verde: "Normal", amarillo: L("Precaución", "Caution"), rojo: L("Alerta", "Warning"), "sin dato": L("Sin dato", "No data") };
 const ORDEN = ["cerebro", "ojos", "pulmones", "corazon", "sangre", "huesos", "piel"];
 const escapar = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const num = (v) => (typeof v === "number" ? v.toLocaleString("es", { maximumFractionDigits: 1 }) : escapar(v));
+// Números con el separador decimal del idioma ("-1,1" guardado en la base se muestra "-1.1" en inglés).
+const num = (v) => (typeof v === "number" ? v.toLocaleString(LOCALE, { maximumFractionDigits: 1 })
+  : escapar(EN && /^-?\d+,\d+$/.test(String(v)) ? String(v).replace(",", ".") : v));
 
 export function crearHud({ contenedor, obtenerEstado, obtenerFichas, onSeleccion }) {
   const svg = document.createElementNS(NS, "svg");

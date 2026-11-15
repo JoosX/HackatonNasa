@@ -7,7 +7,7 @@ import {
 } from "./organos.js";
 import { crearChat, avatarORI } from "./chat.js";
 import { crearHud } from "./hud.js";
-import { L, LOCALE, traducirPagina } from "./i18n.js";
+import { L, LOCALE, EN, traducirPagina } from "./i18n.js";
 
 const $ = (s) => document.querySelector(s);
 const reducir = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -24,7 +24,8 @@ let estado, inicial, fichas = {}, reglas = {}, nasa = null, clima = null;
 let visor = null, hud = null, chat = null, seleccionado = null, conectado = true, enCola = 0, primeraVez = true;
 
 const escapar = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const numero = (v) => (typeof v === "number" ? v.toLocaleString(LOCALE, { maximumFractionDigits: 1 }) : escapar(v));
+const numero = (v) => (typeof v === "number" ? v.toLocaleString(LOCALE, { maximumFractionDigits: 1 })
+  : escapar(EN && /^-?\d+,\d+$/.test(String(v)) ? String(v).replace(",", ".") : v));
 const nombreOrgano = (o) => fichas[o]?.nombre ?? ORGANOS[o].nombre;
 
 async function json(url) {

@@ -6,6 +6,8 @@ A **local** health assistant for astronauts, featuring **ORI**, an AI health com
 
 Challenge: *Create Health Monitoring Software for Astronauts on Space Missions*.
 
+![Health copilot: anatomical 3D body, vital signs and ORI, the onboard health companion](docs/img/overview.jpg)
+
 ## The problem
 
 > How might we help a crew with only partial medical knowledge understand what is happening with their health, and how to act, even without a connection to Earth?
@@ -13,6 +15,14 @@ Challenge: *Create Health Monitoring Software for Astronauts on Space Missions*.
 On the Space Station, flight surgeons on Earth answer almost in real time. On the way to Mars that model breaks down: a message takes **3 to 22 minutes one way** (up to ~44 minutes round trip), and every ~2 years a solar conjunction blocks contact for about **two weeks**. Even around the Moon, Artemis II was out of contact for about **40 minutes** behind it. Astronauts are not doctors, and an emergency cannot wait.
 
 **What the app does:** it records vital signs, compares them with each person's own normal, shows them as a traffic light on a 3D body and, through ORI, explains in plain language what is happening, what to do and whom to alert, entirely on board. When the link is back, the summary is sent to the doctors on Earth, who decide on any treatment.
+
+## Screenshots
+
+<table>
+<tr><td width="50%" valign="top"><img src="docs/img/organ.jpg" alt="Organ card"><br><b>Organ card</b><br>Hovering an organ shows its values and trend; the card adds the 7-day chart with the normal range.</td><td width="50%" valign="top"><img src="docs/img/emergency.jpg" alt="Emergency with no link to Earth"><br><b>Emergency with no link to Earth</b><br>With a warning and no signal, ORI explains what is happening, what you may feel, whom to call and what to do.</td></tr>
+<tr><td width="50%" valign="top"><img src="docs/img/walkthrough.jpg" alt="Step-by-step emergency walkthrough"><br><b>Step-by-step emergency walkthrough</b><br>Responding? Breathing? Big buttons lead to CPR and the defibrillator; it works even if everything else fails.</td><td width="50%" valign="top"><img src="docs/img/ori-ai.jpg" alt="ORI with the local AI"><br><b>ORI with the local AI</b><br>Empathy and an explanation of your own data, plus steps copied from the guide, with no internet.</td></tr>
+<tr><td width="50%" valign="top"><img src="docs/img/measure.jpg" alt="Measure, understand and act"><br><b>Measure, understand and act</b><br>How to take each measurement, why it matters and when to alert, with its sources.</td><td width="50%" valign="top"><img src="docs/img/overview.jpg" alt="Overview"><br><b>Overview</b><br>3D body colored like a ship's caution and warning panel, vital signs strip and overall status.</td></tr>
+</table>
 
 ## Run
 
@@ -24,7 +34,7 @@ From the repository root:
 uv run --with fastapi --with uvicorn uvicorn backend.main:app --port 8000
 ```
 
-Open http://localhost:8000 in Chrome or Chromium (the 3D viewer needs WebGL). The app opens in your browser's language; use **`?lang=en`** to force English or `?lang=es` for Spanish.
+Open http://localhost:8000 in Chrome or Chromium (the 3D viewer needs WebGL). The app opens **in English by default**; use `?lang=es` (or the **ES | EN** button) for Spanish.
 
 Demo shortcuts: `?organo=corazon` opens an organ (the camera focuses on it) · `#emergencia` simulates an emergency · `#sinsenal` starts with no link to Earth · `#hover-corazon` shows the hover card (screenshots) · `#preguntar=text` asks ORI that question on load · `?quieto` stops the rotation.
 
@@ -32,7 +42,7 @@ The AI model (Gemma 3 4B, ~3.4 GB) is not in the repository: download it with `o
 
 ## Languages
 
-The app works in **English and Spanish** (**ES | EN** button, top right). The choice is remembered; without a choice, the browser language is used.
+The app works in **English and Spanish** (**ES | EN** button, top right). English is the default; the choice is remembered in the browser.
 
 - Interface: `frontend/js/i18n.js` (`L("español", "English")` in every module).
 - Server: `backend/idioma.py` reads the `idioma` cookie (or `?lang=`) on each request; ORI, rules, cards, the rules engine, space weather and emergency protocols answer in that language. ORI recognizes phrases in both languages.

@@ -1,5 +1,6 @@
 // Idioma de la app: español o inglés.
-// Orden de elección: ?lang=en|es en el enlace > lo elegido antes en este navegador > idioma del navegador.
+// Orden de elección: ?lang=en|es en el enlace > lo elegido antes en este navegador > inglés (por defecto,
+// porque el jurado de Space Apps evalúa en inglés).
 // El servidor recibe el idioma en una cookie (todas las peticiones lo llevan), así ORI, las guías y las reglas
 // responden en el mismo idioma que la interfaz.
 // Código escrito con asistencia de IA (Claude); revisado por el equipo.
@@ -9,9 +10,9 @@ const enNavegador = typeof window !== "undefined" && typeof document !== "undefi
 const delEnlace = enNavegador ? new URLSearchParams(location.search).get("lang") : null;
 let guardado = null;
 try { guardado = enNavegador ? localStorage.getItem("idioma") : null; } catch { /* sin almacenamiento */ }
-const delNavegador = enNavegador ? ((navigator.language || "en").toLowerCase().startsWith("es") ? "es" : "en") : "es";
+const POR_DEFECTO = enNavegador ? "en" : "es";   // en Node (pruebas de Romario) se mantiene el español
 
-export const IDIOMA = IDIOMAS.includes(delEnlace) ? delEnlace : IDIOMAS.includes(guardado) ? guardado : delNavegador;
+export const IDIOMA = IDIOMAS.includes(delEnlace) ? delEnlace : IDIOMAS.includes(guardado) ? guardado : POR_DEFECTO;
 export const EN = IDIOMA === "en";
 export const LOCALE = EN ? "en-US" : "es";
 /** Texto en el idioma activo: L("Hola", "Hello"). */
