@@ -1,61 +1,63 @@
-# Orientación: alcance y validación pendiente
+**English** | [Español](validacion-orientacion.es.md)
 
-Versión 2026-11-14. Adaptación educativa de ApeLogic, para adultos. **Sin aprobación clínica ni certificación NASA.** No se ejecutó una prueba de integración en la laptop de David en esta mejora.
+# Guidance: scope and pending validation
 
-## Qué cambió
+Version 2026-11-14. Educational adaptation by team ApeLogic, for adults. **No clinical approval and no NASA certification.** No integration test was run on David's laptop for this improvement.
 
-El recorrido de emergencia funciona con JavaScript incluido en la página, sin esperar a API, registros, Ollama o internet una vez cargada. Pregunta respuesta y respiración, contempla incertidumbre y prioriza ayuda ante síntomas aunque el panel esté verde. Permite volver, reiniciar y cerrar sin guardar respuestas. No enseña las técnicas específicas de RCP en microgravedad.
+## What changed
 
-Las ocho guías incluyen preparación, equipo, pasos, errores y ausencia de equipo. Las cinco mediciones instrumentales tienen referencias específicas de medición, distintas de las fuentes NASA de contexto. Sueño es diario del equipo; ánimo y estrés son escalas propias no validadas.
+The emergency walkthrough runs with JavaScript included in the page, without waiting for the API, records, Ollama or the internet once loaded. It asks about responsiveness and breathing, accounts for uncertainty and prioritizes help when there are symptoms, even if the panel is green. Users can go back, restart and close without saving answers. It does not teach the specific CPR techniques used in microgravity.
 
-Las reglas conservan sus colores de demostración por compatibilidad. Cada una declara aprobación clínica falsa, responsable, limitación y vigencia de software; la guía permite consultar los cortes concretos. Se retiraron esperas de 15/30 minutos en acciones sin fundamento y cortes de noches del consejo de sueño. Esto es una auditoría documental del prototipo, **no una validación de los cortes**. Para uso real, medicina de vuelo debe aprobar o reemplazar cada regla, dispositivo, contexto y procedimiento.
+The eight guides include preparation, equipment, steps, common mistakes and what to do without the equipment. The five instrument-based measurements have specific measurement references, separate from the NASA context sources. Sleep is a team diary; mood and stress are the team's own unvalidated scales.
 
-ORI deriva expresiones explícitas urgentes a una respuesta fija antes de buscar o generar con IA. Esta detección conservadora puede activar ejemplos y negaciones, no reconoce todas las formas de describir un síntoma y no debe usarse para descartar urgencia. El botón de orientación está siempre disponible. Si el índice de embeddings no coincide con las guías actuales, ORI usa el texto actualizado con búsqueda por palabras; David puede regenerar el índice con su proceso habitual.
+The rules keep their demonstration colors for compatibility. Each one declares that clinical approval is false, who is responsible, its limitations and its software validity period; the guide lets users check the exact cutoffs. Unfounded 15/30-minute waits were removed from the actions, as were the night-count cutoffs from the sleep advice. This is a documentation audit of the prototype, **not a validation of the cutoffs**. For real use, flight medicine must approve or replace each rule, device, context and procedure.
 
-## Fuentes y propósito
+ORI routes explicit urgent expressions to a fixed response before searching or generating with AI. This conservative detection may be triggered by examples and negations, does not recognize every way of describing a symptom and must not be used to rule out urgency. The guidance button is always available. If the embeddings index does not match the current guides, ORI uses the updated text with keyword search; David can regenerate the index with his usual process.
 
-| Fuente | Se usa para | No demuestra |
+## Sources and purpose
+
+| Source | Used for | Does not prove |
 |---|---|---|
-| [RCUK BLS 2025](https://www.resus.org.uk/professional-library/2025-resuscitation-guidelines/adult-basic-life-support-guidelines) | Reconocimiento de falta de respuesta, respiración anormal, ayuda, RCP y DEA | Aprobación del recorrido espacial |
-| [DGLRM / ESAM-SMG 2020](https://pmc.ncbi.nlm.nih.gov/articles/PMC7607644/) | Necesidad de técnicas y sujeción específicas de microgravedad | Que el usuario sepa realizarlas o que la app las valide |
-| [MedlinePlus Pulse](https://medlineplus.gov/ency/article/003399.htm) | Reposo y conteo manual en muñeca | Cortes del semáforo para astronautas |
-| [CDC Blood Pressure](https://www.cdc.gov/high-blood-pressure/measure/index.html) | Preparación y técnica terrestre de presión | Posición aprobada para una misión en microgravedad |
-| [FDA Pulse Oximeter](https://www.fda.gov/consumers/consumer-updates/pulse-oximeter-basics) | Lectura y limitaciones del oxímetro | CO₂, aire de nave o diagnóstico por un porcentaje |
-| [FDA Glucose Devices](https://www.fda.gov/medical-devices/in-vitro-diagnostics/blood-glucose-monitoring-devices) | Uso, higiene y limitaciones del glucómetro | Equivalencia de alarmas capilares con el laboratorio de OSD-575 |
-| [MedlinePlus Temperature](https://medlineplus.gov/ency/article/003400.htm) | Preparación y método de termómetro | Un mismo corte diagnóstico para todos los métodos |
-| [NASA HRP](https://www.nasa.gov/hrp/risks/) / [OSD-575](https://osdr.nasa.gov/bio/repo/data/studies/OSD-575) | Riesgos espaciales y muestras históricas | Validación clínica de las reglas del equipo |
+| [RCUK BLS 2025](https://www.resus.org.uk/professional-library/2025-resuscitation-guidelines/adult-basic-life-support-guidelines) | Recognizing unresponsiveness, abnormal breathing, calling for help, CPR and AED | Approval of the spaceflight walkthrough |
+| [DGLRM / ESAM-SMG 2020](https://pmc.ncbi.nlm.nih.gov/articles/PMC7607644/) | The need for microgravity-specific techniques and restraint | That the user can perform them or that the app validates them |
+| [MedlinePlus Pulse](https://medlineplus.gov/ency/article/003399.htm) | Rest and manual counting at the wrist | Traffic-light cutoffs for astronauts |
+| [CDC Blood Pressure](https://www.cdc.gov/high-blood-pressure/measure/index.html) | Preparation and on-Earth blood pressure technique | An approved position for a microgravity mission |
+| [FDA Pulse Oximeter](https://www.fda.gov/consumers/consumer-updates/pulse-oximeter-basics) | Reading and limitations of the pulse oximeter | CO₂, ship air or a diagnosis from a percentage |
+| [FDA Glucose Devices](https://www.fda.gov/medical-devices/in-vitro-diagnostics/blood-glucose-monitoring-devices) | Use, hygiene and limitations of the glucose meter | Equivalence between capillary alarms and the OSD-575 laboratory |
+| [MedlinePlus Temperature](https://medlineplus.gov/ency/article/003400.htm) | Preparation and thermometer method | A single diagnostic cutoff for every method |
+| [NASA HRP](https://www.nasa.gov/hrp/risks/) / [OSD-575](https://osdr.nasa.gov/bio/repo/data/studies/OSD-575) | Spaceflight risks and historical samples | Clinical validation of the team's rules |
 
-## Prueba breve con personas ajenas al equipo (pendiente)
+## Short test with people outside the team (pending)
 
-Comprobación técnica realizada en navegador local: ruta de colapso con jadeos, ruta consciente con síntomas, acceso desde registro a guía de presión, tabla de límites, derivación de ORI y reapertura con respuestas reiniciadas. Se comprobó activación con Enter, cierre con Escape y foco en la nueva pregunta. En 390 × 844 los botones de decisión tienen 52 px de alto y el diálogo no presenta desborde horizontal; se acortó el aviso para que las tres respuestas iniciales sean visibles. Se restauró el tamaño original del navegador. Estas comprobaciones no son una auditoría completa de accesibilidad ni una prueba con usuarios.
+Technical check carried out in a local browser: the collapse path with gasping, the conscious path with symptoms, access from the log to the blood pressure guide, the limits table, ORI routing and reopening with reset answers. Activation with Enter, closing with Escape and focus on the new question were checked. At 390 × 844, the decision buttons are 52 px tall and the dialog has no horizontal overflow; the notice was shortened so the first three answers are visible. The browser's original size was restored. These checks are not a full accessibility audit or a user test.
 
-No presentar una comprobación técnica como prueba con usuarios. Pidan a tres personas sin formación médica que completen estos escenarios con datos de demostración, sin explicarles dónde hacer clic. No simular maniobras sobre personas.
+Do not present a technical check as a user test. Ask three people without medical training to complete these scenarios with demo data, without telling them where to click. Do not simulate maneuvers on people.
 
-1. «Tu compañero se desploma y solo jadea. ¿Dónde buscas ayuda y qué harías primero?» Debe abrir orientación, llegar a la ruta de reanimación y priorizar ayuda sin esperar mediciones o chat.
-2. «Tienes dolor de pecho, pero el pulso aparece verde.» Debe pedir ayuda; el verde no debe tranquilizarlo.
-3. «Quieres registrar presión. No sabes qué preparar.» Debe encontrar equipo, preparación, pasos, unidad y ambos valores.
-4. «No tienes oxímetro.» Debe comunicar síntomas y dejar el dato ausente; nunca inventar un porcentaje.
-5. «¿Estos colores los aprobó NASA?» Debe encontrar la explicación y responder que no.
+1. "Your crewmate collapses and is only gasping. Where do you look for help and what would you do first?" They should open the guidance, reach the resuscitation path and prioritize help without waiting for measurements or the chat.
+2. "You have chest pain, but your pulse shows green." They should ask for help; green should not reassure them.
+3. "You want to log blood pressure. You don't know what to prepare." They should find the equipment, preparation, steps, unit and both values.
+4. "You don't have a pulse oximeter." They should report symptoms and leave the value missing; never make up a percentage.
+5. "Did NASA approve these colors?" They should find the explanation and answer no.
 
-Registrar por persona: escenario, tiempo hasta primera acción, tarea completada sin ayuda, error observado y comentario literal. Meta interna de usabilidad (no clínica): localizar ayuda en 10 segundos y cero interpretaciones de «verde = emergencia descartada». Si alguien se equivoca, ajustar y repetir con otra persona. No afirmar que la meta se cumplió hasta tener resultados.
+Record for each person: scenario, time to first action, task completed without help, error observed and verbatim comment. Internal usability goal (not clinical): find help within 10 seconds and zero interpretations of "green = emergency ruled out". If someone makes a mistake, adjust and repeat with another person. Do not claim the goal was met until there are results.
 
-| Persona anónima | Escenario | Segundos | Sin ayuda | Error / comentario |
+| Anonymous person | Scenario | Seconds | Without help | Error / comment |
 |---|---|---|---|---|
-| Pendiente | — | — | — | No se realizó todavía |
+| Pending | — | — | — | Not carried out yet |
 
-## Revisión profesional (pendiente)
+## Professional review (pending)
 
-Revisor de medicina de vuelo / urgencias por asignar. Solicitar revisión del texto completo, rutas de incertidumbre, RCP/DEA según entorno y equipamiento, criterios de aviso, intervalos de plausibilidad, antigüedad de datos y cada corte de color. Registrar nombre, credencial, fecha, versión, observaciones y aprobación explícita antes de cambiar el estado a aprobado. No sustituir esta revisión con fuentes bibliográficas ni con aprobación del equipo.
+Flight medicine / emergency medicine reviewer to be assigned. Request a review of the full text, the uncertainty paths, CPR/AED according to environment and equipment, alert criteria, plausibility ranges, data age and every color cutoff. Record name, credentials, date, version, comments and explicit approval before changing the status to approved. Do not replace this review with bibliographic sources or team approval.
 
-## Integración en la versión DavidMAC (2026-11-15)
+## Integration into the DavidMAC version (2026-11-15)
 
-Partes de la rama `romario/orientacion-fundamentada` integradas sobre la versión con base de datos de a bordo y protocolos de ORI:
+Parts of the `romario/orientacion-fundamentada` branch integrated on top of the version with the onboard database and ORI protocols:
 
-- **Recorrido de emergencia** (árbol de decisión ¿responde? / ¿respira?): botón «Orientación urgente» en la barra superior y botón «Abrir recorrido paso a paso» en cada respuesta de emergencia de ORI. Funciona sin servidor, sin IA y sin enlace.
-- **Guía «Medir, comprender y actuar»** por indicador (`data/medicion_guiada.json`, `/api/orientacion`), accesible desde «¿Cómo tomo esta medida?» en el registro.
-- **Contexto de la medición** (reposo, ejercicio, ayunas, después de comer): se guarda en la base de datos; la glucosa medida fuera de ayunas no se clasifica.
-- **Calidad del dato** (vigente, sospechoso, vencido, contexto pendiente) calculada por el motor de reglas.
-- **Validación declarada** en `data/reglas.json` y retirada de esperas de 15/30 minutos sin fundamento, también en los protocolos de ORI.
-- **Robustez**: si el índice de la IA no coincide con las guías actuales se usan las guías actuales; el chat usa el estado de la base de datos, no el enviado por el navegador.
+- **Emergency walkthrough** (decision tree: responding? / breathing?): "Urgent guidance" button in the top bar and "Open step-by-step walkthrough" button in every ORI emergency answer. Works without the server, the AI or the Earth link.
+- **"Measure, understand and act" guide** for each indicator (`data/medicion_guiada.json`, `/api/orientacion`), opened from "How do I take this measurement?" in the log.
+- **Measurement context** (at rest, exercise, fasting, after eating): stored in the database; glucose measured outside fasting is not classified.
+- **Data quality** (current, suspicious, outdated, context pending) computed by the rules engine.
+- **Declared validation** in `data/reglas.json` and removal of unfounded 15/30-minute waits, also in ORI's protocols.
+- **Robustness**: if the AI index does not match the current guides, the current guides are used; the chat uses the database state, not the one sent by the browser.
 
-No se integraron `mediciones.py` ni `evolucion.py`: duplican el registro (`db.py`) y el motor de reglas (`motor.py`) de esta versión. Diferencia de criterio pendiente: ORI responde a las urgencias con un protocolo paso a paso en el chat (empático, con a quién llamar), además de derivar al recorrido. Debe revisarlo medicina de vuelo igual que el resto.
+`mediciones.py` and `evolucion.py` were not integrated: they duplicate this version's log (`db.py`) and rules engine (`motor.py`). Pending difference in approach: ORI answers emergencies with a step-by-step protocol in the chat (empathetic, with whom to call), in addition to routing to the walkthrough. Flight medicine must review it like everything else.

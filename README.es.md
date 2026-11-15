@@ -13,7 +13,7 @@
 NASA Space Apps Challenge 2026 · Moquegua, Perú<br>
 [English](README.md) · **Español**
 
-[El desafío](https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/) · [Inicio rápido](#inicio-rápido) · [IA local](IA_LOCAL.md)
+[El desafío](https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/) · [Inicio rápido](#inicio-rápido) · [IA local](IA_LOCAL.es.md)
 
 </div>
 
@@ -69,7 +69,7 @@ uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 node --test tests/*.mjs
 ```
 
-Consulta la [configuración de IA](IA_LOCAL.md), los [créditos del modelo](frontend/modelos/LEEME.md) y la [revisión pendiente de las guías](docs/validacion-orientacion.md).
+Consulta la [configuración de IA](IA_LOCAL.es.md), los [créditos del modelo](frontend/modelos/LEEME.md#español) y la [revisión pendiente de las guías](docs/validacion-orientacion.es.md).
 
 </details>
 
