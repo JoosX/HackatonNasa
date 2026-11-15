@@ -1,0 +1,120 @@
+{
+  "version": "2026-11-14",
+  "alcance": "Educational instructions for adults, adapted by the team. Terrestrial references: the mission's equipment and approved procedure take precedence. Pending review by flight medicine.",
+  "indicadores": {
+    "pulso": {
+      "preparacion": "If you want to log a resting pulse, rest for at least 10 minutes. Do not wait that long in an emergency.",
+      "pasos": [
+        "Use the monitor according to its manual. As a manual alternative, place your index and middle fingers on the inside of the wrist, below the base of the thumb.",
+        "When you feel the beats, count them for one full minute.",
+        "Log the result in bpm and whether you were at rest or exercising."
+      ],
+      "errores": "Comparing rest with exercise or losing count. If you cannot get a reading, do not make up a value or delay urgent help.",
+      "sin_equipo": "You can count the pulse at the wrist if you know how. If you cannot find it, ask for support; this count does not replace assessing a person who is not responding.",
+      "fuente": {
+        "nombre": "MedlinePlus — Pulse",
+        "url": "https://medlineplus.gov/ency/article/003399.htm"
+      }
+    },
+    "presion_arterial": {
+      "preparacion": "For a routine measurement, empty your bladder and rest for 5 minutes. Avoid food and drink during the previous 30 minutes. Note it if these conditions were not met.",
+      "pasos": [
+        "Use a properly sized cuff on the bare arm, following the blood pressure monitor's manual.",
+        "On Earth: back supported, legs uncrossed, feet flat and arm at chest height. In microgravity, use the restraint and position in the mission procedure.",
+        "Do not talk while it measures. Log systolic and diastolic in mmHg.",
+        "For a routine measurement, take at least two readings 1–2 minutes apart and keep each one."
+      ],
+      "errores": "A cuff over clothing, the wrong size, talking or comparing different positions can change the reading. Do not use the timing of a routine measurement to delay an emergency.",
+      "sin_equipo": "Without a blood pressure monitor you cannot get this value. Leave it unlogged and ask for the device; do not estimate it from the pulse.",
+      "fuente": {
+        "nombre": "CDC — Measuring Your Blood Pressure",
+        "url": "https://www.cdc.gov/high-blood-pressure/measure/index.html"
+      }
+    },
+    "oxigeno": {
+      "preparacion": "Read the pulse oximeter's manual. Keep your hand warm and relaxed; remove nail polish from the finger you use.",
+      "pasos": [
+        "Place the pulse oximeter on the finger according to its manual and stay still.",
+        "Wait for a stable reading and log the SpO₂ saturation in %, without confusing it with the pulse.",
+        "Note symptoms, date and reading conditions. A number that looks good does not rule out shortness of breath."
+      ],
+      "errores": "Movement, a cold hand, circulation, nail polish and skin pigmentation can affect accuracy. The pulse oximeter does not measure CO₂ or the quality of the ship's air.",
+      "sin_equipo": "Do not estimate a percentage from how the person looks. If there is difficulty breathing, ask for help without waiting for the pulse oximeter.",
+      "fuente": {
+        "nombre": "FDA — Pulse Oximeter Basics",
+        "url": "https://www.fda.gov/consumers/consumer-updates/pulse-oximeter-basics"
+      }
+    },
+    "glucosa": {
+      "preparacion": "Use the glucose meter only if it is part of the mission plan and you are trained. Wash and dry your hands well; check the supplies and how they were stored.",
+      "pasos": [
+        "Follow the manual for the glucose meter, strips and lancet and the mission's blood-handling procedure.",
+        "Read the device's unit: this form accepts mg/dL. Do not copy a value in mmol/L as if it were mg/dL.",
+        "Log whether you were fasting or had eaten, plus the date and symptoms.",
+        "Dispose of sharps according to the onboard procedure; do not share single-use supplies."
+      ],
+      "errores": "Dirty or wet hands, badly stored strips, dehydration, certain substances and environmental conditions can affect the result. Do not adjust medication based on this prototype's colors.",
+      "sin_equipo": "Without a glucose meter and proper supplies, leave the value missing. The historical OSD-575 tests do not replace a personal reading.",
+      "fuente": {
+        "nombre": "FDA — Blood Glucose Monitoring Devices",
+        "url": "https://www.fda.gov/medical-devices/in-vitro-diagnostics/blood-glucose-monitoring-devices"
+      }
+    },
+    "temperatura": {
+      "preparacion": "Use a digital thermometer according to its manual. For a routine oral reading, wait 20–30 minutes after eating, smoking or drinking something cold or hot.",
+      "pasos": [
+        "Clean the device according to its manual and the mission procedure.",
+        "Use the method approved for that device. If oral, place the probe under the tongue and close your mouth until the device signals.",
+        "Log °C and write the method in the notes: oral, armpit, ear or forehead. Do not compare methods as if they were equivalent."
+      ],
+      "errores": "Recent food or drink, exercise and different methods can change the reading. Do not add or subtract an improvised correction between methods.",
+      "sin_equipo": "Touching the forehead does not give a temperature in °C. Leave the value missing and report the symptoms.",
+      "fuente": {
+        "nombre": "MedlinePlus — Temperature measurement",
+        "url": "https://medlineplus.gov/ency/article/003400.htm"
+      }
+    },
+    "sueno": {
+      "preparacion": "Choose a consistent criterion: hours actually slept, not just time in bed. This is a team diary, not a validated clinical test.",
+      "pasos": [
+        "Write down the estimated hours of sleep for the day and the matching date.",
+        "Say in the notes whether you included naps and whether it is an estimate or a device reading.",
+        "Use the same criterion every day. The comparison groups by UTC date and keeps the last reading of each day."
+      ],
+      "errores": "Logging the same day twice does not add hours in the comparison. One short night does not prove the cause of a symptom.",
+      "sin_equipo": "You can log an honest estimate. If you do not remember, leave the value missing; do not enter zero to mean unknown.",
+      "fuente": {
+        "nombre": "NASA HRP — risk context; diary method defined by the team",
+        "url": "https://www.nasa.gov/hrp/risks/"
+      }
+    },
+    "animo": {
+      "preparacion": "Voluntary self-report of your current state. Team scale, without clinical validation; it does not diagnose a disorder.",
+      "pasos": [
+        "Choose how you feel: 1 very low, 2 low, 3 medium, 4 good, 5 very good.",
+        "Log the date and, if you want, a note about the context.",
+        "Compare only using the same meaning of the scale. If you need help, say so regardless of the number."
+      ],
+      "errores": "Do not treat a score as a diagnosis or assign it to another person without asking them. It is not a fitness-for-duty test.",
+      "sin_equipo": "No sensor needed. If you prefer not to answer, leave the value missing.",
+      "fuente": {
+        "nombre": "NASA HRP — behavioral context; scale defined by the team",
+        "url": "https://www.nasa.gov/hrp/risks/"
+      }
+    },
+    "estres": {
+      "preparacion": "Voluntary self-report of your current stress. Team scale, without clinical validation.",
+      "pasos": [
+        "Choose your perceived stress: 1 very low, 2 low, 3 medium, 4 high, 5 very high.",
+        "Log the date and context if you want to share it.",
+        "Ask for support when you need it, even if the scale shows a low value."
+      ],
+      "errores": "This scale goes the opposite way from mood: a higher number means more stress. Do not use it to diagnose or penalize a crew member.",
+      "sin_equipo": "No sensor needed. If you prefer not to answer, leave the value missing.",
+      "fuente": {
+        "nombre": "NASA HRP — behavioral context; scale defined by the team",
+        "url": "https://www.nasa.gov/hrp/risks/"
+      }
+    }
+  }
+}

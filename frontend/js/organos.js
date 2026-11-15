@@ -1,6 +1,7 @@
 // Datos compartidos por el cuerpo 2D y el 3D.
 // Los nombres de órganos son el CONTRATO con el modelo de Blender y con P3.
 // Código escrito con asistencia de IA (Claude); revisado por el equipo.
+import { L } from "./i18n.js";
 
 export const COLORES = { verde: "#4cb782", amarillo: "#e3a008", rojo: "#e5484d", "sin dato": "#6b6b6b" };   // código C&W de vuelo
 const ORDEN = { "sin dato": 0, verde: 1, amarillo: 2, rojo: 3 };
@@ -8,51 +9,51 @@ const ORDEN = { "sin dato": 0, verde: 1, amarillo: 2, rojo: 3 };
 // Qué muestra cada órgano. Textos breves basados en NASA HRP (ilustrativos; P6 los reemplaza por fichas.json).
 export const ORGANOS = {
   corazon: {
-    nombre: "Corazón", indicadores: ["pulso", "presion_arterial"],
-    espacio: "Sin gravedad, la sangre se desplaza hacia el pecho y la cabeza; el corazón y los vasos se adaptan y la presión y el pulso pueden cambiar.",
+    nombre: L("Corazón", "Heart"), indicadores: ["pulso", "presion_arterial"],
+    espacio: L("Sin gravedad, la sangre se desplaza hacia el pecho y la cabeza; el corazón y los vasos se adaptan y la presión y el pulso pueden cambiar.", "Without gravity, blood shifts toward the chest and head; the heart and vessels adapt and blood pressure and pulse can change."),
     fuente: "NASA HRP – Cardiovascular Adaptations",
   },
   cerebro: {
-    nombre: "Cerebro y ánimo", indicadores: ["animo", "estres", "sueno"],
-    espacio: "El aislamiento, el encierro y los horarios irregulares afectan el sueño, el ánimo y la atención.",
+    nombre: L("Cerebro y ánimo", "Brain and mood"), indicadores: ["animo", "estres", "sueno"],
+    espacio: L("El aislamiento, el encierro y los horarios irregulares afectan el sueño, el ánimo y la atención.", "Isolation, confinement and irregular schedules affect sleep, mood and attention."),
     fuente: "NASA HRP – Behavioral Health; Sleep and Irregular Schedules",
   },
   pulmones: {
-    nombre: "Pulmones", indicadores: ["oxigeno"],
-    espacio: "El aire de la nave se recicla; niveles altos de CO₂ o bajos de oxígeno afectan la respiración y causan dolor de cabeza.",
+    nombre: L("Pulmones", "Lungs"), indicadores: ["oxigeno"],
+    espacio: L("El aire de la nave se recicla; niveles altos de CO₂ o bajos de oxígeno afectan la respiración y causan dolor de cabeza.", "Ship air is recycled; high CO₂ or low oxygen levels affect breathing and cause headaches."),
     fuente: "NASA HRP – Hostile/Closed Environments; Hypoxia",
   },
   huesos: {
-    nombre: "Huesos", indicadores: ["perdida_osea"],
-    espacio: "Sin gravedad, los huesos pierden entre 1 y 1,5 % de densidad por mes si no hay ejercicio de resistencia.",
+    nombre: L("Huesos", "Bones"), indicadores: ["perdida_osea"],
+    espacio: L("Sin gravedad, los huesos pierden entre 1 y 1,5 % de densidad por mes si no hay ejercicio de resistencia.", "Without gravity, bones lose 1 to 1.5 % of their density per month without resistance exercise."),
     fuente: "NASA – Risk of Spaceflight-Induced Bone Changes",
   },
   ojos: {
-    nombre: "Ojos", indicadores: ["vision"],
-    espacio: "El desplazamiento de líquidos hacia la cabeza puede cambiar la estructura del ojo (síndrome SANS).",
+    nombre: L("Ojos", "Eyes"), indicadores: ["vision"],
+    espacio: L("El desplazamiento de líquidos hacia la cabeza puede cambiar la estructura del ojo (síndrome SANS).", "The shift of fluids toward the head can change the structure of the eye (SANS)."),
     fuente: "NASA HRP – SANS",
   },
   sangre: {
-    nombre: "Sangre (glucosa)", indicadores: ["glucosa"],
-    espacio: "La glucosa refleja energía y metabolismo; la dieta, el estrés y el sueño la alteran.",
+    nombre: L("Sangre (glucosa)", "Blood (glucose)"), indicadores: ["glucosa"],
+    espacio: L("La glucosa refleja energía y metabolismo; la dieta, el estrés y el sueño la alteran.", "Glucose reflects energy and metabolism; diet, stress and sleep change it."),
     fuente: "NASA OSDR OSD-575 (Inspiration4, panel metabólico)",
   },
   radiacion: {
-    nombre: "Radiación (clima espacial)", indicadores: ["radiacion"],
-    espacio: "Las llamaradas y los eventos de partículas solares aumentan la dosis de radiación en pocas horas.",
+    nombre: L("Radiación (clima espacial)", "Radiation (space weather)"), indicadores: ["radiacion"],
+    espacio: L("Las llamaradas y los eventos de partículas solares aumentan la dosis de radiación en pocas horas.", "Flares and solar particle events increase the radiation dose within a few hours."),
     fuente: "NASA DONKI (CCMC / NASA GSFC)",
   },
   piel: {
-    nombre: "Piel y temperatura", indicadores: ["temperatura"],
-    espacio: "Las erupciones en la piel son el evento médico más común en la Estación Espacial (1,12 por año de vuelo).",
+    nombre: L("Piel y temperatura", "Skin and temperature"), indicadores: ["temperatura"],
+    espacio: L("Las erupciones en la piel son el evento médico más común en la Estación Espacial (1,12 por año de vuelo).", "Skin rashes are the most common medical event on the Space Station (1.12 per flight year)."),
     fuente: "Crucian et al. 2016",
   },
 };
 
 export const NOMBRES_INDICADORES = {
-  pulso: "Pulso", presion_arterial: "Presión arterial", animo: "Ánimo", estres: "Estrés",
-  sueno: "Sueño", oxigeno: "Oxígeno", perdida_osea: "Pérdida ósea", vision: "Visión",
-  glucosa: "Glucosa", temperatura: "Temperatura", radiacion: "Clima espacial",
+  pulso: L("Pulso", "Pulse"), presion_arterial: L("Presión arterial", "Blood pressure"), animo: L("Ánimo", "Mood"), estres: L("Estrés", "Stress"),
+  sueno: L("Sueño", "Sleep"), oxigeno: L("Oxígeno", "Oxygen"), perdida_osea: L("Pérdida ósea", "Bone loss"), vision: L("Visión", "Vision"),
+  glucosa: L("Glucosa", "Glucose"), temperatura: L("Temperatura", "Temperature"), radiacion: L("Clima espacial", "Space weather"),
 };
 
 // Estado de demostración (mismo formato que GET /api/estado de P4).
@@ -160,9 +161,9 @@ export function sparkline(serie, color, ancho = 72, alto = 22) {
 
 export function antiguedadTexto(min) {
   if (min == null) return "";
-  if (min < 60) return `hace ${min} min`;
-  if (min < 1440) return `hace ${Math.round(min / 60)} h`;
-  return `hace ${Math.round(min / 1440)} d`;
+  if (min < 60) return L(`hace ${min} min`, `${min} min ago`);
+  if (min < 1440) return L(`hace ${Math.round(min / 60)} h`, `${Math.round(min / 60)} h ago`);
+  return L(`hace ${Math.round(min / 1440)} d`, `${Math.round(min / 1440)} d ago`);
 }
 
 // Panel lateral compartido: muestra el órgano seleccionado.

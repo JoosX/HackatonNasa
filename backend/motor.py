@@ -17,15 +17,22 @@ import json
 from statistics import mean
 
 import db
+import idioma
+from idioma import t as T
 
 ORDEN = {"verde": 1, "amarillo": 2, "rojo": 3}
-CONTEXTOS = {"reposo": "en reposo", "despues_ejercicio": "después de ejercicio", "ayunas": "en ayunas",
-             "despues_comida": "después de comer", "otro": "otro"}
+CONTEXTOS = {"reposo": ("en reposo", "at rest"), "despues_ejercicio": ("después de ejercicio", "after exercise"),
+             "ayunas": ("en ayunas", "fasting"), "despues_comida": ("después de comer", "after eating"),
+             "otro": ("otro", "other")}
+
+
+def _contexto(c: str) -> str:
+    return T(*CONTEXTOS[c]) if c in CONTEXTOS else c
 
 
 def reglas() -> dict:
-    datos = json.loads((db.RAIZ / "data" / "reglas.json").read_text(encoding="utf-8"))
-    return {r["indicador"]: r for r in datos["indicadores"]}
+    """Reglas por indicador, con nombres, unidades y acciones en el idioma de la petición."""
+    return {r["indicador"]: r for r in idioma.reglas()["indicadores"]}
 
 
 def valor_num(indicador: str, valor) -> float | None:
@@ -51,7 +58,8 @@ def clasificar(regla: dict, valor) -> tuple[str, bool]:
     if "componentes" in regla:
         partes = str(valor).replace(" ", "").split("/")
         if len(partes) != 2:
-            raise ValueError("La presión se escribe como sistólica/diastólica, por ejemplo 120/80.")
+            raise ValueError(T("La presión se escribe como sistólica/diastólica, por ejemplo 120/80.",
+                               "Blood pressure is written as systolic/diastolic, for example 120/80."))
         nums = [float(p) for p in partes]
         colores, sospechoso = [], False
         for c, v in zip(regla["componentes"].values(), nums):
@@ -97,9 +105,11 @@ def evaluar(astronauta: str) -> dict:
         antig = int((t_ahora - t).total_seconds() // 60)
         filas = db.serie(astronauta, nombre, 7)
         nums = [f["valor_num"] for f in filas if f["valor_num"] is not None]
-        item = {"indicador": nombre, "valor": _mostrar(fila["valor"]), "unidad": regla.get("unidad", fila["unidad"]),
+        valor = _mostrar(fila["valor"])
+        valor = regla.get("etiquetas", {}).get(valor, valor) if isinstance(valor, str) else valor   # "sin cambios" -> "no change"
+        item = {"indicador": nombre, "valor": valor, "unidad": regla.get("unidad", fila["unidad"]),
                 "color": color, "antiguedad_min": antig, "origen": fila["origen"], "fecha": fila["ts"],
-                "calidad": "vigente", "motivo": "Medición reciente."}
+                "calidad": "vigente", "motivo": T("Medición reciente.", "Recent measurement.")}
         contexto = fila["contexto"] if "contexto" in fila.keys() else None
         if contexto:
             item["contexto"] = contexto
@@ -113,17 +123,21 @@ def evaluar(astronauta: str) -> dict:
                 item["desviacion_pct"] = round((nums[-1] - base) / abs(base) * 100)
         if sospechoso:
             item["sospechoso"] = True
-            item.update(calidad="sospechoso", motivo="Valor fuera de lo físicamente posible: comprueba la medición antes de actuar.")
+            item.update(calidad="sospechoso", motivo=T("Valor fuera de lo físicamente posible: comprueba la medición antes de actuar.",
+                                                       "Value outside what is physically possible: check the measurement before acting."))
         elif antig > regla.get("max_antiguedad_min", 10 ** 9):
             item["vencido"] = True
-            item.update(calidad="vencido", motivo="Medición antigua: registra una nueva, esta ya no describe el momento actual.")
+            item.update(calidad="vencido", motivo=T("Medición antigua: registra una nueva, esta ya no describe el momento actual.",
+                                                    "Old measurement: log a new one, this one no longer describes the present."))
         elif nombre == "glucosa" and contexto and contexto != "ayunas":
             # El rango de glucosa es de ayunas: no se clasifica una lectura tomada después de comer.
             item.update(calidad="contexto_pendiente", color="sin dato",
-                        motivo=f"Glucosa medida {CONTEXTOS.get(contexto, contexto)}: el rango es de ayunas, así que no la clasifico.")
+                        motivo=T(f"Glucosa medida {_contexto(contexto)}: el rango es de ayunas, así que no la clasifico.",
+                                 f"Glucose measured {_contexto(contexto)}: the range is for fasting, so I do not classify it."))
         indicadores.append(item)
         if nombre == "sueno" and _noches_cortas(nums) >= 2:
-            notas.append(f"{_noches_cortas(nums)} noches seguidas durmiendo menos de 6 horas")
+            notas.append(T(f"{_noches_cortas(nums)} noches seguidas durmiendo menos de 6 horas",
+                           f"{_noches_cortas(nums)} nights in a row sleeping less than 6 hours"))
     return {"astronauta_id": astronauta, "indicadores": indicadores, "notas": notas, "origen": "base de datos"}
 
 
@@ -140,26 +154,29 @@ def registrar(astronauta: str, indicador: str, valor, origen: str = "manual", co
     """Guarda una medición, la clasifica y devuelve el resultado con la acción de la guía."""
     rs = reglas()
     if indicador not in rs:
-        raise ValueError(f"Indicador desconocido: {indicador}")
+        raise ValueError(T(f"Indicador desconocido: {indicador}", f"Unknown indicator: {indicador}"))
     regla = rs[indicador]
     texto = str(valor).strip()
     if not texto:
-        raise ValueError("Escribe un valor.")
+        raise ValueError(T("Escribe un valor.", "Enter a value."))
     try:
         color, sospechoso = clasificar(regla, texto)
     except ValueError as e:
-        raise ValueError(str(e) if "presión" in str(e) else f"El valor de {regla['nombre'].lower()} debe ser un número.") from e
+        raise ValueError(str(e) if "/" in str(e) else T(f"El valor de {regla['nombre'].lower()} debe ser un número.",
+                                                         f"The {regla['nombre'].lower()} value must be a number.")) from e
     if contexto and contexto not in CONTEXTOS:
-        raise ValueError("Contexto desconocido.")
+        raise ValueError(T("Contexto desconocido.", "Unknown context."))
     db.insertar(astronauta, indicador, texto, valor_num(indicador, texto), regla.get("unidad", ""), origen, contexto=contexto)
     if indicador == "glucosa" and contexto and contexto != "ayunas" and not sospechoso:
         return {"indicador": indicador, "nombre": regla["nombre"], "valor": texto, "unidad": regla.get("unidad", ""),
                 "color": "sin dato", "sospechoso": False,
-                "mensaje": f"Guardado. Medida {CONTEXTOS[contexto]}: el rango de glucosa es de ayunas, así que no la clasifico."}
+                "mensaje": T(f"Guardado. Medida {_contexto(contexto)}: el rango de glucosa es de ayunas, así que no la clasifico.",
+                             f"Saved. Measured {_contexto(contexto)}: the glucose range is for fasting, so I do not classify it.")}
     if sospechoso:
-        mensaje = "Valor inusual: puede ser un error de medición. Repite la medición antes de actuar."
+        mensaje = T("Valor inusual: puede ser un error de medición. Repite la medición antes de actuar.",
+                    "Unusual value: it may be a measurement error. Repeat the measurement before acting.")
     else:
-        mensaje = {"verde": "Valor normal. ¡Bien!", "amarillo": regla["accion"]["amarillo"],
+        mensaje = {"verde": T("Valor normal. ¡Bien!", "Normal value. Good!"), "amarillo": regla["accion"]["amarillo"],
                    "rojo": regla["accion"]["rojo"]}[color]
     if color == "rojo" and not sospechoso:
         db.registrar_alerta(astronauta, indicador, color, mensaje)

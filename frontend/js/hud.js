@@ -4,7 +4,8 @@
 import { ORGANOS, COLORES, NOMBRES_INDICADORES, colorOrgano, indicador, historial, sparkline, antiguedadTexto } from "./organos.js";
 
 const NS = "http://www.w3.org/2000/svg";
-const ESTADO_TXT = { verde: "Normal", amarillo: "Precaución", rojo: "Alerta", "sin dato": "Sin dato" };
+import { L } from "./i18n.js";
+const ESTADO_TXT = { verde: "Normal", amarillo: L("Precaución", "Caution"), rojo: L("Alerta", "Warning"), "sin dato": L("Sin dato", "No data") };
 const ORDEN = ["cerebro", "ojos", "pulmones", "corazon", "sangre", "huesos", "piel"];
 const escapar = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const num = (v) => (typeof v === "number" ? v.toLocaleString("es", { maximumFractionDigits: 1 }) : escapar(v));
@@ -136,7 +137,7 @@ export function crearHud({ contenedor, obtenerEstado, obtenerFichas, onSeleccion
         <span class="t-estado">${ESTADO_TXT[c]}</span></p>
       <ul class="t-filas">${filas}</ul>
       ${f.efecto_espacio ? `<p class="t-espacio">${escapar(f.efecto_espacio)}</p>` : ""}
-      <p class="t-pista">Clic para ver la ficha completa</p>`;
+      <p class="t-pista">${L("Clic para ver la ficha completa", "Click to see the full card")}</p>`;
     tarjeta.hidden = false;
     tamTarjeta = { tw: tarjeta.offsetWidth || 270, th: tarjeta.offsetHeight || 170 };
   }

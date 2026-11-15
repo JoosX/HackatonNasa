@@ -1,0 +1,113 @@
+{
+  "_nota": "One card per organ in the contract. Answers the challenge's 5 guiding questions. Illustrative content based on NASA HRP; written with AI assistance (Claude) and reviewed by the team.",
+  "version": "2026-11-14",
+  "fichas": {
+    "corazon": {
+      "nombre": "Heart",
+      "indicadores": [
+        "pulso",
+        "presion_arterial"
+      ],
+      "como_medir": "Pulse and blood pressure need different preparation. Open each indicator's guide for device, steps and mistakes. Log context and unit; with urgent symptoms, ask for help without waiting for another reading.",
+      "por_que": "Pulse and blood pressure give information about the cardiovascular system; a single reading does not identify the cause of a change or establish a diagnosis.",
+      "efecto_espacio": "Without gravity, blood shifts toward the chest and head; the heart and vessels adapt and blood pressure and pulse can change.",
+      "a_quien_avisar": "Yellow: repeat the measurement. Red or chest pain: alert the crew immediately.",
+      "prevencion": "Hydration according to the plan, daily exercise and good rest.",
+      "guia": "presion_cardiovascular.md",
+      "fuente": "NASA HRP – Cardiovascular Adaptations"
+    },
+    "cerebro": {
+      "nombre": "Brain, sleep and mood",
+      "indicadores": [
+        "sueno",
+        "animo",
+        "estres"
+      ],
+      "como_medir": "Log your hours of sleep and your mood and stress from 1 to 5 every day. The trend over several days is what matters.",
+      "por_que": "Sleep and mood affect attention, decisions and teamwork.",
+      "efecto_espacio": "Isolation, confinement and irregular schedules affect sleep and mood; on the Station people sleep about 6 hours.",
+      "a_quien_avisar": "Several days of little sleep or low mood: crew medical officer. Thoughts of self-harm: alert immediately.",
+      "prevencion": "A fixed sleep schedule, little screen light before sleeping, routines and contact with family when there is a signal.",
+      "guia": "animo_estres.md",
+      "fuente": "NASA HRP – Behavioral Health; Sleep"
+    },
+    "pulmones": {
+      "nombre": "Lungs and oxygen",
+      "indicadores": [
+        "oxigeno"
+      ],
+      "como_medir": "Pulse oximeter on a clean, warm finger; stay still until the number stabilizes.",
+      "por_que": "It shows whether the body gets enough oxygen and warns about problems with the ship's air.",
+      "efecto_espacio": "Ship air is recycled: high CO₂ or low oxygen cause headaches and tiredness.",
+      "a_quien_avisar": "Several crew members with symptoms or shortness of breath: alert immediately.",
+      "prevencion": "Monitor the ship's air indicators and report symptoms early.",
+      "guia": "oxigeno_aire.md",
+      "fuente": "NASA HRP – Hypoxia; Closed Environments"
+    },
+    "sangre": {
+      "nombre": "Blood and glucose",
+      "indicadores": [
+        "glucosa"
+      ],
+      "como_medir": "Glucose meter from the kit; note whether it was fasting or after eating.",
+      "por_que": "Glucose reflects available energy and metabolism.",
+      "efecto_espacio": "Diet, stress and sleep change it; in the Inspiration4 crew each person varied differently from their own normal.",
+      "a_quien_avisar": "Very low value with symptoms: onboard protocol and alert the crew.",
+      "prevencion": "Regular meals according to the mission plan and repeat strange measurements.",
+      "guia": "glucosa.md",
+      "fuente": "NASA OSDR OSD-575 (Inspiration4)"
+    },
+    "huesos": {
+      "nombre": "Bones and muscles",
+      "indicadores": [
+        "perdida_osea"
+      ],
+      "como_medir": "Density is measured before and after the mission; on board, log daily exercise and pain.",
+      "por_que": "Weak bones increase the risk of fractures when returning to gravity or arriving on Mars.",
+      "efecto_espacio": "Bone density drops 1 to 1.5 % per month; with resistance exercise, about 0.3 to 0.5 %.",
+      "a_quien_avisar": "A blow with strong pain or deformity: immobilize and alert the crew.",
+      "prevencion": "Resistance and cardiovascular exercise every day.",
+      "guia": "huesos_ejercicio.md",
+      "fuente": "NASA – Spaceflight-Induced Bone Changes"
+    },
+    "ojos": {
+      "nombre": "Eyes and vision",
+      "indicadores": [
+        "vision"
+      ],
+      "como_medir": "The mission's periodic vision test; note any new blurry vision.",
+      "por_que": "Good vision is key to reading instruments and procedures.",
+      "efecto_espacio": "The shift of fluids toward the head can change the eye (SANS).",
+      "a_quien_avisar": "New change: crew medical officer. Blurry vision with a strong headache: alert immediately.",
+      "prevencion": "Take the scheduled vision tests and report changes early.",
+      "guia": "vision_sans.md",
+      "fuente": "NASA HRP – SANS"
+    },
+    "piel": {
+      "nombre": "Skin and temperature",
+      "indicadores": [
+        "temperatura"
+      ],
+      "como_medir": "The kit's thermometer, always the same way; check the skin in good light.",
+      "por_que": "Temperature detects infections; the skin shows irritation or allergies.",
+      "efecto_espacio": "Skin rashes are the most common medical event on the Station (about 1.1 per flight year).",
+      "a_quien_avisar": "Fever or a growing rash: crew medical officer.",
+      "prevencion": "Clean, dry skin, no scratching and compare with previous days.",
+      "guia": "piel_temperatura.md",
+      "fuente": "Crucian et al. 2016"
+    },
+    "radiacion": {
+      "nombre": "Radiation (space weather)",
+      "indicadores": [
+        "radiacion"
+      ],
+      "como_medir": "Check your personal dosimeter and the space weather alerts. The app uses real NASA DONKI solar events synced at the last connection.",
+      "por_que": "Flares and solar particle events can increase the radiation dose within a few hours.",
+      "efecto_espacio": "Outside Earth's protection radiation is higher; in 6 months on the Station a person receives 80 to 160 mSv, compared with 2–3.6 mSv per year on Earth.",
+      "a_quien_avisar": "Solar particle event: go to the shielded area and alert the crew. Recent strong flare: watch your dosimeter.",
+      "prevencion": "Know the route to the shielded area, check the dosimeter and sync space weather whenever there is a signal.",
+      "guia": "radiacion.md",
+      "fuente": "NASA DONKI (CCMC / NASA GSFC) + NASA HRP – Space Radiation"
+    }
+  }
+}

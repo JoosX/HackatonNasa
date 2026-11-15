@@ -33,6 +33,16 @@ Las mediciones se guardan en `data/mision.db` (un solo archivo, sin servidor, fu
 
 `data/nasa_donki.json` guarda los eventos solares reales de los últimos 30 días (llamaradas, partículas solares y tormentas geomagnéticas) de NASA DONKI. Es la "sincronización con la Tierra": se actualiza con `python scripts/actualizar_donki.py` cuando hay señal, y sin señal la app usa el último archivo y avisa su antigüedad. El nivel de radiación (verde, precaución o alerta) se calcula en `backend/clima_espacial.py` con reglas ilustrativas. Desde el 30/09/2026 el servicio está en `https://ccmc.gsfc.nasa.gov/DONKI-API/get/` (sin clave).
 
+## Idiomas / Languages
+
+La app funciona en **español e inglés** (botón **ES | EN** arriba a la derecha). Para abrirla directamente en inglés: `http://localhost:8000/?lang=en`. Se recuerda la elección; sin elección, usa el idioma del navegador.
+
+- Interfaz: `frontend/js/i18n.js` (`L("español", "English")`).
+- Servidor: `backend/idioma.py` lee la cookie `idioma` (o `?lang=`) en cada petición; ORI, reglas, fichas y protocolos responden en ese idioma.
+- Contenido en inglés: `data/guias_en/` (11 guías, misma estructura), `data/en/` (fichas, reglas, guías de medición) y el índice `data/indice_guias_en.json` (`python scripts/indexar_guias.py` genera los dos).
+
+The app works in **Spanish and English** (**ES | EN** button, top right). Open it in English with `?lang=en`.
+
 ## Emergencias y orientación
 
 - **ORI en una emergencia** (`backend/emergencia.py`): ante "me duele el pecho", "mi compañero se desmayó" o un indicador en alerta con "¿qué hago?", responde al instante y sin IA: qué puede estar pasando, qué se siente, a quién llamar y qué decirle, pasos con su porqué y qué hacer sin enlace con la Tierra. El chat se amplía solo.

@@ -1,0 +1,133 @@
+{
+  "_nota": "Translation layer for data/reglas.json (names, units, actions and validation in English). The ranges are the same as in the Spanish file. ILLUSTRATIVE colors defined by the team; not approved for diagnosis or clinical decisions. NASA sources provide space context and do not validate these cutoffs; review by flight medicine is required.",
+  "indicadores": {
+    "pulso": {
+      "nombre": "Pulse",
+      "unidad": "bpm",
+      "accion": {
+        "amarillo": "Check the device, the conditions and the context of the reading according to the mission procedure. If there are important symptoms, alert immediately; do not wait to repeat it.",
+        "rojo": "Alert the crew and open the blood pressure and pulse guide."
+      },
+      "validacion": {
+        "responsable": "ApeLogic team; clinical reviewer not yet assigned",
+        "nota": "The green range 50–100 does not match the general MedlinePlus resting reference of 60–100; athletes may differ. The 50 limit and the yellow/red limits for astronauts have not been justified.",
+        "vigencia": "The age limit and the plausible range are team software controls, not a period of clinical validity or certified physiological limits."
+      }
+    },
+    "presion_arterial": {
+      "nombre": "Blood pressure",
+      "accion": {
+        "amarillo": "Check the device, the conditions and the context of the reading according to the mission procedure. If there are important symptoms, alert immediately; do not wait to repeat it.",
+        "rojo": "Alert the crew; if there is chest pain or shortness of breath, follow the emergency protocol."
+      },
+      "validacion": {
+        "responsable": "ApeLogic team; clinical reviewer not yet assigned",
+        "nota": "The prototype ranges are not diagnostic categories or approved emergency thresholds. Population, position, device and both components still need validation with flight medicine.",
+        "vigencia": "The age limit and the plausible range are team software controls, not a period of clinical validity or certified physiological limits."
+      }
+    },
+    "oxigeno": {
+      "nombre": "Blood oxygen",
+      "accion": {
+        "amarillo": "Repeat at rest and check the ship's air with the crew.",
+        "rojo": "Alert the crew immediately and follow the onboard protocol."
+      },
+      "validacion": {
+        "responsable": "ApeLogic team; clinical reviewer not yet assigned",
+        "nota": "Accuracy depends on the device and conditions. The color limits have not been approved for cabin pressure or mission oxygenation protocols.",
+        "vigencia": "The age limit and the plausible range are team software controls, not a period of clinical validity or certified physiological limits."
+      }
+    },
+    "glucosa": {
+      "nombre": "Glucose",
+      "accion": {
+        "amarillo": "Repeat the measurement and note whether it was fasting or after eating.",
+        "rojo": "If you have symptoms, follow the onboard protocol and alert the crew."
+      },
+      "fuente": "ApeLogic team — illustrative limits without clinical validation; OSD-575 is historical context and does not validate capillary alarms",
+      "validacion": {
+        "responsable": "ApeLogic team; clinical reviewer not yet assigned",
+        "nota": "The OSD-575 laboratory ranges come from historical samples and do not validate alarm limits for a capillary glucose meter. Fasting is necessary context, but it does not prove equivalence between methods.",
+        "vigencia": "The age limit and the plausible range are team software controls, not a period of clinical validity or certified physiological limits."
+      }
+    },
+    "temperatura": {
+      "nombre": "Temperature",
+      "accion": {
+        "amarillo": "Check the device, the conditions and the context of the reading according to the mission procedure. If there are important symptoms, alert immediately; do not wait to repeat it.",
+        "rojo": "Alert the crew medical officer."
+      },
+      "validacion": {
+        "responsable": "ApeLogic team; clinical reviewer not yet assigned",
+        "nota": "The measurement method changes the interpretation. The colors do not distinguish oral, armpit, forehead or ear methods and cannot be used to diagnose fever.",
+        "vigencia": "The age limit and the plausible range are team software controls, not a period of clinical validity or certified physiological limits."
+      }
+    },
+    "sueno": {
+      "nombre": "Sleep",
+      "accion": {
+        "amarillo": "Prioritize rest and avoid critical tasks if the reaction test gets worse.",
+        "rojo": "Alert the crew medical officer."
+      },
+      "validacion": {
+        "responsable": "ApeLogic team; clinical reviewer not yet assigned",
+        "nota": "The 6/4 hour limits and the green maximum of 12 are prototype decisions, not approved clinical targets or clearance for tasks.",
+        "vigencia": "The age limit and the plausible range are team software controls, not a period of clinical validity or certified physiological limits."
+      }
+    },
+    "animo": {
+      "nombre": "Mood",
+      "accion": {
+        "amarillo": "Keep your routines and talk with a crewmate you trust.",
+        "rojo": "Alert the crew medical officer."
+      },
+      "validacion": {
+        "responsable": "ApeLogic team; clinical reviewer not yet assigned",
+        "nota": "Team-made 1–5 scale without clinical validation. The color cutoffs do not diagnose mental health.",
+        "vigencia": "The age limit and the plausible range are team software controls, not a period of clinical validity or certified physiological limits."
+      }
+    },
+    "estres": {
+      "nombre": "Stress",
+      "accion": {
+        "amarillo": "Take a break and review your workload with the crew.",
+        "rojo": "Alert the crew medical officer."
+      },
+      "validacion": {
+        "responsable": "ApeLogic team; clinical reviewer not yet assigned",
+        "nota": "Team-made 1–5 scale without clinical validation. The color cutoffs do not diagnose clinical stress.",
+        "vigencia": "The age limit and the plausible range are team software controls, not a period of clinical validity or certified physiological limits."
+      }
+    },
+    "perdida_osea": {
+      "nombre": "Estimated bone loss",
+      "unidad": "%/month",
+      "accion": {
+        "amarillo": "Follow the daily resistance exercise plan.",
+        "rojo": "Review the exercise plan with the crew medical officer."
+      },
+      "validacion": {
+        "responsable": "ApeLogic team; clinical reviewer not yet assigned",
+        "nota": "Illustrative team classification, pending review by flight medicine.",
+        "vigencia": "The age limit and the plausible range are team software controls, not a period of clinical validity or certified physiological limits."
+      }
+    },
+    "vision": {
+      "nombre": "Vision",
+      "accion": {
+        "amarillo": "Take the mission vision test and log the change.",
+        "rojo": "Alert the crew immediately."
+      },
+      "etiquetas": {
+        "sin cambios": "no change",
+        "cambio leve": "slight change",
+        "perdida brusca": "sudden loss"
+      },
+      "validacion": {
+        "responsable": "ApeLogic team; clinical reviewer not yet assigned",
+        "nota": "Illustrative team classification, pending review by flight medicine.",
+        "vigencia": "The age limit and the plausible range are team software controls, not a period of clinical validity or certified physiological limits."
+      }
+    }
+  }
+}

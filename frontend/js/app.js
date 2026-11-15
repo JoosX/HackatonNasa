@@ -7,22 +7,24 @@ import {
 } from "./organos.js";
 import { crearChat, avatarORI } from "./chat.js";
 import { crearHud } from "./hud.js";
+import { L, LOCALE, traducirPagina } from "./i18n.js";
 
 const $ = (s) => document.querySelector(s);
 const reducir = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const CORTO = { presion_arterial: "Presión", temperatura: "Temp.", radiacion: "Radiación" };   // rótulos de la tira de instrumentos
+const CORTO = { presion_arterial: L("Presión", "Pressure"), temperatura: "Temp.", radiacion: L("Radiación", "Radiation") };   // rótulos de la tira de instrumentos
 const SIGNOS = ["pulso", "presion_arterial", "oxigeno", "glucosa", "temperatura", "sueno", "animo", "radiacion"];
-const ETIQUETA_ESTADO = { verde: "Normal", amarillo: "Precaución", rojo: "Alerta", "sin dato": "Sin dato" };
+const ETIQUETA_ESTADO = { verde: "Normal", amarillo: L("Precaución", "Caution"), rojo: L("Alerta", "Warning"), "sin dato": L("Sin dato", "No data") };
 const PREGUNTAS = [
-  ["como_medir", "Cómo medir a bordo"], ["por_que", "Por qué importa"], ["efecto_espacio", "Efecto del espacio"],
-  ["a_quien_avisar", "Cuándo avisar"], ["prevencion", "Prevención"],
+  ["como_medir", L("Cómo medir a bordo", "How to measure on board")], ["por_que", L("Por qué importa", "Why it matters")],
+  ["efecto_espacio", L("Efecto del espacio", "Effect of space")], ["a_quien_avisar", L("Cuándo avisar", "When to alert")],
+  ["prevencion", L("Prevención", "Prevention")],
 ];
 
 let estado, inicial, fichas = {}, reglas = {}, nasa = null, clima = null;
 let visor = null, hud = null, chat = null, seleccionado = null, conectado = true, enCola = 0, primeraVez = true;
 
 const escapar = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const numero = (v) => (typeof v === "number" ? v.toLocaleString("es", { maximumFractionDigits: 1 }) : escapar(v));
+const numero = (v) => (typeof v === "number" ? v.toLocaleString(LOCALE, { maximumFractionDigits: 1 }) : escapar(v));
 const nombreOrgano = (o) => fichas[o]?.nombre ?? ORGANOS[o].nombre;
 
 async function json(url) {
@@ -40,9 +42,9 @@ function pintarSignos() {
         aria-pressed="${organo === seleccionado}" aria-label="${NOMBRES_INDICADORES[n]}: ${i.valor} ${i.unidad}, ${ETIQUETA_ESTADO[i.color]}">
       <span class="etiqueta"><span class="punto-estado" aria-hidden="true"></span><span>${CORTO[n] ?? NOMBRES_INDICADORES[n]}</span></span>
       <span class="valor">${n === "radiacion"
-        ? escapar(String(i.valor).split(" hace ")[0])
+        ? escapar(i.evento ?? String(i.valor).split(" hace ")[0])
         : `<span data-valor="${escapar(i.valor)}">${numero(i.valor)}</span><small>${escapar(i.unidad)}</small>`}</span>
-      <span class="pie-signo"><span class="edad">${n === "radiacion" && String(i.valor).includes(" hace ") ? "evento hace " + escapar(String(i.valor).split(" hace ")[1]) : antiguedadTexto(i.antiguedad_min)}</span>${sparkline(historial(estado, n), c)}</span>
+      <span class="pie-signo"><span class="edad">${n === "radiacion" && i.hace ? L("evento ", "event ") + escapar(i.hace) : antiguedadTexto(i.antiguedad_min)}</span>${sparkline(historial(estado, n), c)}</span>
     </button></li>`;
   }).join("");
   if (primeraVez && !reducir) contar();
@@ -59,7 +61,7 @@ function contar() {
     const t0 = performance.now(), dur = 900;
     const paso = (t) => {
       const k = Math.min(1, (t - t0) / dur), e = 1 - (1 - k) ** 3;
-      el.textContent = partes.map((x) => (x * e).toLocaleString("es", { minimumFractionDigits: dec, maximumFractionDigits: dec })).join("/");
+      el.textContent = partes.map((x) => (x * e).toLocaleString(LOCALE, { minimumFractionDigits: dec, maximumFractionDigits: dec })).join("/");
       if (k < 1) requestAnimationFrame(paso);
     };
     requestAnimationFrame(paso);
@@ -82,7 +84,7 @@ function grafica({ serie, etiquetas, verde, color, titulo, nota }) {
   const xs = etiquetas.map((t, k) => (k % Math.ceil(etiquetas.length / 7) === 0 || k === etiquetas.length - 1 ? `<text x="${X(k)}" y="${H - 6}" text-anchor="middle">${escapar(t)}</text>` : "")).join("");
   const puntos = pts.map(([x, y, v]) => `<circle cx="${x}" cy="${y}" r="3"><title>${numero(v)}</title></circle>`).join("");
   return `<figure class="grafica" style="--c:${color}">
-    <figcaption><span>${escapar(titulo)}</span>${verde ? '<span class="g-ley"><i></i>rango normal</span>' : ""}</figcaption>
+    <figcaption><span>${escapar(titulo)}</span>${verde ? '<span class="g-ley"><i></i>' + L("rango normal", "normal range") + '</span>' : ""}</figcaption>
     <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapar(titulo)}">${banda}${ejes}${xs}<path d="${d}" class="g-linea" pathLength="1"/>${puntos}</svg>
     ${nota ? `<p class="g-nota">${nota}</p>` : ""}</figure>`;
 }
@@ -108,21 +110,23 @@ function lineaClima() {
       : `<rect x="${x - 1.5}" y="${base - alto}" width="3" height="${alto}" fill="${color}"/>`;
     return `<g>${forma}<title>${escapar(clase)} · ${escapar((e.pico || e.inicio).replace("T", " ").replace("Z", " UTC"))}</title></g>`;
   }).join("");
-  const dias = [0, 10, 20, 30].map((d) => { const t = t0 + (d / 30) * (t1 - t0); return `<text x="${X(t)}" y="${H - 8}" text-anchor="middle">${new Date(t).toLocaleDateString("es", { day: "numeric", month: "short", timeZone: "UTC" })}</text>`; }).join("");
-  const sync = clima.sincronizado ? new Date(clima.sincronizado.replace("Z", ":00Z")).toLocaleString("es", { dateStyle: "medium", timeStyle: "short" }) : "—";
+  const dias = [0, 10, 20, 30].map((d) => { const t = t0 + (d / 30) * (t1 - t0); return `<text x="${X(t)}" y="${H - 8}" text-anchor="middle">${new Date(t).toLocaleDateString(LOCALE, { day: "numeric", month: "short", timeZone: "UTC" })}</text>`; }).join("");
+  const sync = clima.sincronizado ? new Date(clima.sincronizado.replace("Z", ":00Z")).toLocaleString(LOCALE, { dateStyle: "medium", timeStyle: "short" }) : "—";
   return `<figure class="grafica" style="--c:${COLORES.amarillo}">
-    <figcaption><span>Eventos solares · últimos 30 días</span><span class="g-ley">NASA DONKI</span></figcaption>
-    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Eventos solares de los últimos 30 días">
+    <figcaption><span>${L("Eventos solares · últimos 30 días", "Solar events · last 30 days")}</span><span class="g-ley">NASA DONKI</span></figcaption>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${L("Eventos solares de los últimos 30 días", "Solar events in the last 30 days")}">
       <line x1="${iz}" y1="${base}" x2="${W - de}" y2="${base}" stroke="#3a3a3a"/>${marcas}${dias}</svg>
-    <p class="g-nota">${escapar(clima.motivo || "")} Barras: llamaradas (ámbar = clase M, rojo = clase X), rojo alto = partículas solares, contorno = tormenta geomagnética. Sincronizado: ${escapar(sync)}. Se actualiza cuando vuelve la señal con la Tierra.</p></figure>`;
+    <p class="g-nota">${escapar(clima.motivo || "")} ${L(
+      `Barras: llamaradas (ámbar = clase M, rojo = clase X), rojo alto = partículas solares, contorno = tormenta geomagnética. Sincronizado: ${escapar(sync)}. Se actualiza cuando vuelve la señal con la Tierra.`,
+      `Bars: flares (amber = class M, red = class X), tall red = solar particles, outline = geomagnetic storm. Synced: ${escapar(sync)}. Updates when the link to Earth is back.`)}</p></figure>`;
 }
 
 // Etiquetas del eje X a partir de las fechas reales de cada medición.
 function etiquetasDe(n) {
   const s = serieReal(n);
-  if (!s.length) return ["-6 d", "-5", "-4", "-3", "-2", "-1", "hoy"];
+  if (!s.length) return ["-6 d", "-5", "-4", "-3", "-2", "-1", L("hoy", "today")];
   const hoy = new Date().toDateString();
-  return s.map((p) => { const d = new Date(p.ts); return d.toDateString() === hoy ? "hoy" : d.toLocaleDateString("es", { weekday: "short" }); });
+  return s.map((p) => { const d = new Date(p.ts); return d.toDateString() === hoy ? L("hoy", "today") : d.toLocaleDateString(LOCALE, { weekday: "short" }); });
 }
 
 function rangoVerde(n) {
@@ -138,10 +142,10 @@ function graficasDe(organo) {
     const i = indicador(estado, ind);
     html += grafica({
       serie: historial(estado, ind), etiquetas: etiquetasDe(ind), verde: rangoVerde(ind),
-      color: COLORES[i.color], titulo: `${NOMBRES_INDICADORES[ind]} · últimos 7 días${ind === "presion_arterial" ? " (sistólica)" : ""}`,
+      color: COLORES[i.color], titulo: `${NOMBRES_INDICADORES[ind]} · ${L("últimos 7 días", "last 7 days")}${ind === "presion_arterial" ? L(" (sistólica)", " (systolic)") : ""}`,
       nota: serieReal(ind).length
-        ? `${serieReal(ind).length} mediciones guardadas a bordo.${i.normal != null ? ` Tu normal: ${numero(i.normal)} ${escapar(i.unidad)}${i.desviacion_pct ? ` · hoy ${i.desviacion_pct > 0 ? "+" : ""}${i.desviacion_pct} %` : ""}.` : ""}`
-        : "Historial de demostración (sin conexión con la base de datos).",
+        ? `${serieReal(ind).length} ${L("mediciones guardadas a bordo.", "measurements stored on board.")}${i.normal != null ? ` ${L("Tu normal", "Your normal")}: ${numero(i.normal)} ${escapar(i.unidad)}${i.desviacion_pct ? ` · ${L("hoy", "today")} ${i.desviacion_pct > 0 ? "+" : ""}${i.desviacion_pct} %` : ""}.` : ""}`
+        : L("Historial de demostración (sin conexión con la base de datos).", "Demo history (no connection to the database)."),
     });
   }
   // Datos reales de NASA para la glucosa: el "normal" de un tripulante de Inspiration4.
@@ -149,8 +153,9 @@ function graficasDe(organo) {
   if (organo === "sangre" && real) {
     html += grafica({
       serie: nasa.momentos.map((m) => real.valores[m]), etiquetas: nasa.momentos, verde: real.rango, color: COLORES.amarillo,
-      titulo: "Glucosa real · tripulante C003 de Inspiration4",
-      nota: `Dato real de <span translate="no">NASA OSDR OSD-575</span>. L = días antes del lanzamiento, R = días después del regreso. El valor de R+45 sale muy bajo en 3 de 4 tripulantes: probablemente un problema de la muestra, por eso la app pide repetir mediciones sospechosas.`,
+      titulo: L("Glucosa real · tripulante C003 de Inspiration4", "Real glucose · Inspiration4 crew member C003"),
+      nota: L(`Dato real de <span translate="no">NASA OSDR OSD-575</span>. L = días antes del lanzamiento, R = días después del regreso. El valor de R+45 sale muy bajo en 3 de 4 tripulantes: probablemente un problema de la muestra, por eso la app pide repetir mediciones sospechosas.`,
+        `Real data from <span translate="no">NASA OSDR OSD-575</span>. L = days before launch, R = days after return. The R+45 value is very low in 3 of 4 crew members: probably a sample issue, which is why the app asks to repeat suspicious measurements.`),
     });
   }
   return html;
@@ -162,9 +167,9 @@ function pintarFicha() {
   caja.classList.toggle("abierta", !!seleccionado);
   if (!seleccionado) {
     const alertas = Object.keys(ORGANOS).filter((o) => colorOrgano(estado, o) !== "verde");
-    caja.innerHTML = `<p class="rotulo">Estado general</p>
-      <h2>${alertas.length ? `${alertas.length} ${alertas.length === 1 ? "sistema requiere" : "sistemas requieren"} atención` : "Todo en rango normal"}</h2>
-      <p class="resumen">Cada sistema toma el color de su indicador más alterado. Elige uno en el cuerpo, en las etiquetas o aquí.</p>
+    caja.innerHTML = `<p class="rotulo">${L("Estado general", "Overall status")}</p>
+      <h2>${alertas.length ? L(`${alertas.length} ${alertas.length === 1 ? "sistema requiere" : "sistemas requieren"} atención`, `${alertas.length} ${alertas.length === 1 ? "system needs" : "systems need"} attention`) : L("Todo en rango normal", "Everything in normal range")}</h2>
+      <p class="resumen">${L("Cada sistema toma el color de su indicador más alterado. Elige uno en el cuerpo, en las etiquetas o aquí.", "Each system takes the color of its most abnormal indicator. Pick one on the body, the labels or here.")}</p>
       <ul class="organos">${Object.keys(ORGANOS).map((o) => {
         const c = colorOrgano(estado, o);
         return `<li><button type="button" data-organo="${o}" style="--c:${COLORES[c]}">
@@ -177,21 +182,21 @@ function pintarFicha() {
   const c = colorOrgano(estado, seleccionado);
   const datos = (f.indicadores ?? ORGANOS[seleccionado].indicadores).map((n) => {
     const i = indicador(estado, n);
-    if (!i) return `<li><span>${NOMBRES_INDICADORES[n] ?? n}</span><span class="num">sin dato</span></li>`;
+    if (!i) return `<li><span>${NOMBRES_INDICADORES[n] ?? n}</span><span class="num">${L("sin dato", "no data")}</span></li>`;
     return `<li style="--c:${COLORES[i.color]}"><span>${NOMBRES_INDICADORES[n]}<span class="edad">${antiguedadTexto(i.antiguedad_min)}</span></span>
       <span class="num">${numero(i.valor)} ${escapar(i.unidad)}</span></li>`;
   }).join("");
   const preguntas = PREGUNTAS.filter(([k]) => f[k]).map(([k, t]) => `<div><h3>${t}</h3><p>${escapar(f[k])}</p></div>`).join("");
-  caja.innerHTML = `<p class="rotulo">Sistema seleccionado</p>
+  caja.innerHTML = `<p class="rotulo">${L("Sistema seleccionado", "Selected system")}</p>
     <h2><span class="punto-estado" style="--c:${COLORES[c]}" aria-hidden="true"></span>${escapar(nombreOrgano(seleccionado))}
       <span class="chip chip-estado" style="--c:${COLORES[c]}">${ETIQUETA_ESTADO[c]}</span></h2>
     <ul class="datos">${datos}</ul>
-    ${c === "rojo" ? '<p class="aviso-rojo">Avisa a la tripulación y sigue el protocolo de a bordo.</p>' : ""}
+    ${c === "rojo" ? `<p class="aviso-rojo">${L("Avisa a la tripulación y sigue el protocolo de a bordo.", "Alert your crew and follow the onboard protocol.")}</p>` : ""}
     ${graficasDe(seleccionado)}
     <div class="preguntas">${preguntas}</div>
-    <p class="fuente">Fuente: ${escapar(f.fuente ?? ORGANOS[seleccionado].fuente)}</p>
-    <div class="botones">${(f.indicadores ?? ORGANOS[seleccionado].indicadores).some((n) => reglas[n] && !reglas[n].categorias) ? `<button type="button" class="btn btn-primario" data-registrar="${(f.indicadores ?? ORGANOS[seleccionado].indicadores).find((n) => reglas[n] && !reglas[n].categorias)}">Registrar medición</button>` : ""}<button type="button" class="btn" data-preguntar="${seleccionado}">Preguntar a ORI</button>
-      <button type="button" class="btn" data-organo="">Ver todos</button></div>`;
+    <p class="fuente">${L("Fuente", "Source")}: ${escapar(f.fuente ?? ORGANOS[seleccionado].fuente)}</p>
+    <div class="botones">${(f.indicadores ?? ORGANOS[seleccionado].indicadores).some((n) => reglas[n] && !reglas[n].categorias) ? `<button type="button" class="btn btn-primario" data-registrar="${(f.indicadores ?? ORGANOS[seleccionado].indicadores).find((n) => reglas[n] && !reglas[n].categorias)}">${L("Registrar medición", "Log measurement")}</button>` : ""}<button type="button" class="btn" data-preguntar="${seleccionado}">${L("Preguntar a ORI", "Ask ORI")}</button>
+      <button type="button" class="btn" data-organo="">${L("Ver todos", "See all")}</button></div>`;
   caja.scrollTop = 0;
 }
 
@@ -215,14 +220,14 @@ function refrescar() {
   pintarFicha();
   const lpm = Number(indicador(estado, "pulso")?.valor) || 70;
   $("#pulso").value = lpm;
-  $("#vPulso").textContent = `${lpm} lpm`;
+  $("#vPulso").textContent = `${lpm} ${L("lpm", "bpm")}`;
   // Resumen de Precaución y Alerta (C&W), como el panel de alarmas de la nave.
   const cuenta = { rojo: 0, amarillo: 0 };
   for (const i of estado.indicadores) if (cuenta[i.color] != null) cuenta[i.color] += 1;
-  $("#cw").innerHTML = `<span class="cw-rojo${cuenta.rojo ? " activo" : " cw-off"}">${cuenta.rojo} alerta${cuenta.rojo === 1 ? "" : "s"}</span>
-    <span class="${cuenta.amarillo ? "cw-amarillo" : "cw-off"}">${cuenta.amarillo} ${cuenta.amarillo === 1 ? "precaución" : "precauciones"}</span>`;
+  $("#cw").innerHTML = `<span class="cw-rojo${cuenta.rojo ? " activo" : " cw-off"}">${cuenta.rojo} ${L("alerta", "warning")}${cuenta.rojo === 1 ? "" : "s"}</span>
+    <span class="${cuenta.amarillo ? "cw-amarillo" : "cw-off"}">${cuenta.amarillo} ${cuenta.amarillo === 1 ? L("precaución", "caution") : L("precauciones", "cautions")}</span>`;
   const rojos = cuenta.rojo > 0;
-  $("#rotuloEstado").textContent = rojos ? "Alerta" : cuenta.amarillo ? "Precaución" : "Normal";
+  $("#rotuloEstado").textContent = rojos ? L("Alerta", "Warning") : cuenta.amarillo ? L("Precaución", "Caution") : "Normal";
   $("#rotuloEstado").style.color = COLORES[rojos ? "rojo" : cuenta.amarillo ? "amarillo" : "verde"];
   $("#lienzo").classList.toggle("en-alerta", rojos);
 }
@@ -235,26 +240,27 @@ async function recargarDatos() {
   refrescar();
 }
 
-const PALABRA = { verde: "normal", amarillo: "en precaución", rojo: "en alerta" };
+const PALABRA = { verde: "normal", amarillo: L("en precaución", "at caution level"), rojo: L("en alerta", "at warning level") };
 async function registrar(indicadorNombre, valor, { comentar = true, contexto = null } = {}) {
   const r = await fetch("/api/mediciones", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ astronauta_id: "A1", indicador: indicadorNombre, valor: String(valor), contexto: contexto || null }),
   });
   const d = await r.json();
-  if (!r.ok) throw new Error(d.detail || "No se pudo guardar la medición.");
+  if (!r.ok) throw new Error(d.detail || L("No se pudo guardar la medición.", "The measurement could not be saved."));
   estado = d.estado;
   fijarSeries(await json("/api/historial/A1"));
   refrescar();
   const res = d.resultado;
   if (comentar) {
     const dato = `${res.nombre.toLowerCase()}: **${res.valor} ${res.unidad}**`.trim();
+    const anote = L("Anoté tu", "I logged your");
     const texto = res.sospechoso
-      ? `Anoté tu ${dato}, pero es un valor muy inusual. ${res.mensaje}`
-      : res.color === "sin dato" ? `Anoté tu ${dato}. ${res.mensaje}`
-      : res.color === "verde" ? `Anoté tu ${dato}. Está normal 👍 Sigue así.`
-      : res.color === "amarillo" ? `Anoté tu ${dato}, ${PALABRA.amarillo}. ${res.mensaje}\n¿Quieres que te explique qué puede estar pasando? Pregúntame *¿por qué?*`
-      : `Anoté tu ${dato} y está ${PALABRA.rojo}. ${res.mensaje} No tienes que manejarlo solo: escríbeme *¿qué hago?* y te guío paso a paso.`;
+      ? `${anote} ${dato}${L(", pero es un valor muy inusual.", ", but it is a very unusual value.")} ${res.mensaje}`
+      : res.color === "sin dato" ? `${anote} ${dato}. ${res.mensaje}`
+      : res.color === "verde" ? `${anote} ${dato}. ${L("Está normal 👍 Sigue así.", "It is normal 👍 Keep it up.")}`
+      : res.color === "amarillo" ? `${anote} ${dato}, ${PALABRA.amarillo}. ${res.mensaje}\n${L("¿Quieres que te explique qué puede estar pasando? Pregúntame *¿por qué?*", "Want me to explain what may be going on? Ask me *why?*")}`
+      : `${anote} ${dato}${L(" y está ", ", ")}${PALABRA.rojo}. ${res.mensaje} ${L("No tienes que manejarlo solo: escríbeme *¿qué hago?* y te guío paso a paso.", "You don't have to handle this alone: write *what should I do?* and I'll guide you step by step.")}`;
     chat.decir(texto, res.color === "rojo" && !res.sospechoso);
   }
   return res;
@@ -282,7 +288,7 @@ const RETRASO_MARTE_MIN = 14;   // en la demo 1 minuto = 1 segundo
 
 function pintarSenal() {
   $("#btnSenal").setAttribute("aria-pressed", String(conectado));
-  $("#txtSenal").textContent = conectado ? "Enlace con la Tierra" : "Sin enlace · modo autónomo";
+  $("#txtSenal").textContent = conectado ? L("Enlace con la Tierra", "Link to Earth") : L("Sin enlace · modo autónomo", "No link · autonomous mode");
   document.documentElement.classList.toggle("sin-senal", !conectado);
 }
 
@@ -290,15 +296,15 @@ function enviarTierra() {
   const caja = $("#estadoTierra");
   if (!conectado) {
     enCola += 1;
-    caja.textContent = `Resumen en cola (${enCola}). Se enviará solo cuando vuelva la señal.`;
+    caja.textContent = L(`Resumen en cola (${enCola}). Se enviará solo cuando vuelva la señal.`, `Summary queued (${enCola}). It will be sent automatically when the signal is back.`);
     return;
   }
   const n = Math.max(enCola, 1);
   enCola = 0;
-  caja.innerHTML = `Enviando ${n === 1 ? "resumen" : `${n} resúmenes`} · llega en ${RETRASO_MARTE_MIN} min (demo: ${RETRASO_MARTE_MIN} s)…
-    <div class="barra-envio" role="progressbar" aria-label="Envío a la Tierra"><i></i></div>`;
+  caja.innerHTML = `${L(`Enviando ${n === 1 ? "resumen" : `${n} resúmenes`} · llega en`, `Sending ${n === 1 ? "summary" : `${n} summaries`} · arrives in`)} ${RETRASO_MARTE_MIN} min (demo: ${RETRASO_MARTE_MIN} s)…
+    <div class="barra-envio" role="progressbar" aria-label="${L("Envío a la Tierra", "Sending to Earth")}"><i></i></div>`;
   caja.querySelector("i").animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: RETRASO_MARTE_MIN * 1000, fill: "forwards" })
-    .finished.then(() => { caja.textContent = "Resumen recibido en la Tierra. La respuesta tardará otro tanto; mientras, sigue las indicaciones de a bordo."; setTimeout(() => { caja.textContent = ""; }, 12000); });
+    .finished.then(() => { caja.textContent = L("Resumen recibido en la Tierra. La respuesta tardará otro tanto; mientras, sigue las indicaciones de a bordo.", "Summary received on Earth. The reply will take just as long; meanwhile, follow the onboard guidance."); setTimeout(() => { caja.textContent = ""; }, 12000); });
 }
 
 // ---------- Formulario "Registrar medición" ----------
@@ -309,12 +315,12 @@ function iniciarRegistro() {
   const organoDe = (n) => Object.keys(ORGANOS).find((o) => ORGANOS[o].indicadores.includes(n));
   const pintarAyuda = () => {
     const n = sel.value, r = reglas[n];
-    val.placeholder = `Ej.: ${EJEMPLO[n]}…`;
+    val.placeholder = `${L("Ej.", "E.g.")}: ${EJEMPLO[n]}…`;
     val.inputMode = n === "presion_arterial" ? "text" : "decimal";
     $("#regComoMedir").dataset.orientacion = n;   // abre la guía de medición de ese indicador
     const rango = r?.verde ? `${r.verde[0]}–${r.verde[1]}` : `${r.componentes.sistolica.verde.join("–")} / ${r.componentes.diastolica.verde.join("–")}`;
-    ayuda.innerHTML = `<span class="rango">Rango ilustrativo verde: ${rango} ${escapar(r?.unidad ?? "")}</span>`
-      + (n === "glucosa" ? "<br>El rango es de ayunas: indica abajo si comiste antes de medir." : "");
+    ayuda.innerHTML = `<span class="rango">${L("Rango ilustrativo verde", "Illustrative green range")}: ${rango} ${escapar(r?.unidad ?? "")}</span>`
+      + (n === "glucosa" ? "<br>" + L("El rango es de ayunas: indica abajo si comiste antes de medir.", "The range is for fasting: say below if you ate before measuring.") : "");
     res.textContent = "";
   };
   sel.addEventListener("change", pintarAyuda);
@@ -328,7 +334,7 @@ function iniciarRegistro() {
   $("#formRegistro").addEventListener("submit", async (ev) => {
     ev.preventDefault();
     const boton = $("#regGuardar");
-    boton.disabled = true; boton.textContent = "Guardando…";
+    boton.disabled = true; boton.textContent = L("Guardando…", "Saving…");
     try {
       const r = await registrar(sel.value, val.value, { contexto: $("#regContexto").value });
       dlg.close();
@@ -337,7 +343,7 @@ function iniciarRegistro() {
       res.textContent = e.message;
       val.focus();
     } finally {
-      boton.disabled = false; boton.textContent = "Guardar";
+      boton.disabled = false; boton.textContent = L("Guardar", "Save");
     }
   });
 }
@@ -356,6 +362,7 @@ function iniciarGuia() {
 
 // ---------- Inicio ----------
 async function iniciar() {
+  traducirPagina();
   const [e, f, r, n, c, h] = await Promise.all([cargarEstado(), cargarFichas(), json("/api/reglas"), json("/api/nasa/osd575"), json("/api/clima-espacial"), json("/api/historial/A1")]);
   estado = e; fichas = f; nasa = n; clima = c;
   fijarSeries(h);
@@ -368,8 +375,8 @@ async function iniciar() {
   function ampliarChat(si) {
     document.body.classList.toggle("chat-amplio", si);
     btnAmpliar.setAttribute("aria-pressed", String(si));
-    btnAmpliar.setAttribute("aria-label", si ? "Reducir la conversación" : "Ampliar la conversación");
-    btnAmpliar.querySelector(".txt-ampliar").textContent = si ? "Reducir" : "Ampliar";
+    btnAmpliar.setAttribute("aria-label", si ? L("Reducir la conversación", "Shrink the conversation") : L("Ampliar la conversación", "Expand the conversation"));
+    btnAmpliar.querySelector(".txt-ampliar").textContent = si ? L("Reducir", "Shrink") : L("Ampliar", "Expand");
   }
   btnAmpliar.addEventListener("click", () => ampliarChat(!document.body.classList.contains("chat-amplio")));
   document.addEventListener("keydown", (ev) => {
@@ -416,7 +423,7 @@ async function iniciar() {
     if (reg) window.abrirRegistro?.(reg.dataset.registrar);
     const p = ev.target.closest("[data-preguntar]");
     if (p) {
-      chat.preguntar(`¿Cómo está mi ${nombreOrgano(p.dataset.preguntar).toLowerCase()} y qué debo hacer?`);
+      chat.preguntar(L(`¿Cómo está mi ${nombreOrgano(p.dataset.preguntar).toLowerCase()} y qué debo hacer?`, `How is my ${nombreOrgano(p.dataset.preguntar).toLowerCase()} and what should I do?`));
       $("#chat").focus({ preventScroll: false });
     }
     const c = ev.target.closest("[data-capa]");
@@ -440,18 +447,19 @@ async function iniciar() {
 
   $("#btnSenal").addEventListener("click", () => { conectado = !conectado; pintarSenal(); if (conectado && enCola) enviarTierra(); });
   $("#btnTierra").addEventListener("click", enviarTierra);
-  $("#pulso").addEventListener("input", (ev) => { $("#vPulso").textContent = `${ev.target.value} lpm`; });
+  $("#pulso").addEventListener("input", (ev) => { $("#vPulso").textContent = `${ev.target.value} ${L("lpm", "bpm")}`; });
   $("#pulso").addEventListener("change", (ev) => registrar("pulso", ev.target.value));
   $("#btnEmergencia").addEventListener("click", async () => {
     await registrar("pulso", 148, { comentar: false });
     await registrar("oxigeno", 88, { comentar: false });
     await registrar("animo", 1, { comentar: false });
     seleccionar("corazon");
-    chat.decir("Estoy contigo. Detecté **3 indicadores en alerta**: pulso 148 lpm, oxígeno 88 % y ánimo 1/5. Es posible que notes el corazón acelerado, falta de aire o mareo.\n**Avisa ahora a un compañero o al oficial médico** para que no estés solo.\nEscríbeme *¿qué hago?* y te guío paso a paso.", true);
+    chat.decir(L("Estoy contigo. Detecté **3 indicadores en alerta**: pulso 148 lpm, oxígeno 88 % y ánimo 1/5. Es posible que notes el corazón acelerado, falta de aire o mareo.\n**Avisa ahora a un compañero o al oficial médico** para que no estés solo.\nEscríbeme *¿qué hago?* y te guío paso a paso.",
+      "I'm here with you. I detected **3 indicators at warning level**: pulse 148 bpm, oxygen 88 % and mood 1/5. You may notice a racing heart, shortness of breath or dizziness.\n**Alert a crewmate or the crew medical officer now** so you are not alone.\nWrite *what should I do?* and I'll guide you step by step."), true);
   });
   $("#btnTormenta").addEventListener("click", () => {
     const i = indicador(estado, "radiacion");
-    if (i) Object.assign(i, { valor: "SEP · ahora", color: "rojo", antiguedad_min: 0, motivo: "Evento de partículas solares (simulado).", accion: "Ve al área protegida de la nave según el protocolo y revisa tu dosímetro." });
+    if (i) Object.assign(i, { valor: L("SEP · ahora", "SEP · now"), color: "rojo", antiguedad_min: 0, motivo: L("Evento de partículas solares (simulado).", "Solar particle event (simulated)."), accion: L("Ve al área protegida de la nave según el protocolo y revisa tu dosímetro.", "Go to the ship's shielded area per protocol and check your dosimeter.") });
     refrescar(); seleccionar("radiacion");
   });
   $("#btnReiniciar").addEventListener("click", async () => {
@@ -469,7 +477,8 @@ async function iniciar() {
     const rojosAntes = new Set(estado.indicadores.filter((i) => i.color === "rojo").map((i) => i.indicador));
     estado = e; fijarSeries(await json("/api/historial/A1")); refrescar();
     const nuevos = e.indicadores.filter((i) => i.color === "rojo" && !rojosAntes.has(i.indicador));
-    if (nuevos.length) chat.decir(`Ojo: tu **${NOMBRES_INDICADORES[nuevos[0].indicador] ?? nuevos[0].indicador}** acaba de pasar a alerta (${nuevos[0].valor} ${nuevos[0].unidad}). Estoy aquí contigo.\n**Avisa ahora a un compañero o al oficial médico** para que no estés solo.\nEscríbeme *¿qué hago?* y te guío paso a paso.`, true);
+    if (nuevos.length) chat.decir(L(`Ojo: tu **${NOMBRES_INDICADORES[nuevos[0].indicador] ?? nuevos[0].indicador}** acaba de pasar a alerta (${nuevos[0].valor} ${nuevos[0].unidad}). Estoy aquí contigo.\n**Avisa ahora a un compañero o al oficial médico** para que no estés solo.\nEscríbeme *¿qué hago?* y te guío paso a paso.`,
+      `Heads up: your **${NOMBRES_INDICADORES[nuevos[0].indicador] ?? nuevos[0].indicador}** just moved to warning level (${nuevos[0].valor} ${nuevos[0].unidad}). I'm here with you.\n**Alert a crewmate or the crew medical officer now** so you are not alone.\nWrite *what should I do?* and I'll guide you step by step.`), true);
   }, 15000);
 
   reloj();

@@ -1,5 +1,5 @@
 """Indexa las guías: calcula un vector (embedding) por fragmento con Ollama
-y lo guarda en data/indice_guias.json.
+y lo guarda en data/indice_guias.json (español) y data/indice_guias_en.json (inglés).
 
 Ejecutar cada vez que P6 agregue o cambie guías:
     python scripts/indexar_guias.py
@@ -17,16 +17,24 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
+import idioma  # noqa: E402
 import ollama_cliente  # noqa: E402
 from guias import RAIZ, cargar_fragmentos  # noqa: E402
 
-SALIDA = RAIZ / "data" / "indice_guias.json"
+SALIDAS = {"es": RAIZ / "data" / "indice_guias.json", "en": RAIZ / "data" / "indice_guias_en.json"}
 
 
 def main() -> None:
+    for lengua, salida in SALIDAS.items():
+        with idioma.usar(lengua):
+            print(f"[{lengua}]", end=" ")
+            indexar(salida)
+
+
+def indexar(SALIDA: Path) -> None:
     fragmentos = cargar_fragmentos()
     if not fragmentos:
-        print("No hay guías en data/guias/.")
+        print("No hay guías en", idioma.carpeta_guias())
         return
     print(f"{len(fragmentos)} fragmentos en {len({f['archivo'] for f in fragmentos})} guías.")
 

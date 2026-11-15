@@ -1,4 +1,4 @@
-"""Lee las guías de salud (data/guias/*.md) y las corta en fragmentos.
+"""Lee las guías de salud (data/guias/*.md, en inglés data/guias_en/*.md) y las corta en fragmentos.
 
 Cada guía tiene un encabezado con titulo, fuente, url y version, y
 secciones que empiezan con "## ". Cada sección es un fragmento: así la
@@ -9,8 +9,10 @@ Código escrito con asistencia de IA (Claude); revisado por el equipo.
 
 from pathlib import Path
 
+import idioma
+
 RAIZ = Path(__file__).resolve().parent.parent
-CARPETA_GUIAS = RAIZ / "data" / "guias"
+CARPETA_GUIAS = RAIZ / "data" / "guias"   # español (las guías en inglés están en data/guias_en)
 
 
 def leer_guia(ruta: Path) -> tuple[dict, str]:
@@ -29,7 +31,7 @@ def leer_guia(ruta: Path) -> tuple[dict, str]:
 def fragmentar(meta: dict, cuerpo: str) -> list[dict]:
     """Un fragmento por sección '## ...'."""
     fragmentos = []
-    seccion, lineas = "Introducción", []
+    seccion, lineas = ("Introduction" if idioma.en() else "Introducción"), []
 
     def cerrar():
         contenido = "\n".join(lineas).strip()
@@ -57,8 +59,9 @@ def fragmentar(meta: dict, cuerpo: str) -> list[dict]:
 
 
 def cargar_fragmentos() -> list[dict]:
+    """Fragmentos de todas las guías en el idioma activo."""
     todos = []
-    for ruta in sorted(CARPETA_GUIAS.glob("*.md")):
+    for ruta in sorted(idioma.carpeta_guias().glob("*.md")):
         meta, cuerpo = leer_guia(ruta)
         todos.extend(fragmentar(meta, cuerpo))
     return todos

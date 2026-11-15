@@ -1,15 +1,16 @@
 // Chat con ORI, el compañero de salud a bordo (POST /api/chat).
 // Código escrito con asistencia de IA (Claude); revisado por el equipo.
+import { L, LOCALE } from "./i18n.js";
 
 const MODOS = {
-  ia_local: "IA local",
-  respaldo_sin_ia: "Guías (sin IA)",
-  sin_informacion: "Sin guía",
-  resumen: "Resumen de tus datos",
+  ia_local: L("IA local", "Local AI"),
+  respaldo_sin_ia: L("Guías (sin IA)", "Guides (no AI)"),
+  sin_informacion: L("Sin guía", "No guide"),
+  resumen: L("Resumen de tus datos", "Summary of your data"),
   conversacion: "ORI",
-  protocolo: "Protocolo · sin IA",
-  emergencia: "Emergencia · sin IA",
-  emergencia_companero: "Emergencia · sin IA",
+  protocolo: L("Protocolo · sin IA", "Protocol · no AI"),
+  emergencia: L("Emergencia · sin IA", "Emergency · no AI"),
+  emergencia_companero: L("Emergencia · sin IA", "Emergency · no AI"),
 };
 
 // Avatar de ORI: casco con visor, ojos que parpadean, antena de estado y línea de pulso.
@@ -70,7 +71,7 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
   function mensajeTuyo(texto) {
     const li = document.createElement("li");
     li.className = "msg msg-yo";
-    li.innerHTML = `<div class="burbuja"><p class="quien">Tú</p><div class="cuerpo"><p>${enLinea(texto)}</p></div></div>`;
+    li.innerHTML = `<div class="burbuja"><p class="quien">${L("Tú", "You")}</p><div class="cuerpo"><p>${enLinea(texto)}</p></div></div>`;
     lista.append(li);
     lista.scrollTop = lista.scrollHeight;
   }
@@ -82,9 +83,9 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
     boton.disabled = true;
     boton.setAttribute("aria-busy", "true");
     mensajeTuyo(pregunta);
-    const li = mensajeORI('<p class="pensando">Revisando tus datos y las guías<span class="puntos"><i></i><i></i><i></i></span></p>', "esperando");
+    const li = mensajeORI(`<p class="pensando">${L("Revisando tus datos y las guías", "Checking your data and the guides")}<span class="puntos"><i></i><i></i><i></i></span></p>`, "esperando");
     li.querySelector(".ori").classList.add("pensando");
-    fijarEstado("pensando", "Revisando las guías…");
+    fijarEstado("pensando", L("Revisando las guías…", "Checking the guides…"));
     try {
       const r = await fetch("/api/chat", {
         method: "POST",
@@ -95,9 +96,9 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       // Las fuentes se muestran aparte; se quita una línea "Fuente:" si el modelo la escribió.
-      const texto = d.respuesta.replace(/\n*\s*(\d\)\s*)?Fuente:[^\n]*\s*$/i, "").trim();
+      const texto = d.respuesta.replace(/\n*\s*(\d\)\s*)?(Fuente|Source):[^\n]*\s*$/i, "").trim();
       const fuentes = d.fuentes.length
-        ? `<details class="fuentes aparece" style="--d:${(texto.split("\n").length) * 90}ms"><summary>Basado en ${d.fuentes.length} guía${d.fuentes.length > 1 ? "s" : ""} de a bordo</summary>
+        ? `<details class="fuentes aparece" style="--d:${(texto.split("\n").length) * 90}ms"><summary>${L(`Basado en ${d.fuentes.length} guía${d.fuentes.length > 1 ? "s" : ""} de a bordo`, `Based on ${d.fuentes.length} onboard guide${d.fuentes.length > 1 ? "s" : ""}`)}</summary>
             <ul>${d.fuentes.map((f) => `<li>${escapar(f.guia)} · ${escapar(f.seccion)}</li>`).join("")}</ul></details>`
         : "";
       li.className = `msg msg-ia${d.alerta_roja ? " msg-alerta" : ""}`;
@@ -107,19 +108,19 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
       av.classList.add("habla");
       setTimeout(() => av.classList.remove("habla"), 2400);
       const recorrido = /^(protocolo|emergencia)/.test(d.modo)
-        ? `<button type="button" class="btn btn-peligro btn-recorrido aparece" data-abrir-urgente="pulso">Abrir recorrido paso a paso (¿responde? ¿respira?)</button>` : "";
+        ? `<button type="button" class="btn btn-peligro btn-recorrido aparece" data-abrir-urgente="pulso">${L("Abrir recorrido paso a paso (¿responde? ¿respira?)", "Open step-by-step walkthrough (responding? breathing?)")}</button>` : "";
       li.querySelector(".cuerpo").innerHTML = `${bloques(texto)}${recorrido}${fuentes}
         <p class="meta"><span class="chip-modo" data-modo="${d.modo}">${MODOS[d.modo] ?? d.modo}</span>
-        <span>${Number(d.segundos).toLocaleString("es", { maximumFractionDigits: 1 })}&nbsp;s · sin internet</span></p>`;
-      fijarEstado(d.alerta_roja ? "alerta" : "listo", d.alerta_roja ? "Hay una alerta activa" : "En línea · sin internet");
+        <span>${Number(d.segundos).toLocaleString(LOCALE, { maximumFractionDigits: 1 })}&nbsp;s · ${L("sin internet", "no internet")}</span></p>`;
+      fijarEstado(d.alerta_roja ? "alerta" : "listo", d.alerta_roja ? L("Hay una alerta activa", "A warning is active") : L("En línea · sin internet", "Online · no internet needed"));
       if (/^(protocolo|emergencia)/.test(d.modo)) alEmergencia?.();   // en una emergencia, el chat se amplía
     } catch (e) {
       li.className = "msg msg-ia msg-error";
       li.querySelector(".ori").classList.remove("pensando");
       li.querySelector(".cuerpo").innerHTML = `<p>${e.name === "TimeoutError"
-        ? "Perdón, me tardé demasiado en pensar. ¿Me lo preguntas otra vez? La segunda vez suelo ser más rápido."
-        : "Uy, no logro conectarme con mi sistema local. Revisa que el servidor esté encendido y vuelve a intentarlo."}</p>`;
-      fijarEstado("listo", "Sin respuesta del sistema");
+        ? L("Perdón, me tardé demasiado en pensar. ¿Me lo preguntas otra vez? La segunda vez suelo ser más rápido.", "Sorry, I took too long to think. Could you ask me again? I'm usually faster the second time.")
+        : L("Uy, no logro conectarme con mi sistema local. Revisa que el servidor esté encendido y vuelve a intentarlo.", "Oops, I can't reach my local system. Check that the server is running and try again.")}</p>`;
+      fijarEstado("listo", L("Sin respuesta del sistema", "No response from the system"));
     } finally {
       ocupado = false;
       boton.disabled = false;
@@ -161,9 +162,12 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
   });
 
   // Mensaje de bienvenida.
-  mensajeORI(bloques("¡Hola! Soy **ORI**, tu compañero de salud a bordo.\n"
+  mensajeORI(bloques(L("¡Hola! Soy **ORI**, tu compañero de salud a bordo.\n"
     + "Puedo decirte **cómo estás**, orientarte si te sientes mal y explicarte tus indicadores. "
-    + "Funciono sin internet y te muestro de qué guía de NASA saco cada consejo.\nCuéntame, ¿cómo te sientes hoy?"));
+    + "Funciono sin internet y te muestro de qué guía de NASA saco cada consejo.\nCuéntame, ¿cómo te sientes hoy?",
+    "Hi! I'm **ORI**, your onboard health companion.\n"
+    + "I can tell you **how you're doing**, guide you if you feel unwell and explain your indicators. "
+    + "I work without internet and show you which NASA guide each piece of advice comes from.\nTell me, how are you feeling today?")));
 
   // ORI comenta por iniciativa propia (al registrar una medición o si aparece una alerta).
   function decir(texto, alerta = false) {

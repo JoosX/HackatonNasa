@@ -494,3 +494,11 @@ body.chat-amplio .sugerencias { flex-wrap: nowrap; mask-image: linear-gradient(t
 .btn-recorrido { display: block; width: 100%; margin: 12px 0 4px; padding: 11px 12px; font-size: 11px; text-align: left; }
 @media (max-width: 860px) { #abrirUrgente { padding: 7px 10px; } }
 @media (max-width: 640px) { .accion-principal { flex-wrap: wrap; } }
+
+/* Selector de idioma (ES | EN) */
+.idioma { display: inline-flex; align-self: center; border: 1px solid var(--linea-2); margin: 0 var(--borde-pagina) 0 8px; }
+.idioma button { padding: 6px 8px; min-width: 34px; border: 0; background: transparent; color: var(--suave); font: 700 10.5px var(--mono); letter-spacing: .08em; cursor: pointer; }
+.idioma button + button { border-left: 1px solid var(--linea-2); }
+.idioma button[aria-pressed="true"] { background: var(--texto); color: var(--negro); }
+.idioma button:hover:not([aria-pressed="true"]) { color: var(--texto); }
+.idioma button:focus-visible { outline: 1px solid var(--sel); outline-offset: 2px; }

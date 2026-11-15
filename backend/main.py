@@ -23,6 +23,7 @@ from pydantic import BaseModel  # noqa: E402
 
 import clima_espacial  # noqa: E402
 import db  # noqa: E402
+import idioma  # noqa: E402
 import motor  # noqa: E402
 import ollama_cliente  # noqa: E402
 import orientacion  # noqa: E402
@@ -31,6 +32,34 @@ from guias import RAIZ  # noqa: E402
 
 app = FastAPI(title="Asistente de salud local para astronautas")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+
+class IdiomaMiddleware:
+    """Fija el idioma de cada petición: ?lang=en|es en la URL o la cookie "idioma" que pone la app."""
+
+    def __init__(self, app_asgi):
+        self.app = app_asgi
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        from urllib.parse import parse_qs
+        valor = (parse_qs(scope.get("query_string", b"").decode()).get("lang") or [None])[0]
+        if not valor:
+            for nombre, contenido in scope.get("headers", []):
+                if nombre == b"cookie":
+                    for parte in contenido.decode(errors="ignore").split(";"):
+                        clave, _, dato = parte.strip().partition("=")
+                        if clave == "idioma":
+                            valor = dato
+        token = idioma.fijar(valor)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            idioma.restaurar(token)
+
+
+app.add_middleware(IdiomaMiddleware)
 
 
 @app.on_event("startup")
@@ -132,7 +161,8 @@ def recargar() -> dict:
 
 
 def _json(nombre: str) -> dict:
-    return json.loads((RAIZ / "data" / nombre).read_text(encoding="utf-8"))
+    """Archivo de data/ en el idioma de la petición (data/en/ si existe la traducción)."""
+    return json.loads(idioma.datos(nombre).read_text(encoding="utf-8"))
 
 
 @app.get("/api/clima-espacial")
@@ -149,8 +179,8 @@ def fichas() -> dict:
 
 @app.get("/api/reglas")
 def reglas() -> dict:
-    """Rangos del semáforo (P6). El motor de reglas real es de P4."""
-    return _json("reglas.json")
+    """Rangos del semáforo con nombres, unidades y acciones en el idioma de la petición."""
+    return idioma.reglas()
 
 
 @app.get("/api/nasa/osd575")

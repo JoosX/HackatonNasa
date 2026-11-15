@@ -3,6 +3,7 @@
 // El recorrido de emergencia funciona aunque fallen el servidor, la IA o el enlace con la Tierra.
 import { renderOrientacion } from './orientacion-vista.js';
 import { renderEmergencia, avanzarEmergencia } from './emergencia.js';
+import { L } from './i18n.js';
 
 const dialogo=document.querySelector('#orientacionDialogo');
 const selector=document.querySelector('#orientacionSelector');
@@ -24,11 +25,11 @@ async function cargar() {
   // La emergencia se muestra inmediatamente incluso si la API o la IA fallan.
   if(urgente) {++version;mostrarEmergencia();return;}
   const actual=++version, nombre=selector.value;
-  contenido.textContent='Consultando guías y registro del servidor local…';
+  contenido.textContent=L('Consultando guías y registro del servidor local…','Checking guides and records on the local server…');
   const [b,estado]=await Promise.all([biblioteca,urgente?Promise.resolve(null):json('/api/estado/A1')]);
   if(actual!==version)return;
   if(!b?.indicadores?.[nombre]) {
-    contenido.innerHTML='<p>No se pudo abrir la biblioteca local. Revisa que el servidor esté activo y reintenta.</p><button type="button" class="btn" id="orientacionReintentar">Reintentar biblioteca</button>';
+    contenido.innerHTML=`<p>${L('No se pudo abrir la biblioteca local. Revisa que el servidor esté activo y reintenta.','The local library could not be opened. Check that the server is running and try again.')}</p><button type="button" class="btn" id="orientacionReintentar">${L('Reintentar biblioteca','Retry library')}</button>`;
     return;
   }
   const i=estado?.indicadores?.find(i=>i.indicador===nombre)??{calidad:'error'};
@@ -43,7 +44,7 @@ function abrir(nombre='pulso',esUrgente=false) {
   selector.closest('label').hidden=urgente;
   document.querySelector('#orientacionRevision').hidden=urgente;
   document.querySelector('#orientacionUrgente').hidden=!urgente;
-  document.querySelector('#orientacionTitulo').textContent=urgente?'Orientación urgente':'Medir, comprender y actuar';
+  document.querySelector('#orientacionTitulo').textContent=urgente?L('Orientación urgente','Urgent guidance'):L('Medir, comprender y actuar','Measure, understand and act');
   const registro=document.querySelector('#dlgRegistro');
   if(registro?.open)registro.close();
   if(!dialogo.open)dialogo.showModal();
