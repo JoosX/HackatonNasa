@@ -1,5 +1,5 @@
 {
-  "_nota": "Rangos ILUSTRATIVOS para el prototipo, basados en valores de referencia generales para adultos. Deben validarlos médicos de vuelo. Formato: verde y amarillo son [min, max] inclusivos; fuera de amarillo es rojo; fuera de 'posible' es un dato sospechoso (repetir medición). Escrito con asistencia de IA (Claude) y revisado por el equipo. Amarillo siempre contiene a verde: primero se prueba verde, luego amarillo.",
+  "_nota": "Colores ILUSTRATIVOS definidos por el equipo. No aprobados para diagnóstico o decisiones clínicas. Las fuentes NASA aportan contexto espacial, no validan estos cortes. Verde y amarillo son intervalos inclusivos; fuera de amarillo es rojo; fuera de posible se marca sospechoso sin descartar una emergencia. Cada regla incluye validacion y limitaciones; requiere revisión por medicina de vuelo.",
   "version": "2026-11-14",
   "indicadores": [
     {
@@ -21,11 +21,18 @@
       ],
       "max_antiguedad_min": 240,
       "accion": {
-        "amarillo": "Repite la medición en reposo en 15 minutos.",
+        "amarillo": "Comprueba el equipo, las condiciones y el contexto de la lectura según el procedimiento de la misión. Si hay síntomas importantes, avisa de inmediato; no esperes a repetirla.",
         "rojo": "Avisa a la tripulación y abre la guía de presión y pulso."
       },
       "guia": "presion_cardiovascular.md",
-      "fuente": "NASA HRP – Cardiovascular Adaptations"
+      "fuente": "NASA HRP – Cardiovascular Adaptations",
+      "validacion": {
+        "estado": "pendiente_revision_medica",
+        "aprobado_para_uso_clinico": false,
+        "responsable": "Equipo ApeLogic; revisor clínico todavía no asignado",
+        "nota": "El verde 50–100 no coincide con la referencia general de reposo 60–100 de MedlinePlus; deportistas pueden diferir. No se ha justificado el límite 50 ni los límites amarillo/rojo para astronautas.",
+        "vigencia": "El plazo de antigüedad y el intervalo posible son controles de software del equipo, no duración de validez clínica ni límites fisiológicos certificados."
+      }
     },
     {
       "indicador": "presion_arterial",
@@ -65,11 +72,18 @@
       },
       "max_antiguedad_min": 720,
       "accion": {
-        "amarillo": "Repite la medición en reposo en 15 minutos y revisa sueño e hidratación.",
+        "amarillo": "Comprueba el equipo, las condiciones y el contexto de la lectura según el procedimiento de la misión. Si hay síntomas importantes, avisa de inmediato; no esperes a repetirla.",
         "rojo": "Avisa a la tripulación; si hay dolor de pecho o falta de aire, sigue el protocolo de emergencia."
       },
       "guia": "presion_cardiovascular.md",
-      "fuente": "NASA HRP – Cardiovascular Adaptations"
+      "fuente": "NASA HRP – Cardiovascular Adaptations",
+      "validacion": {
+        "estado": "pendiente_revision_medica",
+        "aprobado_para_uso_clinico": false,
+        "responsable": "Equipo ApeLogic; revisor clínico todavía no asignado",
+        "nota": "Los intervalos del prototipo no son categorías diagnósticas ni umbrales de emergencia aprobados. Falta validar población, posición, dispositivo y ambos componentes con medicina de vuelo.",
+        "vigencia": "El plazo de antigüedad y el intervalo posible son controles de software del equipo, no duración de validez clínica ni límites fisiológicos certificados."
+      }
     },
     {
       "indicador": "oxigeno",
@@ -94,7 +108,14 @@
         "rojo": "Avisa de inmediato a la tripulación y sigue el protocolo de a bordo."
       },
       "guia": "oxigeno_aire.md",
-      "fuente": "NASA HRP – Hypoxia; Hostile/Closed Environments"
+      "fuente": "NASA HRP – Hypoxia; Hostile/Closed Environments",
+      "validacion": {
+        "estado": "pendiente_revision_medica",
+        "aprobado_para_uso_clinico": false,
+        "responsable": "Equipo ApeLogic; revisor clínico todavía no asignado",
+        "nota": "La exactitud depende del dispositivo y condiciones. Los límites de color no se han aprobado para presión de cabina o protocolos de oxigenación de una misión.",
+        "vigencia": "El plazo de antigüedad y el intervalo posible son controles de software del equipo, no duración de validez clínica ni límites fisiológicos certificados."
+      }
     },
     {
       "indicador": "glucosa",
@@ -119,7 +140,14 @@
         "rojo": "Si tienes síntomas, sigue el protocolo de a bordo y avisa a la tripulación."
       },
       "guia": "glucosa.md",
-      "fuente": "NASA OSDR OSD-575 (Inspiration4); rangos de referencia del mismo panel"
+      "fuente": "Equipo ApeLogic — límites ilustrativos sin validación clínica; OSD-575 es contexto histórico, no valida alarmas capilares",
+      "validacion": {
+        "estado": "pendiente_revision_medica",
+        "aprobado_para_uso_clinico": false,
+        "responsable": "Equipo ApeLogic; revisor clínico todavía no asignado",
+        "nota": "Los intervalos del laboratorio de OSD-575 corresponden a muestras históricas, no validan límites de alarma de un glucómetro capilar. Ayunas es contexto necesario, pero no demuestra equivalencia entre métodos.",
+        "vigencia": "El plazo de antigüedad y el intervalo posible son controles de software del equipo, no duración de validez clínica ni límites fisiológicos certificados."
+      }
     },
     {
       "indicador": "temperatura",
@@ -140,11 +168,18 @@
       ],
       "max_antiguedad_min": 1440,
       "accion": {
-        "amarillo": "Repite la medición en 30 minutos y revisa la piel.",
+        "amarillo": "Comprueba el equipo, las condiciones y el contexto de la lectura según el procedimiento de la misión. Si hay síntomas importantes, avisa de inmediato; no esperes a repetirla.",
         "rojo": "Avisa al oficial médico de la tripulación."
       },
       "guia": "piel_temperatura.md",
-      "fuente": "Crucian et al. 2016; NASA HRP – Immune System"
+      "fuente": "Crucian et al. 2016; NASA HRP – Immune System",
+      "validacion": {
+        "estado": "pendiente_revision_medica",
+        "aprobado_para_uso_clinico": false,
+        "responsable": "Equipo ApeLogic; revisor clínico todavía no asignado",
+        "nota": "El método de medición cambia la interpretación. Los colores no distinguen método oral, axilar, frente u oído y no sirven como diagnóstico de fiebre.",
+        "vigencia": "El plazo de antigüedad y el intervalo posible son controles de software del equipo, no duración de validez clínica ni límites fisiológicos certificados."
+      }
     },
     {
       "indicador": "sueno",
@@ -169,7 +204,14 @@
         "rojo": "Avisa al oficial médico de la tripulación."
       },
       "guia": "sueno_fatiga.md",
-      "fuente": "NASA HRP – Inadequate Sleep and Irregular Schedules"
+      "fuente": "NASA HRP – Inadequate Sleep and Irregular Schedules",
+      "validacion": {
+        "estado": "pendiente_revision_medica",
+        "aprobado_para_uso_clinico": false,
+        "responsable": "Equipo ApeLogic; revisor clínico todavía no asignado",
+        "nota": "Los límites 6/4 horas y el máximo verde de 12 son decisiones del prototipo, no metas clínicas aprobadas ni autorización de aptitud para tareas.",
+        "vigencia": "El plazo de antigüedad y el intervalo posible son controles de software del equipo, no duración de validez clínica ni límites fisiológicos certificados."
+      }
     },
     {
       "indicador": "animo",
@@ -194,7 +236,14 @@
         "rojo": "Avisa al oficial médico de la tripulación."
       },
       "guia": "animo_estres.md",
-      "fuente": "NASA HRP – Behavioral Changes and Psychiatric Disorders"
+      "fuente": "NASA HRP – Behavioral Changes and Psychiatric Disorders",
+      "validacion": {
+        "estado": "pendiente_revision_medica",
+        "aprobado_para_uso_clinico": false,
+        "responsable": "Equipo ApeLogic; revisor clínico todavía no asignado",
+        "nota": "Escala propia 1–5, sin validación clínica. Los cortes de color no diagnostican salud mental.",
+        "vigencia": "El plazo de antigüedad y el intervalo posible son controles de software del equipo, no duración de validez clínica ni límites fisiológicos certificados."
+      }
     },
     {
       "indicador": "estres",
@@ -219,7 +268,14 @@
         "rojo": "Avisa al oficial médico de la tripulación."
       },
       "guia": "animo_estres.md",
-      "fuente": "NASA HRP – Behavioral Changes and Psychiatric Disorders"
+      "fuente": "NASA HRP – Behavioral Changes and Psychiatric Disorders",
+      "validacion": {
+        "estado": "pendiente_revision_medica",
+        "aprobado_para_uso_clinico": false,
+        "responsable": "Equipo ApeLogic; revisor clínico todavía no asignado",
+        "nota": "Escala propia 1–5, sin validación clínica. Los cortes de color no diagnostican estrés clínico.",
+        "vigencia": "El plazo de antigüedad y el intervalo posible son controles de software del equipo, no duración de validez clínica ni límites fisiológicos certificados."
+      }
     },
     {
       "indicador": "perdida_osea",
@@ -244,7 +300,14 @@
         "rojo": "Revisa el plan de ejercicio con el oficial médico."
       },
       "guia": "huesos_ejercicio.md",
-      "fuente": "NASA – Risk of Spaceflight-Induced Bone Changes"
+      "fuente": "NASA – Risk of Spaceflight-Induced Bone Changes",
+      "validacion": {
+        "estado": "pendiente_revision_medica",
+        "aprobado_para_uso_clinico": false,
+        "responsable": "Equipo ApeLogic; revisor clínico todavía no asignado",
+        "nota": "Clasificación ilustrativa del equipo, pendiente de revisión por medicina de vuelo.",
+        "vigencia": "El plazo de antigüedad y el intervalo posible son controles de software del equipo, no duración de validez clínica ni límites fisiológicos certificados."
+      }
     },
     {
       "indicador": "vision",
@@ -262,7 +325,14 @@
         "rojo": "Avisa de inmediato a la tripulación."
       },
       "guia": "vision_sans.md",
-      "fuente": "NASA HRP – SANS"
+      "fuente": "NASA HRP – SANS",
+      "validacion": {
+        "estado": "pendiente_revision_medica",
+        "aprobado_para_uso_clinico": false,
+        "responsable": "Equipo ApeLogic; revisor clínico todavía no asignado",
+        "nota": "Clasificación ilustrativa del equipo, pendiente de revisión por medicina de vuelo.",
+        "vigencia": "El plazo de antigüedad y el intervalo posible son controles de software del equipo, no duración de validez clínica ni límites fisiológicos certificados."
+      }
     }
   ]
 }

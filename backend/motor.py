@@ -5,7 +5,9 @@ Para cada indicador calcula, con data/reglas.json:
   - dato sospechoso (fuera de lo físicamente posible: hay que repetir la medición),
   - dato vencido (más viejo que su antigüedad máxima: no se usa para recomendar),
   - tendencia (sube, baja, estable) frente a las mediciones anteriores,
-  - "tu normal": promedio de los primeros días de la misión de ESA persona y cuánto se aleja hoy.
+  - "tu normal": promedio de los primeros días de la misión de ESA persona y cuánto se aleja hoy,
+  - calidad del dato (vigente, sospechoso, vencido, contexto_pendiente) y su motivo, para no
+    presentar como normal un dato que no lo permite (idea de la rama de Romario).
 
 Código escrito con asistencia de IA (Claude); revisado por el equipo.
 """
@@ -17,6 +19,8 @@ from statistics import mean
 import db
 
 ORDEN = {"verde": 1, "amarillo": 2, "rojo": 3}
+CONTEXTOS = {"reposo": "en reposo", "despues_ejercicio": "después de ejercicio", "ayunas": "en ayunas",
+             "despues_comida": "después de comer", "otro": "otro"}
 
 
 def reglas() -> dict:
@@ -94,7 +98,11 @@ def evaluar(astronauta: str) -> dict:
         filas = db.serie(astronauta, nombre, 7)
         nums = [f["valor_num"] for f in filas if f["valor_num"] is not None]
         item = {"indicador": nombre, "valor": _mostrar(fila["valor"]), "unidad": regla.get("unidad", fila["unidad"]),
-                "color": color, "antiguedad_min": antig, "origen": fila["origen"]}
+                "color": color, "antiguedad_min": antig, "origen": fila["origen"], "fecha": fila["ts"],
+                "calidad": "vigente", "motivo": "Medición reciente."}
+        contexto = fila["contexto"] if "contexto" in fila.keys() else None
+        if contexto:
+            item["contexto"] = contexto
         tend = _tendencia(nums, regla)
         if tend:
             item["tendencia"] = tend
@@ -105,8 +113,14 @@ def evaluar(astronauta: str) -> dict:
                 item["desviacion_pct"] = round((nums[-1] - base) / abs(base) * 100)
         if sospechoso:
             item["sospechoso"] = True
-        if antig > regla.get("max_antiguedad_min", 10 ** 9):
+            item.update(calidad="sospechoso", motivo="Valor fuera de lo físicamente posible: comprueba la medición antes de actuar.")
+        elif antig > regla.get("max_antiguedad_min", 10 ** 9):
             item["vencido"] = True
+            item.update(calidad="vencido", motivo="Medición antigua: registra una nueva, esta ya no describe el momento actual.")
+        elif nombre == "glucosa" and contexto and contexto != "ayunas":
+            # El rango de glucosa es de ayunas: no se clasifica una lectura tomada después de comer.
+            item.update(calidad="contexto_pendiente", color="sin dato",
+                        motivo=f"Glucosa medida {CONTEXTOS.get(contexto, contexto)}: el rango es de ayunas, así que no la clasifico.")
         indicadores.append(item)
         if nombre == "sueno" and _noches_cortas(nums) >= 2:
             notas.append(f"{_noches_cortas(nums)} noches seguidas durmiendo menos de 6 horas")
@@ -122,7 +136,7 @@ def _mostrar(valor: str):
         return valor
 
 
-def registrar(astronauta: str, indicador: str, valor, origen: str = "manual") -> dict:
+def registrar(astronauta: str, indicador: str, valor, origen: str = "manual", contexto: str | None = None) -> dict:
     """Guarda una medición, la clasifica y devuelve el resultado con la acción de la guía."""
     rs = reglas()
     if indicador not in rs:
@@ -135,7 +149,13 @@ def registrar(astronauta: str, indicador: str, valor, origen: str = "manual") ->
         color, sospechoso = clasificar(regla, texto)
     except ValueError as e:
         raise ValueError(str(e) if "presión" in str(e) else f"El valor de {regla['nombre'].lower()} debe ser un número.") from e
-    db.insertar(astronauta, indicador, texto, valor_num(indicador, texto), regla.get("unidad", ""), origen)
+    if contexto and contexto not in CONTEXTOS:
+        raise ValueError("Contexto desconocido.")
+    db.insertar(astronauta, indicador, texto, valor_num(indicador, texto), regla.get("unidad", ""), origen, contexto=contexto)
+    if indicador == "glucosa" and contexto and contexto != "ayunas" and not sospechoso:
+        return {"indicador": indicador, "nombre": regla["nombre"], "valor": texto, "unidad": regla.get("unidad", ""),
+                "color": "sin dato", "sospechoso": False,
+                "mensaje": f"Guardado. Medida {CONTEXTOS[contexto]}: el rango de glucosa es de ayunas, así que no la clasifico."}
     if sospechoso:
         mensaje = "Valor inusual: puede ser un error de medición. Repite la medición antes de actuar."
     else:

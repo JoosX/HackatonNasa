@@ -86,8 +86,8 @@ def test_api_fichas_reglas_y_nasa(cliente):
     assert "C001" in cliente.get("/api/nasa/osd575").json()["tripulantes"]
 
 
-def test_api_chat_usa_el_estado_enviado(cliente, sin_ollama):
-    r = cliente.post("/api/chat", json={"pregunta": "Siento el corazón rápido", "estado": ESTADO_ROJO}).json()
+def test_api_chat_acepta_estado_propio_solo_en_modo_demo(cliente, sin_ollama):
+    r = cliente.post("/api/chat", json={"pregunta": "Siento el corazón rápido", "estado": {**ESTADO_ROJO, "modo_demo": True}}).json()
     for clave in ("respuesta", "fuentes", "datos_usados", "modo", "alerta_roja", "segundos"):
         assert clave in r
     assert r["alerta_roja"] is True
@@ -131,7 +131,7 @@ def test_como_estoy_resume_lo_que_esta_fuera_de_rango(sin_ollama):
 @pytest.mark.parametrize("pregunta,guia", [
     ("me siento mareado", "Presión arterial y pulso en microgravedad"),
     ("estoy estresado", "Ánimo, estrés y salud mental"),
-    ("me cuesta respirar", "Oxígeno en sangre y aire de la nave"),
+    ("¿por qué baja mi oxígeno en la nave?", "Oxígeno en sangre y aire de la nave"),   # "me cuesta respirar" ahora es urgencia
     ("me duele el pecho", "Presión arterial y pulso en microgravedad"),
     ("hola, me duele la cabeza", "Dolor de cabeza en el espacio"),
     ("tengo frío", "Temperatura corporal y piel"),
@@ -164,3 +164,81 @@ def test_los_pasos_salen_textuales_de_la_guia(sin_ollama):
 def test_pregunta_mixta_usa_dos_guias(sin_ollama):
     r = rag.responder("Me duele la cabeza y dormí 4 horas, ¿qué hago?", ESTADO_VERDE)
     assert {"Dolor de cabeza en el espacio", "Sueño y fatiga en misiones espaciales"} <= {f["guia"] for f in r["fuentes"]}
+
+
+# --- Alerta roja sin enlace con la Tierra: ORI siempre da un protocolo paso a paso ---
+def _estado_rojo():
+    return {"indicadores": [
+        {"indicador": "pulso", "nombre": "Pulso", "valor": 148, "unidad": "lpm", "color": "rojo"},
+        {"indicador": "oxigeno", "nombre": "Oxígeno", "valor": 97, "unidad": "%", "color": "verde"}]}
+
+
+import pytest as _pytest
+
+
+@_pytest.mark.parametrize("pregunta", ["¿qué hago?", "ayuda", "me siento mal", "emergencia",
+                                       "no hay conexión con la Tierra, ¿qué hago?"])
+def test_protocolo_alerta_sin_enlace(pregunta):
+    import rag
+    r = rag.responder(pregunta, _estado_rojo(), [], conectado=False)
+    assert r["modo"] == "protocolo"
+    assert "tripulación" in r["respuesta"] and "Sin enlace con la Tierra" in r["respuesta"]
+    assert "148" in r["respuesta"]
+    assert r["fuentes"]
+
+
+def test_protocolo_detecta_sin_senal_en_la_pregunta():
+    import rag
+    r = rag.responder("se perdió la señal, ¿qué hago?", _estado_rojo(), [], conectado=True)
+    assert r["modo"] == "protocolo" and r["conectado"] is False
+
+
+def test_sin_alerta_ayuda_sigue_siendo_menu():
+    import rag
+    verde = {"indicadores": [{"indicador": "pulso", "valor": 70, "unidad": "lpm", "color": "verde"}]}
+    assert rag.responder("ayuda", verde, [])["modo"] != "protocolo"
+
+
+# --- El caso del video del desafío: un compañero se desploma; dolor de pecho propio ---
+@_pytest.mark.parametrize("pregunta", ["Mi compañero se desmayó y no responde", "el comandante se cayó y no se mueve",
+                                       "mi compañera tiene dolor en el pecho", "¿se está muriendo?"])
+def test_protocolo_companero(pregunta):
+    import rag
+    r = rag.responder(pregunta, None, [], conectado=False)
+    assert r["modo"] == "emergencia_companero"
+    t = r["respuesta"]
+    assert "¡Emergencia médica!" in t and "desfibrilador" in t and "RCP" in t
+    assert "respira" in t and "Sin enlace con la Tierra" in t
+    assert r["fuentes"][0]["guia"].startswith("Emergencia")
+
+
+@_pytest.mark.parametrize("pregunta", ["me duele el pecho", "no puedo respirar", "siento que me voy a desmayar"])
+def test_sintoma_grave_aun_con_datos_normales(pregunta):
+    import rag
+    verde = {"indicadores": [{"indicador": "pulso", "valor": 72, "unidad": "lpm", "color": "verde"}]}
+    r = rag.responder(pregunta, verde, [])
+    assert r["modo"] == "emergencia"
+    assert "Llama a alguien ahora" in r["respuesta"] and "oficial médico" in r["respuesta"]
+
+
+def test_protocolo_explica_que_se_siente_y_a_quien_llamar():
+    import rag
+    t = rag.responder("¿qué hago?", _estado_rojo(), [], conectado=False)["respuesta"]
+    assert "Qué está pasando" in t and "palpitaciones" in t          # qué se siente
+    assert "Llama a alguien ahora" in t and "«Necesito ayuda médica" in t   # a quién y qué decir
+    assert "no estás solo" in t                                        # empatía, no respuesta seca
+    assert t.rstrip().endswith("?")                                    # sigue la conversación
+
+
+def test_no_responde_la_tierra_no_es_un_companero():
+    import emergencia
+    assert not emergencia.es_companero("no responde la Tierra")
+
+
+def test_api_chat_no_confia_en_el_estado_del_navegador(cliente, sin_ollama):
+    """Sin modo_demo, un estado enviado por el navegador (quizá antiguo) se ignora: manda la base de datos."""
+    import db, motor
+    db.sembrar("A1", forzar=True, valor_num=motor.valor_num)   # base sin alertas rojas
+    falso = {"indicadores": [{"indicador": "pulso", "valor": 190, "unidad": "lpm", "color": "rojo"}]}
+    r = cliente.post("/api/chat", json={"pregunta": "¿Cómo estoy?", "estado": falso}).json()
+    assert "190" not in r["respuesta"]

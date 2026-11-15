@@ -25,6 +25,7 @@ import clima_espacial  # noqa: E402
 import db  # noqa: E402
 import motor  # noqa: E402
 import ollama_cliente  # noqa: E402
+import orientacion  # noqa: E402
 import rag  # noqa: E402
 from guias import RAIZ  # noqa: E402
 
@@ -52,6 +53,7 @@ class PreguntaChat(BaseModel):
     astronauta_id: str = "A1"
     pregunta: str
     estado: dict | None = None   # opcional: si viene, se usa en vez de obtener_estado()
+    conectado: bool = True       # ¿hay enlace con la Tierra? (lo indica la app)
 
 
 class Medicion(BaseModel):
@@ -59,6 +61,7 @@ class Medicion(BaseModel):
     indicador: str
     valor: str
     origen: str = "manual"   # manual | sensor
+    contexto: str | None = None   # reposo, despues_ejercicio, ayunas, despues_comida, otro
 
 
 @app.get("/api/estado/{astronauta_id}")
@@ -71,7 +74,7 @@ def estado(astronauta_id: str) -> dict:
 def nueva_medicion(m: Medicion) -> dict:
     """Guarda una medición, la clasifica con las reglas y devuelve el estado actualizado."""
     try:
-        resultado = motor.registrar(m.astronauta_id, m.indicador, m.valor, m.origen)
+        resultado = motor.registrar(m.astronauta_id, m.indicador, m.valor, m.origen, m.contexto)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
     return {"resultado": resultado, "estado": obtener_estado(m.astronauta_id)}
@@ -98,9 +101,11 @@ def reiniciar_demo(astronauta_id: str = "A1") -> dict:
 @app.post("/api/chat")
 def chat(p: PreguntaChat) -> dict:
     inicio = time.time()
-    estado = p.estado or obtener_estado(p.astronauta_id)
+    # El estado sale siempre de la base de datos de a bordo: no se confía en valores enviados por el navegador
+    # (podrían ser antiguos). Solo las pruebas pueden pasar un estado propio con "modo_demo".
+    estado = p.estado if (p.estado or {}).get("modo_demo") else obtener_estado(p.astronauta_id)
     turnos = db.ultimos_turnos(p.astronauta_id, 4)          # memoria corta de la conversación
-    resultado = rag.responder(p.pregunta, estado, turnos)
+    resultado = rag.responder(p.pregunta, estado, turnos, p.conectado)
     db.guardar_turno(p.astronauta_id, "astronauta", p.pregunta)
     db.guardar_turno(p.astronauta_id, "ori", resultado["respuesta"][:600])
     resultado["segundos"] = round(time.time() - inicio, 2)
@@ -152,6 +157,12 @@ def reglas() -> dict:
 def osd575() -> dict:
     """Panel metabólico real de la tripulación de Inspiration4 (NASA OSDR OSD-575)."""
     return _json("nasa_osd575.json")
+
+
+@app.get("/api/orientacion")
+def orientacion_local() -> dict:
+    """Cómo medir, por qué importa, qué hacer y cuándo avisar, por indicador (sin IA)."""
+    return orientacion.biblioteca()
 
 
 # El frontend se sirve desde el mismo servidor (va al final para no tapar /api).

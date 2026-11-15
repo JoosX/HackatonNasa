@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS mediciones (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   astronauta TEXT NOT NULL, indicador TEXT NOT NULL,
   valor TEXT NOT NULL, valor_num REAL, unidad TEXT, origen TEXT NOT NULL DEFAULT 'manual',
-  ts TEXT NOT NULL
+  ts TEXT NOT NULL, contexto TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_med ON mediciones (astronauta, indicador, ts);
 CREATE TABLE IF NOT EXISTS alertas (
@@ -52,21 +52,23 @@ def conectar() -> sqlite3.Connection:
     con.row_factory = sqlite3.Row
     if not _creada:   # las tablas se crean solas en el primer uso
         con.executescript(ESQUEMA)
+        columnas = {f[1] for f in con.execute("PRAGMA table_info(mediciones)")}
+        if "contexto" not in columnas:   # bases creadas antes de guardar el contexto de la medición
+            con.execute("ALTER TABLE mediciones ADD COLUMN contexto TEXT")
         _creada = True
     return con
 
 
 def crear() -> None:
-    with conectar() as con:
-        con.executescript(ESQUEMA)
+    conectar().close()   # conectar() crea las tablas y migra columnas nuevas
 
 
 def insertar(astronauta: str, indicador: str, valor, valor_num, unidad: str, origen: str = "manual",
-             ts: dt.datetime | None = None) -> int:
+             ts: dt.datetime | None = None, contexto: str | None = None) -> int:
     with conectar() as con:
         cur = con.execute(
-            "INSERT INTO mediciones (astronauta, indicador, valor, valor_num, unidad, origen, ts) VALUES (?,?,?,?,?,?,?)",
-            (astronauta, indicador, str(valor), valor_num, unidad, origen, iso(ts or ahora())))
+            "INSERT INTO mediciones (astronauta, indicador, valor, valor_num, unidad, origen, ts, contexto) VALUES (?,?,?,?,?,?,?,?)",
+            (astronauta, indicador, str(valor), valor_num, unidad, origen, iso(ts or ahora()), contexto))
         return cur.lastrowid
 
 

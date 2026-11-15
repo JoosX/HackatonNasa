@@ -236,10 +236,10 @@ async function recargarDatos() {
 }
 
 const PALABRA = { verde: "normal", amarillo: "en precaución", rojo: "en alerta" };
-async function registrar(indicadorNombre, valor, { comentar = true } = {}) {
+async function registrar(indicadorNombre, valor, { comentar = true, contexto = null } = {}) {
   const r = await fetch("/api/mediciones", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ astronauta_id: "A1", indicador: indicadorNombre, valor: String(valor) }),
+    body: JSON.stringify({ astronauta_id: "A1", indicador: indicadorNombre, valor: String(valor), contexto: contexto || null }),
   });
   const d = await r.json();
   if (!r.ok) throw new Error(d.detail || "No se pudo guardar la medición.");
@@ -251,9 +251,10 @@ async function registrar(indicadorNombre, valor, { comentar = true } = {}) {
     const dato = `${res.nombre.toLowerCase()}: **${res.valor} ${res.unidad}**`.trim();
     const texto = res.sospechoso
       ? `Anoté tu ${dato}, pero es un valor muy inusual. ${res.mensaje}`
+      : res.color === "sin dato" ? `Anoté tu ${dato}. ${res.mensaje}`
       : res.color === "verde" ? `Anoté tu ${dato}. Está normal 👍 Sigue así.`
       : res.color === "amarillo" ? `Anoté tu ${dato}, ${PALABRA.amarillo}. ${res.mensaje}\n¿Quieres que te explique qué puede estar pasando? Pregúntame *¿por qué?*`
-      : `Anoté tu ${dato} y está ${PALABRA.rojo}. ${res.mensaje} No tienes que manejarlo solo.`;
+      : `Anoté tu ${dato} y está ${PALABRA.rojo}. ${res.mensaje} No tienes que manejarlo solo: escríbeme *¿qué hago?* y te guío paso a paso.`;
     chat.decir(texto, res.color === "rojo" && !res.sospechoso);
   }
   return res;
@@ -297,7 +298,7 @@ function enviarTierra() {
   caja.innerHTML = `Enviando ${n === 1 ? "resumen" : `${n} resúmenes`} · llega en ${RETRASO_MARTE_MIN} min (demo: ${RETRASO_MARTE_MIN} s)…
     <div class="barra-envio" role="progressbar" aria-label="Envío a la Tierra"><i></i></div>`;
   caja.querySelector("i").animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: RETRASO_MARTE_MIN * 1000, fill: "forwards" })
-    .finished.then(() => { caja.textContent = "Resumen recibido en la Tierra. La respuesta tardará otro tanto; mientras, sigue las indicaciones de a bordo."; });
+    .finished.then(() => { caja.textContent = "Resumen recibido en la Tierra. La respuesta tardará otro tanto; mientras, sigue las indicaciones de a bordo."; setTimeout(() => { caja.textContent = ""; }, 12000); });
 }
 
 // ---------- Formulario "Registrar medición" ----------
@@ -310,13 +311,16 @@ function iniciarRegistro() {
     const n = sel.value, r = reglas[n];
     val.placeholder = `Ej.: ${EJEMPLO[n]}…`;
     val.inputMode = n === "presion_arterial" ? "text" : "decimal";
-    ayuda.innerHTML = `${escapar(fichas[organoDe(n)]?.como_medir ?? "")}<br><span class="rango">Normal: ${r?.verde ? `${r.verde[0]}–${r.verde[1]}` : `${r.componentes.sistolica.verde.join("–")} / ${r.componentes.diastolica.verde.join("–")}`} ${escapar(r?.unidad ?? "")}</span>`;
+    $("#regComoMedir").dataset.orientacion = n;   // abre la guía de medición de ese indicador
+    const rango = r?.verde ? `${r.verde[0]}–${r.verde[1]}` : `${r.componentes.sistolica.verde.join("–")} / ${r.componentes.diastolica.verde.join("–")}`;
+    ayuda.innerHTML = `<span class="rango">Rango ilustrativo verde: ${rango} ${escapar(r?.unidad ?? "")}</span>`
+      + (n === "glucosa" ? "<br>El rango es de ayunas: indica abajo si comiste antes de medir." : "");
     res.textContent = "";
   };
   sel.addEventListener("change", pintarAyuda);
   window.abrirRegistro = (n) => {
     if (n && reglas[n]) sel.value = n;
-    pintarAyuda(); val.value = ""; res.textContent = "";
+    pintarAyuda(); val.value = ""; res.textContent = ""; $("#regContexto").value = "";
     dlg.showModal(); val.focus();
   };
   $("#btnRegistrar").addEventListener("click", () => window.abrirRegistro(seleccionado ? (fichas[seleccionado]?.indicadores ?? [])[0] : null));
@@ -326,7 +330,7 @@ function iniciarRegistro() {
     const boton = $("#regGuardar");
     boton.disabled = true; boton.textContent = "Guardando…";
     try {
-      const r = await registrar(sel.value, val.value);
+      const r = await registrar(sel.value, val.value, { contexto: $("#regContexto").value });
       dlg.close();
       seleccionar(organoDe(r.indicador));
     } catch (e) {
@@ -359,9 +363,22 @@ async function iniciar() {
   inicial = structuredClone(estado);
 
   $("#oriGrande").innerHTML = avatarORI(40);
+  // Modo conversación: el chat ocupa media pantalla (o toda en móvil). Esc vuelve.
+  const btnAmpliar = $("#btnAmpliar");
+  function ampliarChat(si) {
+    document.body.classList.toggle("chat-amplio", si);
+    btnAmpliar.setAttribute("aria-pressed", String(si));
+    btnAmpliar.setAttribute("aria-label", si ? "Reducir la conversación" : "Ampliar la conversación");
+    btnAmpliar.querySelector(".txt-ampliar").textContent = si ? "Reducir" : "Ampliar";
+  }
+  btnAmpliar.addEventListener("click", () => ampliarChat(!document.body.classList.contains("chat-amplio")));
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" && document.body.classList.contains("chat-amplio") && !document.querySelector("dialog[open]")) ampliarChat(false);
+  });
+
   chat = crearChat({
     lista: $("#mensajes"), formulario: $("#formChat"), entrada: $("#pregunta"), boton: $("#enviar"),
-    sugerencias: $("#sugerencias"), obtenerEstado: () => estado,
+    sugerencias: $("#sugerencias"), obtenerEstado: () => estado, obtenerConexion: () => conectado, alEmergencia: () => ampliarChat(true),
     estadoORI: (e, texto) => {
       const av = $("#oriGrande .ori");
       av.classList.toggle("pensando", e === "pensando");
@@ -430,7 +447,7 @@ async function iniciar() {
     await registrar("oxigeno", 88, { comentar: false });
     await registrar("animo", 1, { comentar: false });
     seleccionar("corazon");
-    chat.decir("Detecté **3 indicadores en alerta**: pulso 148 lpm, oxígeno 88 % y ánimo 1/5. Avisa ahora a la tripulación y sigue el protocolo de a bordo. Si quieres, pregúntame qué hacer mientras tanto.", true);
+    chat.decir("Estoy contigo. Detecté **3 indicadores en alerta**: pulso 148 lpm, oxígeno 88 % y ánimo 1/5. Es posible que notes el corazón acelerado, falta de aire o mareo.\n**Avisa ahora a un compañero o al oficial médico** para que no estés solo.\nEscríbeme *¿qué hago?* y te guío paso a paso.", true);
   });
   $("#btnTormenta").addEventListener("click", () => {
     const i = indicador(estado, "radiacion");
@@ -452,7 +469,7 @@ async function iniciar() {
     const rojosAntes = new Set(estado.indicadores.filter((i) => i.color === "rojo").map((i) => i.indicador));
     estado = e; fijarSeries(await json("/api/historial/A1")); refrescar();
     const nuevos = e.indicadores.filter((i) => i.color === "rojo" && !rojosAntes.has(i.indicador));
-    if (nuevos.length) chat.decir(`Ojo: tu **${NOMBRES_INDICADORES[nuevos[0].indicador] ?? nuevos[0].indicador}** acaba de pasar a alerta (${nuevos[0].valor} ${nuevos[0].unidad}). Avisa a la tripulación y sigue el protocolo de a bordo.`, true);
+    if (nuevos.length) chat.decir(`Ojo: tu **${NOMBRES_INDICADORES[nuevos[0].indicador] ?? nuevos[0].indicador}** acaba de pasar a alerta (${nuevos[0].valor} ${nuevos[0].unidad}). Estoy aquí contigo.\n**Avisa ahora a un compañero o al oficial médico** para que no estés solo.\nEscríbeme *¿qué hago?* y te guío paso a paso.`, true);
   }, 15000);
 
   reloj();

@@ -23,6 +23,7 @@ import math
 import re
 import unicodedata
 
+import emergencia
 import ollama_cliente
 from guias import RAIZ, cargar_fragmentos
 
@@ -207,7 +208,7 @@ def _cuando_avisar(archivo: str) -> list[str]:
             salida.append("🟡 **Precaución**: " + p[len("Amarillo:"):].strip())
         elif p.startswith("Rojo:"):
             salida.append("🔴 **Alerta, avisa de inmediato**: " + p[len("Rojo:"):].strip())
-    return salida
+    return salida or ([texto] if texto else [])   # guías sin cortes por color: se muestra el texto tal cual
 
 
 def explicar(texto_ia: str, archivo: str, pregunta: str) -> str:
@@ -284,10 +285,12 @@ def _coseno(a: list[float], b: list[float]) -> float:
 def _fragmentos() -> list[dict]:
     """Usa el índice con vectores si existe; si no, las guías sin vectores."""
     if "frags" not in _cache:
-        if INDICE.exists():
-            _cache["frags"] = json.loads(INDICE.read_text(encoding="utf-8"))["fragmentos"]
-        else:
-            _cache["frags"] = cargar_fragmentos()
+        actuales = cargar_fragmentos()
+        indexados = json.loads(INDICE.read_text(encoding="utf-8"))["fragmentos"] if INDICE.exists() else []
+        # Si las guías cambiaron después de indexar, no se sirven consejos viejos: se usan las guías actuales
+        # con búsqueda por palabras hasta reindexar (idea de la rama de Romario).
+        claves = lambda fs: {(f["archivo"], f["seccion"]): (f["texto"], f["version"], f["fuente"], f["url"]) for f in fs}
+        _cache["frags"] = indexados if len(indexados) == len(actuales) and claves(indexados) == claves(actuales) else actuales
     return _cache["frags"]
 
 
@@ -391,6 +394,13 @@ def _fuentes(encontrados: list[tuple[float, dict]]) -> list[dict]:
     return salida
 
 
+# Frases urgentes o generales: con un indicador en alerta, se responde con el protocolo paso a paso.
+URGENTE = (r"(que hago|que debo hacer|que tengo que hacer|que hacer|ayuda|ayudame|auxilio|socorro|emergencia|"
+           r"me siento mal|estoy mal|me siento muy mal|grave|me muero|alerta|"
+           r"(no hay|sin|perdi|se perdio|se corto) (la )?(conexion|senal|enlace|comunicacion)|no responde la tierra)")
+SIN_ENLACE = r"((no hay|sin|perdi|se perdio|se corto) (la )?(conexion|senal|enlace|comunicacion)|no responde la tierra)"
+
+
 SEGUIMIENTO = r"^(y |y$|por que|porque|que mas|algo mas|explica|explicame|entonces|eso|y eso|como asi|en serio|de verdad|cuanto|cuando|ok y|vale y|pero)"
 
 
@@ -399,16 +409,40 @@ def _es_seguimiento(pregunta: str) -> bool:
     return len(t.split()) <= 6 and bool(re.search(SEGUIMIENTO, t))
 
 
-def responder(pregunta: str, estado: dict | None = None, turnos: list[dict] | None = None) -> dict:
+def responder(pregunta: str, estado: dict | None = None, turnos: list[dict] | None = None,
+              conectado: bool = True) -> dict:
     turnos = turnos or []
+    plano = _texto_plano(pregunta)
+    if re.search(SIN_ENLACE, plano):   # si el astronauta dice que no hay señal, se asume sin enlace
+        conectado = False
     anterior = next((x["texto"] for x in reversed(turnos) if x["rol"] == "astronauta"), None)
     # Si es una pregunta de seguimiento, se busca con el tema de la pregunta anterior.
     consulta = f"{anterior} {pregunta}" if anterior and _es_seguimiento(pregunta) else pregunta
     texto_estado, hay_rojo = resumir_estado(estado)
-    avisar = (lambda r: AVISO_ROJO + "\n\n" + r) if hay_rojo else (lambda r: r)
+    aviso = AVISO_ROJO if conectado else (AVISO_ROJO + " 📡 No hay enlace con la Tierra: actúa con la tripulación de a bordo.")
+    avisar = (lambda r: aviso + "\n\n" + r) if hay_rojo else (lambda r: r)
+
+    # 0) Emergencias: protocolo paso a paso, cálido y siempre igual (sin IA: instantáneo y sin internet).
+    caso = None
+    if emergencia.es_companero(pregunta):          # "mi compañero se desmayó", "no responde"…
+        caso = ("emergencia_companero", *emergencia.protocolo_companero(conectado))
+    elif emergencia.es_sintoma_grave(pregunta):    # "me duele el pecho", "no puedo respirar"…
+        caso = ("emergencia", *emergencia.protocolo_sintoma(estado, conectado, pregunta))
+    elif hay_rojo and re.search(URGENTE, plano):   # algo en ALERTA y "¿qué hago?", "ayuda", "me siento mal"…
+        caso = ("protocolo", *emergencia.protocolo_alerta(estado, conectado))
+    if caso:
+        modo, texto, fuentes = caso
+        return {"fuentes": fuentes, "datos_usados": texto_estado, "busqueda": "protocolo", "alerta_roja": True,
+                "respuesta": texto, "modo": modo, "conectado": conectado}
 
     # 1) Intenciones que no necesitan IA ni guías (rápidas y siempre iguales).
     intencion = detectar_intencion(pregunta)
+    # Sin alerta, "¿qué hago?" o "me siento mal" sin más detalle: resumen de sus datos e invitación a contar más.
+    if not intencion and re.search(URGENTE, plano) and not buscar(consulta)[0]:
+        texto, fuentes = resumen_estado(estado)
+        texto += "\n\nCuéntame un poco más: ¿qué sientes exactamente y desde cuándo? Así te oriento mejor."
+        return {"fuentes": fuentes, "datos_usados": texto_estado, "busqueda": "reglas", "alerta_roja": hay_rojo,
+                "respuesta": avisar(texto), "modo": "resumen"}
     if intencion == "estado":
         texto, fuentes = resumen_estado(estado)
         return {"fuentes": fuentes, "datos_usados": texto_estado, "busqueda": "reglas", "alerta_roja": hay_rojo,

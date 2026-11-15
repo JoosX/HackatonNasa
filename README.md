@@ -33,13 +33,21 @@ Las mediciones se guardan en `data/mision.db` (un solo archivo, sin servidor, fu
 
 `data/nasa_donki.json` guarda los eventos solares reales de los últimos 30 días (llamaradas, partículas solares y tormentas geomagnéticas) de NASA DONKI. Es la "sincronización con la Tierra": se actualiza con `python scripts/actualizar_donki.py` cuando hay señal, y sin señal la app usa el último archivo y avisa su antigüedad. El nivel de radiación (verde, precaución o alerta) se calcula en `backend/clima_espacial.py` con reglas ilustrativas. Desde el 30/09/2026 el servicio está en `https://ccmc.gsfc.nasa.gov/DONKI-API/get/` (sin clave).
 
+## Emergencias y orientación
+
+- **ORI en una emergencia** (`backend/emergencia.py`): ante "me duele el pecho", "mi compañero se desmayó" o un indicador en alerta con "¿qué hago?", responde al instante y sin IA: qué puede estar pasando, qué se siente, a quién llamar y qué decirle, pasos con su porqué y qué hacer sin enlace con la Tierra. El chat se amplía solo.
+- **Orientación urgente** (botón rojo arriba, de Romario): recorrido paso a paso ¿responde? / ¿respira? hasta RCP y desfibrilador. Funciona aunque fallen el servidor, la IA o el enlace.
+- **Medir, comprender y actuar** (de Romario): por indicador, equipo, preparación, pasos, errores frecuentes y qué hacer sin equipo, con fuentes (MedlinePlus, CDC, FDA). Se abre con «¿Cómo tomo esta medida?» al registrar.
+- Alcance y validación pendiente: [`docs/validacion-orientacion.md`](docs/validacion-orientacion.md). Nada de esto tiene aprobación clínica.
+
 ## Pruebas
 
 ```bash
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
+node --test tests/*.mjs
 ```
 
-79 pruebas: guías, reglas del semáforo, fichas (5 preguntas del reto), datos NASA OSD-575, contrato del modelo 3D, asistente sin IA (no inventa, alerta roja fija) y con IA (se saltan si Ollama está apagado), y la API.
+126 pruebas en Python (guías, semáforo, fichas, datos NASA, modelo 3D, base de datos, contexto y calidad del dato, protocolos de emergencia, orientación, asistente con y sin IA, API) y 11 en JavaScript (recorrido de emergencia y orientación).
 
 ## Estructura y dueños
 
@@ -52,9 +60,11 @@ uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 | `backend/rag.py`, `ollama_cliente.py`, `guias.py` | Asistente RAG local | P5 |
 | `data/guias/*.md`, `reglas.json`, `fichas.json`, `nasa_osd575.json` | Contenido y datos NASA | P6 |
 | `scripts/` | Indexar guías, convertir OSD-575, construir el modelo en Blender | P5 / P6 |
+| `backend/emergencia.py` | Protocolos de emergencia de ORI | P5 |
+| `backend/orientacion.py`, `data/medicion_guiada.json`, `frontend/js/orientacion*.js`, `emergencia.js`, `docs/validacion-orientacion.md` | Orientación urgente y guías de medición | Romario |
 | `tests/` | Pruebas automáticas | P6 |
 
-**Pendiente de P4:** `GET /api/estado/{id}` (estado real calculado con `reglas.json`). Mientras no exista, el frontend usa datos de demostración y los envía al chat.
+El estado del astronauta (`GET /api/estado/{id}`) se calcula con la base de datos y `reglas.json`; el chat siempre usa ese estado.
 
 ## Diseño
 

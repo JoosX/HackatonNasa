@@ -68,3 +68,51 @@ def test_pregunta_de_seguimiento_usa_el_tema_anterior(monkeypatch):
     turnos = [{"rol": "astronauta", "texto": "Me siento con el corazón acelerado"}, {"rol": "ori", "texto": "..."}]
     r = rag.responder("¿y por qué pasa eso?", motor.evaluar("T1"), turnos)
     assert r.get("seguimiento_de") and "Por qué pasa en el espacio" in r["respuesta"]
+
+
+# --- Contexto de la medición y calidad del dato (idea de la rama de Romario) ---
+def test_glucosa_despues_de_comer_no_se_clasifica():
+    import db, motor
+    db.sembrar("A1", forzar=True, valor_num=motor.valor_num)
+    r = motor.registrar("A1", "glucosa", "180", contexto="despues_comida")
+    assert r["color"] == "sin dato" and "ayunas" in r["mensaje"]
+    g = next(i for i in motor.evaluar("A1")["indicadores"] if i["indicador"] == "glucosa")
+    assert g["calidad"] == "contexto_pendiente" and g["color"] == "sin dato" and g["contexto"] == "despues_comida"
+
+
+def test_glucosa_en_ayunas_si_se_clasifica():
+    import motor
+    r = motor.registrar("A1", "glucosa", "250", contexto="ayunas")
+    assert r["color"] == "rojo"
+
+
+def test_calidad_del_dato():
+    import db, motor
+    db.sembrar("A1", forzar=True, valor_num=motor.valor_num)
+    motor.registrar("A1", "pulso", "400")   # imposible
+    ind = {i["indicador"]: i for i in motor.evaluar("A1")["indicadores"]}
+    assert ind["pulso"]["calidad"] == "sospechoso"
+    assert ind["oxigeno"]["calidad"] in ("vigente", "vencido")
+    assert all(i["motivo"] and i["fecha"] for i in ind.values())
+
+
+def test_contexto_desconocido_se_rechaza():
+    import motor, pytest
+    with pytest.raises(ValueError):
+        motor.registrar("A1", "pulso", "70", contexto="volando")
+
+
+def test_base_antigua_sin_columna_contexto_se_migra(tmp_path, monkeypatch):
+    import sqlite3, db
+    ruta = tmp_path / "vieja.db"
+    with sqlite3.connect(ruta) as con:
+        con.execute("CREATE TABLE mediciones (id INTEGER PRIMARY KEY AUTOINCREMENT, astronauta TEXT NOT NULL, "
+                    "indicador TEXT NOT NULL, valor TEXT NOT NULL, valor_num REAL, unidad TEXT, "
+                    "origen TEXT NOT NULL DEFAULT 'manual', ts TEXT NOT NULL)")
+        con.execute("INSERT INTO mediciones (astronauta, indicador, valor, ts) VALUES ('A1','pulso','70','2026-11-14T10:00:00Z')")
+    monkeypatch.setattr(db, "RUTA", ruta)
+    monkeypatch.setattr(db, "_creada", False)
+    db.insertar("A1", "pulso", 72, 72.0, "lpm", contexto="reposo")
+    with sqlite3.connect(ruta) as con:
+        assert con.execute("SELECT COUNT(*) FROM mediciones").fetchone()[0] == 2   # no se perdió nada
+        assert con.execute("SELECT contexto FROM mediciones ORDER BY id DESC").fetchone()[0] == "reposo"

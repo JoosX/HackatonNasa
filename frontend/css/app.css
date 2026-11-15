@@ -318,7 +318,10 @@ button, input { font: inherit; color: inherit; touch-action: manipulation; }
 .msg-ia .quien { color: #cfcfcf; }
 .cuerpo p { margin: 0 0 6px; }
 .cuerpo p:last-child { margin-bottom: 0; }
-.cuerpo ul { margin: 2px 0 8px; padding-left: 18px; }
+.cuerpo ul, .cuerpo ol { margin: 2px 0 8px; padding-left: 18px; }
+.cuerpo ol li::marker { font: 700 11px var(--mono); }
+.cuerpo .titulo-bloque { margin: 10px 0 4px; font: 700 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #e8e8e8; }
+.cuerpo .titulo-bloque:first-child { margin-top: 0; }
 .cuerpo li { margin-bottom: 3px; }
 .cuerpo li::marker { color: var(--suave); }
 .cuerpo em { color: #cfcfcf; }
@@ -380,3 +383,114 @@ details.fuentes ul { list-style: none; padding: 4px 0 0 14px; margin: 0; }
 .guia .tecla { font: 700 10.5px var(--mono); border: 1px solid var(--linea-2); padding: 1px 5px; white-space: nowrap; }
 .guia .btn { width: 100%; }
 @media (max-width: 860px) { .accion-principal .btn { padding: 7px 10px; } }
+
+/* Sugerencias de emergencia: siempre a mano, en rojo de alerta */
+.sugerencias .urgente { border-color: color-mix(in srgb, var(--rojo) 55%, transparent); color: #f1b4b6; }
+.sugerencias .urgente:hover { border-color: var(--rojo); color: #fff; }
+
+/* ==========================================================================
+   Chat cómodo: la conversación manda en la columna, texto legible, modo ampliado
+   (patrón de paneles de asistente: mensajes con la mayor altura, entrada que crece,
+   ancho de lectura ~70 caracteres, botón para volver al último mensaje).
+   ========================================================================== */
+@media (min-width: 1101px) {
+  .app { grid-template-columns: minmax(0, 1fr) clamp(380px, 31vw, 520px); transition: grid-template-columns var(--m-in) var(--ease); }
+  .chat { min-height: 360px; }
+  .ficha:not(.abierta) { max-height: 22%; }
+  .ficha.abierta { max-height: 40%; }
+  .lateral:has(.ficha.abierta) .mensajes { min-height: 200px; }
+  /* Modo ampliado: el chat toma media pantalla; el cuerpo 3D sigue visible a la izquierda. */
+  body.chat-amplio .app { grid-template-columns: minmax(0, 1fr) minmax(540px, 52vw); }
+  body.chat-amplio .lateral > .ficha, body.chat-amplio .lateral > .demo { display: none; }
+}
+@media (max-width: 1100px) {
+  .chat { height: min(80vh, 760px); }
+  /* En pantallas chicas, ampliar = pantalla completa. */
+  body.chat-amplio .chat { position: fixed; inset: 0; z-index: 60; height: auto; margin: 0; border: 0; padding: 12px var(--borde-pagina) calc(12px + env(safe-area-inset-bottom)); }
+  body.chat-amplio { overflow: hidden; }
+}
+
+/* Cabecera: botón ampliar a la derecha */
+.btn-icono { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; min-height: 30px; border: 1px solid var(--linea-2); background: transparent; color: var(--suave); cursor: pointer; font: 700 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; transition: border-color var(--m-out) var(--ease), color var(--m-out) var(--ease); }
+.btn-icono:hover { border-color: var(--texto); color: var(--texto); transition-duration: var(--m-in); }
+.btn-icono:focus-visible { outline: 1px solid var(--sel); outline-offset: 2px; }
+.btn-icono .i-cerrar, .btn-icono[aria-pressed="true"] .i-abrir { display: none; }
+.btn-icono[aria-pressed="true"] .i-cerrar { display: inline; }
+
+/* Zona de mensajes */
+.zona-mensajes { position: relative; flex: 1 1 0; min-height: 0; display: flex; }
+.zona-mensajes .mensajes { flex: 1; min-height: 120px; padding: 4px 6px 12px 0; gap: 16px; scrollbar-width: thin; scrollbar-color: var(--linea-2) transparent; }
+.msg { font-size: 14.5px; line-height: 1.6; }
+.burbuja { padding: 11px 14px; }
+.msg-ia .burbuja { max-width: 100%; }
+.msg-yo .burbuja { max-width: 85%; }
+.cuerpo { max-width: 72ch; }
+.cuerpo p { margin-bottom: 8px; }
+.cuerpo li { margin-bottom: 5px; }
+.cuerpo ul, .cuerpo ol { padding-left: 20px; margin-bottom: 10px; }
+.cuerpo .titulo-bloque { font-size: 11px; margin: 14px 0 6px; }
+.msg-alerta .burbuja { border-left-width: 3px; }
+body.chat-amplio .msg { font-size: 15px; }
+body.chat-amplio .zona-mensajes .mensajes { padding-right: 10px; }
+
+.btn-abajo { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); padding: 6px 12px; border: 1px solid var(--linea-2); background: var(--panel-2); color: var(--texto); font: 10.5px var(--mono); letter-spacing: .06em; cursor: pointer; box-shadow: 0 6px 18px #000a; }
+.btn-abajo:hover { border-color: var(--texto); }
+.btn-abajo[hidden] { display: none; }
+
+/* Sugerencias: una fila que se desliza (con borde difuminado que lo indica); en modo ampliado, varias filas */
+.sugerencias { padding-bottom: 2px; mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+.sugerencias button { padding: 7px 11px; font-size: 12.5px; min-height: 32px; }
+body.chat-amplio .sugerencias { flex-wrap: wrap; mask-image: none; }
+
+/* Entrada: crece con el texto (hasta 5 líneas) */
+.form-chat { align-items: stretch; }
+.form-chat textarea { flex: 1; min-width: 0; min-height: 46px; max-height: 132px; resize: none; padding: 12px 13px; background: var(--negro); border: 1px solid var(--linea-2); border-right: 0; color: var(--texto); font: 14.5px/1.45 var(--fuente); }
+.form-chat textarea::placeholder { color: #6a6a6a; }
+.form-chat textarea:focus-visible { outline: none; border-color: var(--sel); }
+.form-chat .btn { min-width: 84px; }
+.pista-teclado { margin: -2px 0 0; font: 10px var(--mono); color: #6a6a6a; letter-spacing: .04em; }
+@media (pointer: coarse) { .pista-teclado { display: none; } }
+@media (prefers-reduced-motion: reduce) { .app { transition: none; } }
+/* Compacto: todo lo que no es conversación ocupa lo mínimo */
+.chat-cabecera { gap: 10px; }
+.chat-cabecera .btn-icono + .btn-icono { margin-left: 0; }
+.btn-tierra { margin-left: auto; }
+.btn-tierra + #btnAmpliar { margin-left: 0; }
+.estado-tierra { flex: none; margin: -2px 0 0; }
+.estado-tierra:empty { display: none; }
+.form-chat textarea { overflow-y: hidden; }
+.pista-teclado { display: none; }
+body.chat-amplio .pista-teclado { display: block; }
+@media (min-width: 1101px) and (max-height: 860px) {
+  .ficha:not(.abierta) { max-height: 118px; }
+  .ficha.abierta { max-height: 34%; }
+  .chat-cabecera { padding-bottom: 6px; }
+}
+@media (max-width: 1240px) { .btn-tierra span, .txt-ampliar { display: none; } }
+.ori-titulo { min-width: 0; }
+.ori-titulo h2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-icono { padding: 6px 8px; }
+@media (max-width: 1599px) { body:not(.chat-amplio) .btn-tierra span, body:not(.chat-amplio) .txt-ampliar { display: none; } }
+.btn-abajo { left: auto; right: 12px; transform: none; padding: 5px 10px; opacity: .92; }
+/* Con el chat ampliado, el visor es más angosto: signos en 2 filas y sin texto de ayuda */
+@media (min-width: 1101px) {
+  body.chat-amplio .signos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  body.chat-amplio .signos li { border-bottom: 1px solid var(--linea); }
+  body.chat-amplio .ayuda { display: none; }
+}
+body.chat-amplio .sugerencias { flex-wrap: nowrap; mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+
+/* ---------- Orientación (recorrido de emergencia y guías de medición) ---------- */
+.accion-principal { display: flex; gap: 8px; align-items: center; }
+.dialogo-amplio { width: min(940px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; overscroll-behavior: contain; }
+.dialogo-amplio .orientacion-contenido { padding: 18px 22px 22px; }
+.dialogo-cabecera { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 16px 22px; background: var(--panel); border-bottom: 1px solid var(--linea); }
+.dialogo-cabecera h2 { margin: 4px 0 0; font-size: 20px; }
+.dialogo-cabecera form { padding: 0; display: block; }
+.campo-orientacion { display: grid; gap: 6px; font: 11px var(--mono); color: var(--suave); text-transform: uppercase; letter-spacing: .08em; }
+.campo-orientacion select { padding: 10px 12px; background: var(--negro); color: var(--texto); border: 1px solid var(--linea-2); font: 14px var(--fuente); text-transform: none; letter-spacing: 0; }
+.btn-enlace { justify-self: start; padding: 4px 0; border: 0; background: none; color: var(--texto); font: 12.5px var(--fuente); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.btn-enlace:hover { color: #fff; }
+.btn-recorrido { display: block; width: 100%; margin: 12px 0 4px; padding: 11px 12px; font-size: 11px; text-align: left; }
+@media (max-width: 860px) { #abrirUrgente { padding: 7px 10px; } }
+@media (max-width: 640px) { .accion-principal { flex-wrap: wrap; } }

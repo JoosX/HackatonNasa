@@ -7,6 +7,9 @@ const MODOS = {
   sin_informacion: "Sin guía",
   resumen: "Resumen de tus datos",
   conversacion: "ORI",
+  protocolo: "Protocolo · sin IA",
+  emergencia: "Emergencia · sin IA",
+  emergencia_companero: "Emergencia · sin IA",
 };
 
 // Avatar de ORI: casco con visor, ojos que parpadean, antena de estado y línea de pulso.
@@ -29,23 +32,29 @@ const enLinea = (t) => escapar(t).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>
 // Convierte el texto en bloques: párrafos y listas ("- " o "* "). Cada bloque aparece con un leve retraso.
 function bloques(texto) {
   const salida = [];
-  let lista = null;
+  let lista = null, tipo = "ul";
+  const cerrar = () => { if (lista) { salida.push(`<${tipo}>${lista.join("")}</${tipo}>`); lista = null; } };
   for (const linea of texto.split("\n")) {
     const l = linea.trim();
     const item = l.match(/^([-*•]|\d+[.)])\s+(.*)/);
     if (item) {
+      const t = /^\d/.test(item[1]) ? "ol" : "ul";   // pasos numerados = lista ordenada
+      if (lista && t !== tipo) cerrar();
+      tipo = t;
       const conIcono = /^(🟢|🟡|🔴)/u.test(item[2]);   // el círculo de color ya hace de viñeta
       (lista ??= []).push(`<li${conIcono ? ' class="sin-marca"' : ""}>${enLinea(item[2])}</li>`);
       continue;
     }
-    if (lista) { salida.push(`<ul>${lista.join("")}</ul>`); lista = null; }
-    if (l) salida.push(`<p>${enLinea(l)}</p>`);
+    cerrar();
+    if (/^\*\*[^*]+\*\*$/.test(l)) salida.push(`<p class="titulo-bloque">${enLinea(l)}</p>`);   // "**Qué hacer**"
+    else if (l) salida.push(`<p>${enLinea(l)}</p>`);
   }
-  if (lista) salida.push(`<ul>${lista.join("")}</ul>`);
-  return salida.map((b, i) => b.replace(/^<(p|ul)>/, `<$1 class="aparece" style="--d:${i * 90}ms">`)).join("");
+  cerrar();
+  return salida.map((b, i) => b.replace(/^<(p|ul|ol)( class="([^"]*)")?>/, (_, e, __, c) =>
+    `<${e} class="aparece${c ? " " + c : ""}" style="--d:${i * 90}ms">`)).join("");
 }
 
-export function crearChat({ lista, formulario, entrada, boton, sugerencias, obtenerEstado, estadoORI }) {
+export function crearChat({ lista, formulario, entrada, boton, sugerencias, obtenerEstado, obtenerConexion, estadoORI, alEmergencia }) {
   let ocupado = false;
   const fijarEstado = (estado, texto) => estadoORI?.(estado, texto);
 
@@ -80,7 +89,7 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
       const r = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ astronauta_id: "A1", pregunta, estado: obtenerEstado() }),
+        body: JSON.stringify({ astronauta_id: "A1", pregunta, estado: obtenerEstado(), conectado: obtenerConexion?.() ?? true }),
         signal: AbortSignal.timeout(90000),   // si la IA tarda demasiado, se avisa en vez de esperar sin fin
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -97,10 +106,13 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
       av.classList.toggle("alerta", !!d.alerta_roja);
       av.classList.add("habla");
       setTimeout(() => av.classList.remove("habla"), 2400);
-      li.querySelector(".cuerpo").innerHTML = `${bloques(texto)}${fuentes}
+      const recorrido = /^(protocolo|emergencia)/.test(d.modo)
+        ? `<button type="button" class="btn btn-peligro btn-recorrido aparece" data-abrir-urgente="pulso">Abrir recorrido paso a paso (¿responde? ¿respira?)</button>` : "";
+      li.querySelector(".cuerpo").innerHTML = `${bloques(texto)}${recorrido}${fuentes}
         <p class="meta"><span class="chip-modo" data-modo="${d.modo}">${MODOS[d.modo] ?? d.modo}</span>
         <span>${Number(d.segundos).toLocaleString("es", { maximumFractionDigits: 1 })}&nbsp;s · sin internet</span></p>`;
       fijarEstado(d.alerta_roja ? "alerta" : "listo", d.alerta_roja ? "Hay una alerta activa" : "En línea · sin internet");
+      if (/^(protocolo|emergencia)/.test(d.modo)) alEmergencia?.();   // en una emergencia, el chat se amplía
     } catch (e) {
       li.className = "msg msg-ia msg-error";
       li.querySelector(".ori").classList.remove("pensando");
@@ -116,6 +128,26 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
       lista.scrollTop = Math.max(0, li.offsetTop - lista.offsetTop - 8);
     }
   }
+
+  // El cuadro de texto crece con lo que escribes (hasta 5 líneas). Enter envía; Shift+Enter, nueva línea.
+  const crecer = () => {
+    entrada.style.height = "auto";
+    const alto = entrada.scrollHeight + 2;   // + borde
+    entrada.style.height = `${Math.min(alto, 132)}px`;
+    entrada.style.overflowY = alto > 132 ? "auto" : "hidden";
+  };
+  entrada.addEventListener("input", crecer);
+  entrada.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter" && !ev.shiftKey && !ev.isComposing) { ev.preventDefault(); formulario.requestSubmit(); }
+  });
+  formulario.addEventListener("submit", () => requestAnimationFrame(crecer));
+
+  // Botón "↓ Último mensaje" cuando subiste a leer algo anterior.
+  const abajo = document.getElementById("btnAbajo");
+  const revisarAbajo = () => { if (abajo) abajo.hidden = lista.scrollHeight - lista.scrollTop - lista.clientHeight < 80; };
+  lista.addEventListener("scroll", revisarAbajo, { passive: true });
+  new MutationObserver(revisarAbajo).observe(lista, { childList: true, subtree: true });
+  abajo?.addEventListener("click", () => lista.scrollTo({ top: lista.scrollHeight, behavior: "smooth" }));
 
   formulario.addEventListener("submit", (ev) => {
     ev.preventDefault();

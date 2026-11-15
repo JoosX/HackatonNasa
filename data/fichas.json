@@ -8,8 +8,8 @@
         "pulso",
         "presion_arterial"
       ],
-      "como_medir": "Sujétate, descansa 5 minutos, brazo a la altura del corazón, sin hablar. Mide a una hora parecida cada día.",
-      "por_que": "El pulso y la presión muestran cómo trabaja el corazón y detectan estrés, deshidratación o un problema cardiovascular.",
+      "como_medir": "Pulso y presión requieren preparaciones distintas. Abre la guía de cada indicador para equipo, pasos y errores. Registra contexto y unidad; ante síntomas urgentes pide ayuda sin esperar otra lectura.",
+      "por_que": "El pulso y la presión aportan información sobre el sistema cardiovascular; una lectura aislada no identifica la causa de un cambio ni establece un diagnóstico.",
       "efecto_espacio": "Sin gravedad, la sangre se desplaza hacia el pecho y la cabeza; el corazón y los vasos se adaptan y la presión y el pulso pueden cambiar.",
       "a_quien_avisar": "Amarillo: repite la medición. Rojo o dolor de pecho: avisa de inmediato a la tripulación.",
       "prevencion": "Hidratación según el plan, ejercicio diario y buen descanso.",
