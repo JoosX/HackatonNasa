@@ -131,8 +131,6 @@ def test_como_estoy_resume_lo_que_esta_fuera_de_rango(sin_ollama):
 @pytest.mark.parametrize("pregunta,guia", [
     ("me siento mareado", "Presión arterial y pulso en microgravedad"),
     ("estoy estresado", "Ánimo, estrés y salud mental"),
-    ("me cuesta respirar", "Oxígeno en sangre y aire de la nave"),
-    ("me duele el pecho", "Presión arterial y pulso en microgravedad"),
     ("hola, me duele la cabeza", "Dolor de cabeza en el espacio"),
     ("tengo frío", "Temperatura corporal y piel"),
 ])

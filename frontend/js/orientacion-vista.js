@@ -20,6 +20,23 @@ function fuente(g) {
     <p>Texto disponible sin internet con el servidor local activo. Abrir la fuente externa requiere conexión.</p></section>`;
 }
 
+function detalleMedicion(g) {
+  const m=g.medicion;
+  if(!m)return `<ol><li>${esc(g.como_medir)}</li><li>Comprueba la unidad (${esc(g.unidad)}) y anota fecha, contexto y cualquier detalle relevante.</li></ol>`;
+  return `<p><strong>Antes de empezar:</strong> ${esc(m.preparacion)}</p><ol>${m.pasos.map(p=>`<li>${esc(p)}</li>`).join('')}</ol>
+    <details><summary>Errores frecuentes y si no obtengo el dato</summary><p>${esc(m.errores)}</p><p>${esc(m.sin_equipo)}</p></details>
+    <p class="orientacion-enlace"><a href="${esc(/^https:\/\//.test(m.fuente.url)?m.fuente.url:'#')}" target="_blank" rel="noopener noreferrer">${esc(m.fuente.nombre)} ↗</a> · Adaptación educativa del equipo.</p><p class="orientacion-enlace">${esc(m.alcance)}</p>`;
+}
+
+function detalleRegla(g) {
+  const r=g.regla;
+  if(!r)return '';
+  const fila=(nombre,v)=>`<tr><th scope="row">${esc(nombre)}</th><td>${esc(v.verde?.join('–'))}</td><td>${esc(v.amarillo?.join('–'))}</td></tr>`;
+  return `<details class="orientacion-auditoria"><summary>¿De dónde salen estos colores?</summary><p><strong>Sin aprobación clínica.</strong> ${esc(r.validacion.nota)}</p>
+    <div class="orientacion-tabla"><table><caption>Configuración ilustrativa actual (${esc(g.unidad)}). Fuera del amarillo se muestra rojo.</caption><thead><tr><th>Dato</th><th>Verde</th><th>Amarillo (incluye verde)</th></tr></thead><tbody>${r.componentes?Object.entries(r.componentes).map(([n,v])=>fila(n,v)).join(''):fila(g.nombre,r)}</tbody></table></div>
+    <p>El registro se marca vencido tras ${esc(r.max_antiguedad_min)} minutos. ${esc(r.validacion.vigencia)}</p><p>${esc(r.validacion.responsable)}. NASA HRP y OSD-575 no certifican esta configuración.</p></details>`;
+}
+
 export function renderOrientacion(g,i,{urgente=false}={}) {
   if(urgente) return `<div class="orientacion-grid"><section class="orientacion-paso"><p class="rotulo">Referencia local</p><h3>Señales descritas en la guía</h3><p>${esc(g.senales)}</p></section>
     <section class="orientacion-paso"><p class="rotulo">Escalamiento</p><h3>Cuándo avisar según el borrador</h3><p>${esc(g.cuando_avisar)}</p><p>Ante síntomas importantes, prioriza avisar y seguir el protocolo de a bordo. No retrases la ayuda para completar un registro.</p></section></div>${fuente(g)}`;
@@ -28,12 +45,12 @@ export function renderOrientacion(g,i,{urgente=false}={}) {
   return `<div class="orientacion-estado"><strong>${esc(g.nombre)}: ${esc(valor)} ${i?.valor==null?'':esc(i?.unidad)}</strong><span>${esc(i?.calidad??'no disponible')} · ${i?.fecha?esc(new Date(i.fecha).toLocaleString('es')):'sin fecha registrada'}</span></div>
     <div class="orientacion-grid">
       <section class="orientacion-paso"><p class="rotulo">01 / Medir</p><h3>Cómo obtener el dato</h3><p><strong>Equipo o entrada:</strong> ${esc(g.equipo)}</p>
-        <ol><li>${esc(g.como_medir)}</li><li>Comprueba la unidad (${esc(g.unidad)}) y anota fecha, contexto y cualquier detalle relevante.</li></ol>
+        ${detalleMedicion(g)}
         <button type="button" class="btn" data-orientacion-registrar="${esc(g.indicador)}">Registrar medición</button></section>
       <section class="orientacion-paso"><p class="rotulo">02 / Comprender</p><h3>Por qué importa</h3><p>${esc(g.por_que)}</p><details><summary>Qué cambia en el espacio</summary><p>${esc(g.espacio)}</p></details>
         <p>${esc(i?.motivo??'No se pudo consultar una medición actual de este indicador.')}</p></section>
       <section class="orientacion-paso orientacion-dato"><p class="rotulo">03 / Actuar</p><h3>${esc(paso.titulo)}</h3><p>${esc(paso.texto)}</p>
-        <button type="button" class="btn btn-peligro" data-abrir-urgente="${esc(g.indicador)}">Consultar orientación urgente</button>
+        ${detalleRegla(g)}<button type="button" class="btn btn-peligro" data-abrir-urgente="${esc(g.indicador)}">Consultar orientación urgente</button>
         <details><summary>Consultar la guía local ilustrativa</summary><ol>${g.pasos_guia.map(p=>`<li>${esc(p)}</li>`).join('')}</ol></details></section>
       <section class="orientacion-paso"><p class="rotulo">04 / Pedir ayuda</p><h3>Cuándo avisar</h3><p>${esc(g.cuando_avisar)}</p><details><summary>Señales descritas en la guía</summary><p>${esc(g.senales)}</p></details>
         <p>Si hay síntomas importantes, usa el protocolo de a bordo aunque el dato aparezca en rango.</p></section>

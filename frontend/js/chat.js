@@ -2,6 +2,7 @@
 // Código escrito con asistencia de IA (Claude); revisado por el equipo.
 
 const MODOS = {
+  orientacion_urgente: "Orientación urgente · sin IA",
   ia_local: "IA local",
   respaldo_sin_ia: "Guías (sin IA)",
   sin_informacion: "Sin guía",
@@ -97,7 +98,7 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
       av.classList.toggle("alerta", !!d.alerta_roja);
       av.classList.add("habla");
       setTimeout(() => av.classList.remove("habla"), 2400);
-      li.querySelector(".cuerpo").innerHTML = `${bloques(texto)}${fuentes}
+      li.querySelector(".cuerpo").innerHTML = `${bloques(texto)}${d.modo==='orientacion_urgente'?'<button type="button" class="btn btn-peligro" data-abrir-urgente="pulso">Abrir recorrido de emergencia</button>':''}${fuentes}
         <p class="meta"><span class="chip-modo" data-modo="${d.modo}">${MODOS[d.modo] ?? d.modo}</span>
         <span>${Number(d.segundos).toLocaleString("es", { maximumFractionDigits: 1 })}&nbsp;s · sin internet</span></p>`;
       fijarEstado(d.alerta_roja ? "alerta" : "listo", d.alerta_roja ? "Hay una alerta activa" : "En línea · sin internet");
@@ -106,7 +107,7 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
       li.querySelector(".ori").classList.remove("pensando");
       li.querySelector(".cuerpo").innerHTML = `<p>${e.name === "TimeoutError"
         ? "Perdón, me tardé demasiado en pensar. ¿Me lo preguntas otra vez? La segunda vez suelo ser más rápido."
-        : "Uy, no logro conectarme con mi sistema local. Revisa que el servidor esté encendido y vuelve a intentarlo."}</p>`;
+        : "No logro conectarme con el servidor local. Revisa que esté encendido y vuelve a intentarlo."}</p><button type="button" class="btn btn-peligro" data-abrir-urgente="pulso">Orientación urgente · sin esperar al chat</button>`;
       fijarEstado("listo", "Sin respuesta del sistema");
     } finally {
       ocupado = false;
@@ -131,7 +132,7 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
   // Mensaje de bienvenida.
   mensajeORI(bloques("¡Hola! Soy **ORI**, tu compañero de salud a bordo.\n"
     + "Puedo decirte **cómo estás**, orientarte si te sientes mal y explicarte tus indicadores. "
-    + "Funciono sin internet y te muestro de qué guía de NASA saco cada consejo.\nCuéntame, ¿cómo te sientes hoy?"));
+    + "Consulto las guías locales del equipo, pendientes de revisión clínica, y muestro sus fuentes. Para una emergencia, abre **Orientación urgente** sin esperar al chat.\nCuéntame, ¿cómo te sientes hoy?"));
 
   return { preguntar };
 }

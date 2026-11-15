@@ -84,12 +84,11 @@
     <form method="dialog"><button class="btn" aria-label="Cerrar orientación">Cerrar ×</button></form></header>
   <div class="orientacion-contenido">
     <aside id="orientacionUrgente" class="orientacion-urgente" hidden>
-      <h3>Si hay dolor de pecho, falta de aire, confusión o desmayo</h3>
-      <p>Avisa de inmediato a la tripulación y sigue el protocolo de emergencia de a bordo. No esperes una respuesta del chat ni el enlace con la Tierra.</p>
-      <p>Estas fichas ilustrativas no sustituyen ese protocolo. No indican maniobras de reanimación, medicamentos ni dosis.</p>
+      <h3>Pide ayuda a la tripulación ahora</h3>
+      <p>Activa el protocolo de la misión. No esperes al chat ni a la Tierra. Recorrido educativo para adultos; revisión médica pendiente.</p>
     </aside>
     <label>Indicador o tema<select id="orientacionSelector"><option value="pulso">Pulso / corazón</option><option value="presion_arterial">Presión arterial</option><option value="oxigeno">Oxígeno / respiración</option><option value="glucosa">Glucosa</option><option value="temperatura">Temperatura</option><option value="sueno">Sueño</option><option value="animo">Ánimo</option><option value="estres">Estrés</option></select></label>
-    <p class="orientacion-revision">Contenido ilustrativo del equipo · Requiere revisión clínica · Los síntomas importan aunque un valor aparezca en rango.</p>
+    <p id="orientacionRevision" class="orientacion-revision">Contenido ilustrativo del equipo · Requiere revisión clínica · Los síntomas importan aunque un valor aparezca en rango.</p>
     <div id="orientacionContenido" aria-live="polite"></div>
   </div>
 </dialog>

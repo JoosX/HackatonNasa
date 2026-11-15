@@ -120,7 +120,15 @@ La suite Python también verifica las 20 series frente al CSV original incluido.
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 ```
 
-137 pruebas Python: registro local, conexión de ocho indicadores y calidad de los datos, resúmenes descriptivos de evolución, biblioteca de orientación sin IA, guías, reglas del semáforo, fichas, datos NASA y procedencia del CSV, modelo 3D, asistente y API. Las dos pruebas con el modelo se saltan si Ollama está apagado. Las pruebas JavaScript se ejecutan con `node --test tests/*.test.mjs`.
+150 pruebas Python: registro local, conexión de ocho indicadores y calidad de los datos, resúmenes descriptivos de evolución, orientación y emergencia sin IA, guías, reglas del semáforo, fichas, datos NASA y procedencia del CSV, modelo 3D, asistente y API. Las dos pruebas con el modelo se saltan si Ollama está apagado. Las 21 pruebas JavaScript se ejecutan con `node --test tests/*.test.mjs`.
+
+## Emergencia y medición guiada
+
+**Orientación urgente** abre preguntas sobre respuesta, respiración y síntomas, con rutas de incertidumbre, ayuda y referencia de RCP/DEA. No espera al chat ni al servidor una vez cargada la página. ORI también deriva expresiones explícitas urgentes a una respuesta fija antes de consultar el modelo. No es un detector clínico de todas las emergencias.
+
+Las ocho guías explican preparación, pasos, errores y ausencia de equipo. Las técnicas instrumentales enlazan referencias específicas de CDC, FDA o MedlinePlus. El detalle **¿De dónde salen estos colores?** muestra los cortes actuales y sus limitaciones: siguen siendo ilustrativos, sin aprobación clínica. Las fuentes NASA no certifican esos límites y OSD-575 no valida alarmas de un glucómetro capilar.
+
+El [documento de validación](docs/validacion-orientacion.md) reúne fuentes, alcance, revisión médica pendiente y un guion para probar comprensión con personas ajenas al equipo. La revisión técnica no sustituye esas dos validaciones. Si se modifican las guías, un índice de embeddings antiguo se descarta y se usan textos actuales por palabras hasta regenerarlo con el proceso habitual.
 
 ## Estructura y dueños
 

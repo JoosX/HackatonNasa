@@ -24,6 +24,7 @@ import re
 import unicodedata
 
 import ollama_cliente
+from emergencias import expresion_urgente, respuesta_urgente
 from guias import RAIZ, cargar_fragmentos
 
 INDICE = RAIZ / "data" / "indice_guias.json"
@@ -40,7 +41,7 @@ SIN_INFO = ("No tengo información sobre eso en mi biblioteca de guías, y prefi
             "en Tierra cuando vuelva la señal.")
 
 # La IA solo escribe la parte humana (empatía + explicación de sus datos). Los pasos y el "cuándo avisar"
-# se copian tal cual de la guía de NASA: así no se pueden inventar y la fuente queda garantizada.
+# se copian de las adaptaciones locales del equipo, pendientes de revisión clínica.
 SISTEMA = """Eres ORI, el compañero de salud a bordo de una misión espacial larga. Hablas con un
 astronauta que NO es médico. Tono: cálido, cercano y tranquilo, como un compañero de tripulación.
 Habla de "tú", en español, con frases cortas y naturales.
@@ -135,11 +136,11 @@ TEXTO_INTENCION = {
              "- **Explicarte un indicador**: presión, pulso, oxígeno, glucosa, sueño, ánimo, radiación…\n"
              "Solo uso las guías de salud guardadas en la nave y siempre te muestro de dónde saco cada consejo. "
              "No reemplazo al médico, pero te acompaño mientras tanto.",
-    "colores": "Uso el mismo código que las alarmas de la nave, para que lo leas de un vistazo:\n"
-               "- 🟢 **Normal**: todo en orden.\n"
-               "- 🟡 **Precaución**: algo se salió de lo habitual. Repite la medición y sigue el consejo.\n"
-               "- 🔴 **Alerta**: avisa a la tripulación y sigue el protocolo de a bordo.\n"
-               "Cada órgano del cuerpo toma el color de su indicador más alterado.",
+    "colores": "Los colores son ilustrativos y no tienen aprobación clínica:\n"
+               "- 🟢 **En rango ilustrativo**: no descarta síntomas ni una emergencia.\n"
+               "- 🟡 **Precaución ilustrativa**: revisa el dato y su contexto.\n"
+               "- 🔴 **Alerta ilustrativa**: avisa a la tripulación y sigue el protocolo de a bordo.\n"
+               "Un dato ausente, vencido o sospechoso no se considera normal. NASA no certifica estos cortes.",
 }
 
 
@@ -235,7 +236,7 @@ def _cuando_avisar(archivo: str) -> list[str]:
             salida.append("🟡 **Precaución**: " + p[len("Amarillo:"):].strip())
         elif p.startswith("Rojo:"):
             salida.append("🔴 **Alerta, avisa de inmediato**: " + p[len("Rojo:"):].strip())
-    return salida
+    return salida or ([texto] if texto else [])
 
 
 def componer(texto_ia: str, archivo: str, pregunta: str, secundaria: str | None = None) -> str:
@@ -245,7 +246,7 @@ def componer(texto_ia: str, archivo: str, pregunta: str, secundaria: str | None 
         avisos = _cuando_avisar(archivo) + _cuando_avisar(secundaria)
     else:
         pasos, avisos = _pasos_de_la_guia(archivo), _cuando_avisar(archivo)
-    partes = [texto_ia.strip()]
+    partes = [texto_ia.strip(), 'Orientación ilustrativa del equipo, pendiente de revisión clínica. Las fuentes NASA aportan contexto; no aprueban estas recomendaciones.']
     if pasos:
         partes.append("**Lo que te propongo ahora:**\n" + "\n".join(f"- {p}" for p in pasos))
     if avisos:
@@ -301,10 +302,11 @@ def _coseno(a: list[float], b: list[float]) -> float:
 def _fragmentos() -> list[dict]:
     """Usa el índice con vectores si existe; si no, las guías sin vectores."""
     if "frags" not in _cache:
-        if INDICE.exists():
-            _cache["frags"] = json.loads(INDICE.read_text(encoding="utf-8"))["fragmentos"]
-        else:
-            _cache["frags"] = cargar_fragmentos()
+        actuales = cargar_fragmentos()
+        indexados = json.loads(INDICE.read_text(encoding="utf-8"))["fragmentos"] if INDICE.exists() else []
+        # No servir consejos antiguos desde embeddings después de actualizar las guías.
+        claves = lambda fs: {(f['archivo'], f['seccion']): (f['texto'], f['version'], f['fuente'], f['url']) for f in fs}
+        _cache['frags'] = indexados if claves(indexados)==claves(actuales) and len(indexados)==len(actuales) else actuales
     return _cache["frags"]
 
 
@@ -409,6 +411,9 @@ def _fuentes(encontrados: list[tuple[float, dict]]) -> list[dict]:
 
 
 def responder(pregunta: str, estado: dict | None = None) -> dict:
+    if expresion_urgente(pregunta):
+        # Antes de la búsqueda vectorial y de cualquier espera a Ollama.
+        return {**respuesta_urgente(), 'datos_usados':'Expresión del mensaje; no depende de valores ni colores del panel.'}
     texto_estado, hay_rojo = resumir_estado(estado)
     avisar = (lambda r: AVISO_ROJO + "\n\n" + r) if hay_rojo else (lambda r: r)
 

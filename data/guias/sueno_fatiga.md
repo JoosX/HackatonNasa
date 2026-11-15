@@ -20,8 +20,8 @@ Varias noches seguidas con menos de 6 horas de sueño, somnolencia durante el d�
 - Mantener un horario fijo para dormir cuando la misión lo permita.
 - Reducir la luz de pantallas antes de dormir y usar el antifaz y los tapones del saco de dormir.
 - Evitar tareas críticas cuando la prueba de reacción muestre un empeoramiento claro respecto a tu normal.
-- Si llevas 3 o más noches con menos de 6 horas, avisar al oficial médico de la tripulación.
+- Si el descanso insuficiente persiste o afecta tus tareas, avisa a la persona con mayor formación médica de la tripulación.
 - Al volver la señal, incluirlo en el reporte para los médicos en Tierra.
 
 ## Cuándo avisar
-Amarillo: 2 noches seguidas con menos de 6 horas. Rojo: 4 o más noches seguidas con menos de 5 horas, o somnolencia que afecta tareas críticas.
+No hay un número de noches validado para activar una alarma en este prototipo. Comunica el descanso insuficiente persistente; si la somnolencia afecta una tarea crítica, pide apoyo sin esperar a alcanzar un corte de días.

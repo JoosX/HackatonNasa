@@ -17,6 +17,7 @@ EQUIPOS = {
 
 def biblioteca():
     reglas = json.loads((RAIZ / 'data/reglas.json').read_text(encoding='utf-8'))['indicadores']
+    medicion = json.loads((RAIZ / 'data/medicion_guiada.json').read_text(encoding='utf-8'))
     salida = {}
     for nombre in CATALOGO:
         regla = next(r for r in reglas if r['indicador'] == nombre)
@@ -37,5 +38,7 @@ def biblioteca():
             'url': meta.get('url',''), 'version': meta.get('version',''),
             'estado_revision': meta.get('estado','ilustrativo, sin revisión clínica'),
             'autor_contenido': 'Adaptación del equipo basada en las fuentes indicadas; no es un protocolo oficial NASA.',
+            'medicion': dict(medicion['indicadores'][nombre], alcance=medicion['alcance'], version=medicion['version']),
+            'regla': {k: regla[k] for k in ('verde','amarillo','componentes','posible','max_antiguedad_min','validacion') if k in regla},
         }
     return {'indicadores':salida}

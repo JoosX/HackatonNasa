@@ -1,0 +1,62 @@
+{
+  "version": "2026-11-14",
+  "alcance": "Instrucciones educativas para adultos, adaptadas por el equipo. Referencias terrestres: el equipo y el procedimiento aprobado de la misión prevalecen. Pendiente de revisión por medicina de vuelo.",
+  "indicadores": {
+    "pulso": {
+      "preparacion": "Si quieres registrar pulso en reposo, descansa al menos 10 minutos. No esperes ese tiempo ante una emergencia.",
+      "pasos": ["Usa el monitor según su manual. Como alternativa manual, coloca índice y medio en la cara interna de la muñeca, bajo la base del pulgar.", "Cuando percibas los latidos, cuéntalos durante un minuto completo.", "Registra el resultado en lpm y si estabas en reposo o haciendo ejercicio."],
+      "errores": "Comparar reposo con ejercicio o perder la cuenta. Si no logras obtener una lectura, no inventes un valor ni retrases la ayuda urgente.",
+      "sin_equipo": "Puedes contar el pulso en la muñeca si sabes hacerlo. Si no lo encuentras, solicita apoyo; este conteo no sustituye la evaluación de una persona que no responde.",
+      "fuente": {"nombre": "MedlinePlus — Pulse", "url": "https://medlineplus.gov/ency/article/003399.htm"}
+    },
+    "presion_arterial": {
+      "preparacion": "Para una medición rutinaria, vacía la vejiga y descansa 5 minutos. Evita comida y bebida los 30 minutos previos. Anota si estas condiciones no se cumplieron.",
+      "pasos": ["Usa un manguito del tamaño adecuado sobre el brazo descubierto, siguiendo el manual del tensiómetro.", "En Tierra: espalda apoyada, piernas sin cruzar, pies apoyados y brazo a la altura del pecho. En microgravedad usa la sujeción y posición del procedimiento de la misión.", "No hables mientras mide. Registra sistólica y diastólica en mmHg.", "En una medición rutinaria toma al menos dos lecturas separadas por 1–2 minutos y conserva cada una."],
+      "errores": "Manguito sobre ropa, tamaño incorrecto, hablar o comparar posiciones distintas pueden alterar la lectura. No uses el plazo de una medición rutinaria para demorar una emergencia.",
+      "sin_equipo": "Sin tensiómetro no puedes obtener este dato. Déjalo sin registrar y solicita el equipo; no lo calcules a partir del pulso.",
+      "fuente": {"nombre": "CDC — Measuring Your Blood Pressure", "url": "https://www.cdc.gov/high-blood-pressure/measure/index.html"}
+    },
+    "oxigeno": {
+      "preparacion": "Lee el manual del oxímetro. Mantén la mano caliente y relajada; retira el esmalte del dedo utilizado.",
+      "pasos": ["Coloca el oxímetro en el dedo según su manual y permanece quieto.", "Espera una lectura estable y registra la saturación SpO₂ en %, evitando confundirla con el pulso.", "Anota síntomas, fecha y condiciones de la lectura. Una cifra aparentemente buena no descarta falta de aire."],
+      "errores": "Movimiento, mano fría, circulación, esmalte y pigmentación de la piel pueden afectar la exactitud. El oxímetro no mide CO₂ ni la calidad del aire de la nave.",
+      "sin_equipo": "No estimes un porcentaje por el aspecto de la persona. Si hay dificultad respiratoria, pide ayuda sin esperar al oxímetro.",
+      "fuente": {"nombre": "FDA — Pulse Oximeter Basics", "url": "https://www.fda.gov/consumers/consumer-updates/pulse-oximeter-basics"}
+    },
+    "glucosa": {
+      "preparacion": "Usa el glucómetro solo si está indicado en el plan de la misión y tienes entrenamiento. Lava y seca bien las manos; comprueba el material y su conservación.",
+      "pasos": ["Sigue el manual del glucómetro, tiras y lanceta y el procedimiento de manejo de sangre de la misión.", "Lee la unidad del aparato: este formulario acepta mg/dL. No copies un valor en mmol/L como si fuera mg/dL.", "Registra si estabas en ayunas o después de comer, además de fecha y síntomas.", "Desecha el material punzante según el procedimiento a bordo; no compartas material de uso individual."],
+      "errores": "Manos sucias o húmedas, tiras mal conservadas, deshidratación, ciertas sustancias y condiciones ambientales pueden afectar el resultado. No ajustes medicamentos con los colores de este prototipo.",
+      "sin_equipo": "Sin glucómetro y material adecuado, deja el dato ausente. Los análisis históricos de OSD-575 no sustituyen una lectura personal.",
+      "fuente": {"nombre": "FDA — Blood Glucose Monitoring Devices", "url": "https://www.fda.gov/medical-devices/in-vitro-diagnostics/blood-glucose-monitoring-devices"}
+    },
+    "temperatura": {
+      "preparacion": "Utiliza un termómetro digital según su manual. Para una lectura oral rutinaria espera 20–30 minutos tras comer, fumar o beber algo frío o caliente.",
+      "pasos": ["Limpia el dispositivo según su manual y el procedimiento de la misión.", "Usa el método autorizado para ese dispositivo. Si es oral, coloca la sonda bajo la lengua y cierra la boca hasta la señal del aparato.", "Registra °C y escribe en las notas el método: oral, axilar, oído o frente. No compares métodos como si fueran equivalentes."],
+      "errores": "Alimentos o bebidas recientes, ejercicio y métodos distintos pueden cambiar la lectura. No sumes ni restes una corrección improvisada entre métodos.",
+      "sin_equipo": "Tocar la frente no produce una temperatura en °C. Deja el dato ausente y comunica los síntomas.",
+      "fuente": {"nombre": "MedlinePlus — Temperature measurement", "url": "https://medlineplus.gov/ency/article/003400.htm"}
+    },
+    "sueno": {
+      "preparacion": "Elige un criterio consistente: horas realmente dormidas, no solo tiempo en cama. Este es un diario del equipo, no una prueba clínica validada.",
+      "pasos": ["Anota la estimación de horas de sueño del día y la fecha correspondiente.", "Aclara en las notas si incluiste siestas y si es una estimación o una lectura de un dispositivo.", "Usa el mismo criterio cada día. La comparación agrupa por fecha UTC y conserva la última lectura de cada día."],
+      "errores": "Duplicar el mismo día no suma horas en la comparación. Una noche corta no demuestra la causa de un síntoma.",
+      "sin_equipo": "Puedes registrar una estimación honesta. Si no lo recuerdas, deja el dato ausente; no ingreses cero para expresar desconocimiento.",
+      "fuente": {"nombre": "NASA HRP — contexto de riesgos; método de diario definido por el equipo", "url": "https://www.nasa.gov/hrp/risks/"}
+    },
+    "animo": {
+      "preparacion": "Autorreporte voluntario del estado actual. Escala del equipo, sin validación clínica; no diagnostica un trastorno.",
+      "pasos": ["Elige cómo te sientes: 1 muy bajo, 2 bajo, 3 intermedio, 4 bueno, 5 muy bueno.", "Registra fecha y, si quieres, una nota sobre el contexto.", "Compara solo usando el mismo significado de la escala. Si necesitas ayuda, comunícalo independientemente del número."],
+      "errores": "No tratar una puntuación como diagnóstico ni asignarla a otra persona sin preguntarle. No es una prueba de aptitud para tareas.",
+      "sin_equipo": "No requiere sensor. Si prefieres no responder, deja el dato ausente.",
+      "fuente": {"nombre": "NASA HRP — contexto conductual; escala definida por el equipo", "url": "https://www.nasa.gov/hrp/risks/"}
+    },
+    "estres": {
+      "preparacion": "Autorreporte voluntario del estrés actual. Escala del equipo, sin validación clínica.",
+      "pasos": ["Elige tu estrés percibido: 1 muy bajo, 2 bajo, 3 intermedio, 4 alto, 5 muy alto.", "Registra fecha y contexto si quieres compartirlo.", "Pide apoyo cuando lo necesites, aunque la escala muestre un valor bajo."],
+      "errores": "La dirección de esta escala es distinta a ánimo: un número mayor significa más estrés. No usarla para diagnosticar ni sancionar a un tripulante.",
+      "sin_equipo": "No requiere sensor. Si prefieres no responder, deja el dato ausente.",
+      "fuente": {"nombre": "NASA HRP — contexto conductual; escala definida por el equipo", "url": "https://www.nasa.gov/hrp/risks/"}
+    }
+  }
+}

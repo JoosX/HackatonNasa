@@ -18,4 +18,19 @@
 .orientacion-estado strong { font:700 20px var(--mono); }
 .orientacion-estado span { color:#b8b8b8; font-size:12px; }
 .orientacion-enlace { margin:6px 0; font-size:11px; }
+.emergencia-recorrido { border:1px solid var(--rojo); padding:20px; }
+.emergencia-recorrido h3 { font-size:24px; line-height:1.3; margin:12px 0; }
+.emergencia-recorrido p, .emergencia-recorrido li { font-size:15px; line-height:1.6; margin:12px 0; }
+.emergencia-recorrido ol { padding-left:24px; }
+.emergencia-opciones { display:grid; gap:12px; margin:20px 0; }
+.emergencia-opciones .btn { min-height:52px; padding:14px; white-space:normal; text-align:left; font-size:15px; }
+.emergencia-navegacion { display:flex; flex-wrap:wrap; gap:12px; margin:16px 0; }
+.emergencia-recorrido a { color:var(--texto); text-decoration:underline; }
+.emergencia-recorrido summary, .orientacion-auditoria summary { cursor:pointer; padding:12px 0; }
+.orientacion-auditoria { margin:12px 0; }
+.orientacion-tabla { overflow-x:auto; }
+.orientacion-tabla table { width:100%; border-collapse:collapse; font-size:12px; }
+.orientacion-tabla th, .orientacion-tabla td { border:1px solid var(--linea-2); padding:8px; text-align:left; }
+.orientacion-tabla caption { text-align:left; padding:10px 0; }
+#orientacionDialogo [hidden] { display:none !important; }
 @media(max-width:650px) { .orientacion-grid { grid-template-columns:1fr; } .orientacion-contenido { padding:18px; } }
