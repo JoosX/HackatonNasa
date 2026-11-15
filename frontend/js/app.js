@@ -5,7 +5,7 @@ import {
   ORGANOS, COLORES, NOMBRES_INDICADORES, cargarEstado, cargarFichas, colorOrgano, indicador,
   antiguedadTexto, historial, sparkline, valorNumerico, fijarSeries, serieReal,
 } from "./organos.js";
-import { crearChat, avatarORI } from "./chat.js";
+import { crearChat, iniciarSelectorMotor, avatarORI } from "./chat.js";
 import { crearHud } from "./hud.js";
 import { L, LOCALE, EN, traducirPagina } from "./i18n.js";
 
@@ -395,6 +395,7 @@ async function iniciar() {
     if (ev.key === "Escape" && document.body.classList.contains("chat-amplio") && !document.querySelector("dialog[open]")) ampliarChat(false);
   });
 
+  iniciarSelectorMotor($("#motorIA"));
   chat = crearChat({
     lista: $("#mensajes"), formulario: $("#formChat"), entrada: $("#pregunta"), boton: $("#enviar"),
     sugerencias: $("#sugerencias"), obtenerEstado: () => estado, obtenerConexion: () => conectado, alEmergencia: () => ampliarChat(true),

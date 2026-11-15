@@ -49,6 +49,21 @@ Variables opcionales: `MODELO_CHAT` (p. ej. `gemma3:1b` si va lento), `MODELO_EM
 
 **Voz sin internet (opcional):** `python scripts/descargar_voces.py` descarga una vez las voces de ORI; luego agrega `--with faster-whisper --with numpy --with piper-tts` al comando del servidor. Whisper transcribe el micrófono y Piper le da voz a ORI, los dos en la misma computadora.
 
+## Demo en línea: elegir el motor de IA
+
+> **El modo de ORI es la IA local.** En la nave no hay internet, así que ORI usa Ollama en la computadora de a bordo. Gemini es solo una ayuda para mostrar la demo en un servidor gratuito sin modelo local.
+
+En la app, encima del chat, el selector **IA: Local · Gemini** elige quién redacta la explicación empática. Los pasos, las alertas y las emergencias no cambian: siguen saliendo de las guías y de los protocolos fijos.
+
+| Motor | Cuándo | Cómo se activa |
+|---|---|---|
+| **Local** (Ollama) | En la nave, sin internet | Ollama en la misma computadora, o `OLLAMA_URL` apuntando a tu computadora a través de un túnel |
+| **Gemini** (Google AI Studio) | Solo para la demo en línea | Variable `GEMINI_API_KEY` en el servidor (opcional: `GEMINI_MODELO`, por defecto `gemini-flash-latest`) |
+
+`MOTOR_IA=auto` (por defecto) usa la IA local si responde y, si no, Gemini. Si ninguno está disponible, ORI responde con el texto de las guías. Con Gemini, la pregunta y los datos del astronauta salen a internet: úsalo solo con datos de demostración.
+
+**Render (gratis):** el archivo `render.yaml` crea el servicio. En el panel de Render se escribe `GEMINI_API_KEY`; la clave nunca va en el código. En el plan gratis no hay Whisper ni Piper: el micrófono queda desactivado y la voz de ORI usa la del navegador.
+
 ## Endpoints
 
 | Endpoint | Qué hace |
@@ -58,7 +73,7 @@ Variables opcionales: `MODELO_CHAT` (p. ej. `gemma3:1b` si va lento), `MODELO_EM
 | `POST /api/ia/recargar` | Recargar después de volver a indexar las guías |
 | `POST /api/voz` · `POST /api/voz/hablar` | Voz a texto (Whisper) · texto a voz (Piper) |
 
-`modo` puede ser: `ia_local` (respondió el modelo), `respaldo_sin_ia` (sin modelo, texto de la guía), `sin_informacion`, `resumen`, `conversacion`, `protocolo`, `emergencia` o `emergencia_companero`.
+`modo` puede ser: `ia_local` (respondió el modelo local), `ia_nube` (respondió Gemini), `respaldo_sin_ia` (sin modelo, texto de la guía), `sin_informacion`, `resumen`, `conversacion`, `protocolo`, `emergencia` o `emergencia_companero`.
 
 El idioma llega en la cookie `idioma` o con `?lang=en|es`; ORI, las guías y las reglas responden en ese idioma.
 
@@ -68,7 +83,7 @@ El idioma llega en la cookie `idioma` o con `?lang=en|es`; ORI, las guías y las
 - ✅ Respuestas en unos 0,3–2,5 s, citan la guía, respetan el color de cada dato y dicen "no tengo información" ante preguntas fuera de las guías.
 - ✅ Búsqueda **híbrida**: los vectores ordenan y la coincidencia de palabras decide si hay algo relevante.
 - ✅ Estado real desde la base de datos SQLite de a bordo y el motor de reglas; voz sin internet con Whisper y Piper.
-- ✅ 155 pruebas automáticas en Python y 13 en JavaScript.
+- ✅ 161 pruebas automáticas en Python y 13 en JavaScript.
 - Las guías son **ilustrativas** y se basan en información del Human Research Program de NASA; requieren revisión de medicina de vuelo.
 
 > Código escrito con asistencia de IA (Claude) y revisado por el equipo.

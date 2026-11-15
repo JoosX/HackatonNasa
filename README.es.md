@@ -69,6 +69,8 @@ uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 node --test tests/*.mjs
 ```
 
+> **ORI está pensado para la IA local.** En la nave todo corre sin internet en la computadora de a bordo con Ollama (Gemma 3). El motor opcional Gemini existe solo para la demo en línea, donde no hay un modelo local; la app muestra qué motor respondió.
+
 Consulta la [configuración de IA](IA_LOCAL.es.md), los [créditos del modelo](frontend/modelos/LEEME.md#español) y la [revisión pendiente de las guías](docs/validacion-orientacion.es.md).
 
 </details>

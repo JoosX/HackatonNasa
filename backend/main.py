@@ -85,6 +85,7 @@ class PreguntaChat(BaseModel):
     pregunta: str
     estado: dict | None = None   # opcional: si viene, se usa en vez de obtener_estado()
     conectado: bool = True       # ¿hay enlace con la Tierra? (lo indica la app)
+    motor: str | None = None     # "local" (Ollama), "nube" (Gemini) o "auto"; lo elige el usuario en la app
 
 
 class Medicion(BaseModel):
@@ -132,6 +133,7 @@ def reiniciar_demo(astronauta_id: str = "A1") -> dict:
 @app.post("/api/chat")
 def chat(p: PreguntaChat) -> dict:
     inicio = time.time()
+    ollama_cliente.fijar_motor(p.motor)
     # El estado sale siempre de la base de datos de a bordo: no se confía en valores enviados por el navegador
     # (podrían ser antiguos). Solo las pruebas pueden pasar un estado propio con "modo_demo".
     estado = p.estado if (p.estado or {}).get("modo_demo") else obtener_estado(p.astronauta_id)
@@ -148,6 +150,9 @@ def estado_ia() -> dict:
     """Para el indicador del front: ¿la IA local está lista?"""
     return {
         "ollama": ollama_cliente.disponible(),
+        "nube": ollama_cliente.nube_disponible(),
+        "motor_por_defecto": ollama_cliente.MOTOR_POR_DEFECTO,
+        "modelo_nube": ollama_cliente.GEMINI_MODELO,
         "modelo_chat": ollama_cliente.MODELO_CHAT,
         "modelo_embeddings": ollama_cliente.MODELO_EMBED,
         "indice_guias": rag.INDICE.exists(),

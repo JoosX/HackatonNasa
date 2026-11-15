@@ -1,0 +1,18 @@
+# Demo en línea de ORI en Render (plan gratis). En la nave ORI funciona sin internet con la IA local (ver IA_LOCAL.md);
+# aquí la IA puede ser Gemini (GEMINI_API_KEY) o tu IA local a través de un túnel (OLLAMA_URL).
+# Escrito con asistencia de IA (Claude); revisado por el equipo.
+services:
+  - type: web
+    name: ori
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/ia/estado
+    envVars:
+      - key: GEMINI_API_KEY      # clave de Google AI Studio (se escribe en el panel de Render, nunca en el código)
+        sync: false
+      - key: MOTOR_IA            # auto = IA local si responde; si no, Gemini
+        value: auto
+      - key: OLLAMA_URL          # opcional: dirección del túnel hacia tu IA local (Ollama)
+        sync: false

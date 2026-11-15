@@ -49,6 +49,21 @@ Optional variables: `MODELO_CHAT` (e.g. `gemma3:1b` if it is slow), `MODELO_EMBE
 
 **Offline voice (optional):** `python scripts/descargar_voces.py` downloads ORI's voices once; then add `--with faster-whisper --with numpy --with piper-tts` to the server command. Whisper transcribes the microphone and Piper gives ORI its voice, both on the same computer.
 
+## Online demo: choosing the AI engine
+
+> **ORI's mode is local AI.** There is no internet on the spacecraft, so ORI uses Ollama on the onboard computer. Gemini is only a helper to show the demo on a free server with no local model.
+
+In the app, above the chat, the **AI: Local · Gemini** selector chooses who writes the empathetic explanation. Steps, alerts and emergencies do not change: they still come from the guides and the fixed protocols.
+
+| Engine | When | How to enable it |
+|---|---|---|
+| **Local** (Ollama) | On the spacecraft, no internet | Ollama on the same computer, or `OLLAMA_URL` pointing to your computer through a tunnel |
+| **Gemini** (Google AI Studio) | Only for the online demo | `GEMINI_API_KEY` variable on the server (optional: `GEMINI_MODELO`, default `gemini-flash-latest`) |
+
+`MOTOR_IA=auto` (default) uses the local AI when it responds and Gemini otherwise. If neither is available, ORI answers with the guide text. With Gemini, the question and the astronaut's data go over the internet: use it only with demo data.
+
+**Render (free):** `render.yaml` creates the service. `GEMINI_API_KEY` is set in the Render dashboard; the key never goes in the code. The free plan has no Whisper or Piper: the microphone is disabled and ORI uses the browser's voice.
+
 ## Endpoints
 
 | Endpoint | What it does |
@@ -58,7 +73,7 @@ Optional variables: `MODELO_CHAT` (e.g. `gemma3:1b` if it is slow), `MODELO_EMBE
 | `POST /api/ia/recargar` | Reload after re-indexing the guides |
 | `POST /api/voz` · `POST /api/voz/hablar` | Speech to text (Whisper) · text to speech (Piper) |
 
-`modo` can be: `ia_local` (the model answered), `respaldo_sin_ia` (no model, guide text), `sin_informacion`, `resumen`, `conversacion`, `protocolo`, `emergencia` or `emergencia_companero`.
+`modo` can be: `ia_local` (the local model answered), `ia_nube` (Gemini answered), `respaldo_sin_ia` (no model, guide text), `sin_informacion`, `resumen`, `conversacion`, `protocolo`, `emergencia` or `emergencia_companero`.
 
 The language comes from the `idioma` cookie or `?lang=en|es`; ORI, the guides and the rules answer in that language.
 
@@ -68,7 +83,7 @@ The language comes from the `idioma` cookie or `?lang=en|es`; ORI, the guides an
 - ✅ Answers in about 0.3–2.5 s, citing the guide, respecting each value's color and saying "I don't have information" for questions outside the guides.
 - ✅ **Hybrid** search: vectors rank the passages and keyword overlap decides whether something is relevant.
 - ✅ Real status from the onboard SQLite database and rules engine; offline voice with Whisper and Piper.
-- ✅ 155 automated Python tests and 13 JavaScript tests.
+- ✅ 161 automated Python tests and 13 JavaScript tests.
 - Guides are **illustrative** and based on NASA Human Research Program information; they need review by flight medicine.
 
 > Code written with AI assistance (Claude) and reviewed by the team.

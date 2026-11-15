@@ -1,0 +1,11 @@
+.git
+**/__pycache__
+*.pyc
+.pytest_cache
+.venv
+venv
+data/mision.db
+data/mision.db-*
+data/voces
+blender
+tests

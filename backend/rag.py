@@ -594,7 +594,8 @@ def responder(pregunta: str, estado: dict | None = None, turnos: list[dict] | No
     ]
     principal = encontrados[0][1]["archivo"]
     try:
-        humano, modo = ollama_cliente.chatear(mensajes), "ia_local"
+        humano, motor_usado = ollama_cliente.chatear_con_motor(mensajes)
+        modo = "ia_nube" if motor_usado == "nube" else "ia_local"
     except ollama_cliente.OllamaNoDisponible:
         # Respaldo sin modelo: frase fija + lo que dice la guía (pasos y avisos), igual de útil.
         humano = T(f"Te entiendo. Mi parte de IA no está disponible ahora, pero esto es lo que recomienda "

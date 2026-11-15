@@ -5,6 +5,7 @@ import * as voz from "./voz.js";
 
 const MODOS = {
   ia_local: L("IA local", "Local AI"),
+  ia_nube: L("Gemini · solo demo en línea", "Gemini · online demo only"),
   respaldo_sin_ia: L("Guías (sin IA)", "Guides (no AI)"),
   sin_informacion: L("Sin guía", "No guide"),
   resumen: L("Resumen de tus datos", "Summary of your data"),
@@ -56,6 +57,39 @@ function bloques(texto) {
     `<${e} class="aparece${c ? " " + c : ""}" style="--d:${i * 90}ms">`)).join("");
 }
 
+// Motor de IA: "local" (Ollama, sin internet) o "nube" (Gemini). La elección se recuerda en este navegador.
+const CLAVE_MOTOR = "ori-motor-ia";
+let motor = null;
+function leerMotor() { try { return localStorage.getItem(CLAVE_MOTOR); } catch { return null; } }
+function guardarMotor(m) { try { localStorage.setItem(CLAVE_MOTOR, m); } catch { /* sin almacenamiento: solo esta sesión */ } }
+export function motorElegido() { return motor; }
+
+/** Conecta los botones Local / Gemini con lo que el servidor tiene disponible (GET /api/ia/estado). */
+export async function iniciarSelectorMotor(grupo) {
+  if (!grupo) return;
+  const botones = [...grupo.querySelectorAll("[data-motor]")];
+  let estado = null;
+  try { const r = await fetch("/api/ia/estado", { signal: AbortSignal.timeout(4000) }); estado = r.ok ? await r.json() : null; } catch { /* sin servidor */ }
+  const hay = { local: !!estado?.ollama, nube: !!estado?.nube };
+  if (!hay.local && !hay.nube) { grupo.hidden = true; return; }   // sin IA: ORI usa las guías (modo respaldo)
+  let aviso = grupo.querySelector(".motor-aviso");
+  if (!aviso) { aviso = document.createElement("span"); aviso.className = "motor-aviso"; grupo.append(aviso); }
+  const marcar = (m) => {
+    motor = m;
+    botones.forEach((b) => b.setAttribute("aria-checked", String(b.dataset.motor === m)));
+    aviso.textContent = m === "nube"
+      ? L("En la nave ORI usa la IA local, sin internet", "On the spacecraft ORI uses local AI, no internet")
+      : L("Sin internet, como en la nave", "No internet, as on the spacecraft");
+  };
+  botones.forEach((b) => {
+    b.disabled = !hay[b.dataset.motor];
+    if (b.disabled) b.title += L(" · no disponible en este servidor", " · not available on this server");
+    b.addEventListener("click", () => { if (!b.disabled) { marcar(b.dataset.motor); guardarMotor(b.dataset.motor); } });
+  });
+  const guardado = leerMotor();
+  marcar(hay[guardado] ? guardado : hay.local ? "local" : "nube");
+}
+
 export function crearChat({ lista, formulario, entrada, boton, sugerencias, obtenerEstado, obtenerConexion, estadoORI, alEmergencia }) {
   let ocupado = false;
   const textos = new WeakMap();   // mensaje -> texto original (para leerlo en voz alta)
@@ -92,7 +126,7 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
       const r = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ astronauta_id: "A1", pregunta, estado: obtenerEstado(), conectado: obtenerConexion?.() ?? true }),
+        body: JSON.stringify({ astronauta_id: "A1", pregunta, estado: obtenerEstado(), conectado: obtenerConexion?.() ?? true, motor: motorElegido() }),
         signal: AbortSignal.timeout(90000),   // si la IA tarda demasiado, se avisa en vez de esperar sin fin
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);

@@ -95,6 +95,11 @@
           <span class="txt-ampliar">Ampliar</span>
         </button>
       </div>
+      <div id="motorIA" class="motor-ia" role="radiogroup" aria-label="Motor de IA">
+        <span class="motor-rotulo">IA</span>
+        <button type="button" role="radio" data-motor="local" aria-checked="true" title="IA local (Ollama): funciona sin internet, como en la nave">Local · a bordo</button>
+        <button type="button" role="radio" data-motor="nube" aria-checked="false" title="Gemini (Google AI Studio): por internet, para la demo en línea">Gemini · solo demo</button>
+      </div>
       <div id="estadoTierra" class="estado-tierra" aria-live="polite"></div>
       <div class="zona-mensajes">
         <ol id="mensajes" class="mensajes" aria-live="polite"></ol>

@@ -69,6 +69,8 @@ uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
 node --test tests/*.mjs
 ```
 
+> **ORI is built around local AI.** On the spacecraft everything runs offline on the onboard computer with Ollama (Gemma 3). The optional Gemini engine exists only for the online demo, where no local model is available; the app shows which engine answered.
+
 See [AI setup](IA_LOCAL.md), [model credits](frontend/modelos/LEEME.md) and [guidance review](docs/validacion-orientacion.md).
 
 </details>
