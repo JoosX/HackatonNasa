@@ -1,0 +1,17 @@
+ORI · PITCH DE UN MINUTO
+
+PANTALLA 1
+En el espacio, la distancia se mide en kilómetros. Cuando tu salud cambia, se mide en tiempo.
+
+PANTALLA 2
+Los astronautas están entrenados y tienen monitoreo. Pero en una misión lejana, la respuesta médica desde Tierra puede demorarse. ¿Cómo mantenemos el cuidado durante esa espera?
+
+PANTALLA 3
+Presentamos ORI, un copiloto de salud que funciona a bordo. Reúne mediciones y tendencias en un cuerpo interactivo. Puedes preguntarle por tus registros y consultar guías con fuentes. Su arquitectura local mantiene el historial y la orientación disponibles sin internet. La conversación utiliza un modelo local; si falla, quedan guías y respuestas predefinidas.
+
+PANTALLA 4
+Nuestro prototipo usa recursos de NASA y datos de demostración. El siguiente paso es validar su orientación con profesionales y probarlo con usuarios. ORI: que la distancia no interrumpa el cuidado.
+
+Controles: espacio inicia o pausa, flechas cambian pantalla, N muestra el guion, R reinicia.
+El avance automático dura 60 segundos: pantallas en 0, 10, 23 y 47 segundos.
+Duración de locución aproximada: ensayar al ritmo propio.
