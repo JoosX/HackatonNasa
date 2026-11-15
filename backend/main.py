@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from fastapi import FastAPI, HTTPException  # noqa: E402
+from fastapi import FastAPI, HTTPException, Request  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
@@ -28,6 +28,7 @@ import motor  # noqa: E402
 import ollama_cliente  # noqa: E402
 import orientacion  # noqa: E402
 import rag  # noqa: E402
+import voz  # noqa: E402
 from guias import RAIZ  # noqa: E402
 
 app = FastAPI(title="Asistente de salud local para astronautas")
@@ -68,6 +69,7 @@ def _iniciar() -> None:
     db.sembrar("A1", valor_num=motor.valor_num)
     import threading
     threading.Thread(target=ollama_cliente.precalentar, daemon=True).start()
+    threading.Thread(target=voz.precargar, daemon=True).start()   # Whisper local (si está instalado)
 
 
 def obtener_estado(astronauta_id: str) -> dict:
@@ -187,6 +189,45 @@ def reglas() -> dict:
 def osd575() -> dict:
     """Panel metabólico real de la tripulación de Inspiration4 (NASA OSDR OSD-575)."""
     return _json("nasa_osd575.json")
+
+
+@app.get("/api/voz/estado")
+def voz_estado() -> dict:
+    """¿Hay transcripción de voz local en esta computadora? (la app oculta el micrófono si no)."""
+    return {"disponible": voz.disponible(), "modelo": voz.MODELO, "habla": voz.tts_disponible()}
+
+
+class TextoVoz(BaseModel):
+    texto: str
+
+
+@app.post("/api/voz/hablar")
+def voz_hablar(p: TextoVoz):
+    """Texto -> audio WAV con la voz natural de ORI (Piper), generado en esta misma computadora."""
+    from fastapi.responses import Response
+    try:
+        audio = voz.hablar(p.texto, idioma.actual())
+    except voz.VozNoDisponible as e:
+        raise HTTPException(status_code=503, detail=idioma.t("La voz de ORI no está instalada en este equipo.",
+                                                             "ORI's voice is not installed on this computer.")) from e
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    return Response(content=audio, media_type="audio/wav", headers={"Cache-Control": "no-store"})
+
+
+@app.post("/api/voz")
+async def voz_a_texto(request: Request) -> dict:
+    """Audio del micrófono (cuerpo crudo: webm/ogg/wav) -> texto, con Whisper en esta misma computadora."""
+    audio = await request.body()
+    try:
+        from starlette.concurrency import run_in_threadpool
+        return await run_in_threadpool(voz.transcribir, audio, idioma.actual())
+    except voz.VozNoDisponible as e:
+        raise HTTPException(status_code=503, detail=idioma.t("La voz local no está instalada en este equipo.",
+                                                             "Local voice is not installed on this computer.")) from e
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=idioma.t("No se pudo entender el audio. Intenta de nuevo.",
+                                                             "The audio could not be understood. Try again.")) from e
 
 
 @app.get("/api/orientacion")

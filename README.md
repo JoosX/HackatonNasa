@@ -34,7 +34,7 @@ Astronauts already train and monitor their health. Long missions add delayed or 
 </tr>
 </table>
 
-**Built in:** English / Spanish · anatomical layers · local history · illustrative status rules · measurement instructions · educational urgent guidance · cached NASA space-weather events. The Earth-link and summary-delivery controls are simulated.
+**Built in:** English / Spanish · offline voice (talk to ORI, spoken answers and emergency alarms) · anatomical layers · local history · illustrative status rules · measurement instructions · educational urgent guidance · cached NASA space-weather events. The Earth-link and summary-delivery controls are simulated.
 
 ## Quick start
 
@@ -55,6 +55,8 @@ ollama pull gemma3:4b
 ollama pull nomic-embed-text
 ```
 
+**Optional offline voice:** download ORI's voices once (`python scripts/descargar_voces.py`, ~60 MB each) and start the server with `--with faster-whisper --with numpy --with piper-tts` (requires `ffmpeg`). The microphone is transcribed locally with Whisper and ORI speaks with Piper; audio never leaves the computer.
+
 After setup, the app and models run locally. Without Ollama, ORI uses guide-based and predefined responses. Initial downloads and external dataset updates need connectivity.
 
 <details>
@@ -64,7 +66,7 @@ Browser / Three.js → FastAPI → SQLite + rule engine + local guide retrieval 
 
 ```bash
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
-node --test tests/emergencia.test.mjs tests/orientacion.test.mjs
+node --test tests/*.mjs
 ```
 
 See [AI setup](IA_LOCAL.md), [model credits](frontend/modelos/LEEME.md) and [guidance review](docs/validacion-orientacion.md).
@@ -83,6 +85,6 @@ See [AI setup](IA_LOCAL.md), [model credits](frontend/modelos/LEEME.md) and [gui
 
 ---
 
-**Credits:** BodyParts3D © The Database Center for Life Science, [CC BY 4.0](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html) · Three.js (MIT) · JetBrains Mono (OFL). Screenshots from this repository. Event logo supplied by the team, displayed on a dark background. [Space Apps branding](https://www.spaceappschallenge.org/brand/).
+**Credits:** BodyParts3D © The Database Center for Life Science, [CC BY 4.0](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html) · Three.js (MIT) · JetBrains Mono (OFL) · faster-whisper (MIT) · Piper (GPL-3.0) with voices es_MX-ald (Unlicense dataset) and en_US-lessac (Blizzard 2013 dataset, non-commercial research). Screenshots from this repository. Event logo supplied by the team, displayed on a dark background. [Space Apps branding](https://www.spaceappschallenge.org/brand/).
 
 **AI disclosure:** project code, text and translations include Claude assistance; this README was prepared with OpenAI Codex assistance. NASA references and event participation do not imply NASA endorsement.

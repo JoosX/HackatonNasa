@@ -1,6 +1,7 @@
 // Chat con ORI, el compañero de salud a bordo (POST /api/chat).
 // Código escrito con asistencia de IA (Claude); revisado por el equipo.
 import { L, LOCALE } from "./i18n.js";
+import * as voz from "./voz.js";
 
 const MODOS = {
   ia_local: L("IA local", "Local AI"),
@@ -57,6 +58,7 @@ function bloques(texto) {
 
 export function crearChat({ lista, formulario, entrada, boton, sugerencias, obtenerEstado, obtenerConexion, estadoORI, alEmergencia }) {
   let ocupado = false;
+  const textos = new WeakMap();   // mensaje -> texto original (para leerlo en voz alta)
   const fijarEstado = (estado, texto) => estadoORI?.(estado, texto);
 
   function mensajeORI(html, clase = "") {
@@ -110,10 +112,15 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
       const recorrido = /^(protocolo|emergencia)/.test(d.modo)
         ? `<button type="button" class="btn btn-peligro btn-recorrido aparece" data-abrir-urgente="pulso">${L("Abrir recorrido paso a paso (¿responde? ¿respira?)", "Open step-by-step walkthrough (responding? breathing?)")}</button>` : "";
       li.querySelector(".cuerpo").innerHTML = `${bloques(texto)}${recorrido}${fuentes}
-        <p class="meta"><span class="chip-modo" data-modo="${d.modo}">${MODOS[d.modo] ?? d.modo}</span>
+        <p class="meta"><button type="button" class="btn-leer" aria-label="${L("Leer en voz alta", "Read aloud")}" title="${L("Leer en voz alta", "Read aloud")}">🔊</button>
+        <span class="chip-modo" data-modo="${d.modo}">${MODOS[d.modo] ?? d.modo}</span>
         <span>${Number(d.segundos).toLocaleString(LOCALE, { maximumFractionDigits: 1 })}&nbsp;s · ${L("sin internet", "no internet")}</span></p>`;
       fijarEstado(d.alerta_roja ? "alerta" : "listo", d.alerta_roja ? L("Hay una alerta activa", "A warning is active") : L("En línea · sin internet", "Online · no internet needed"));
-      if (/^(protocolo|emergencia)/.test(d.modo)) alEmergencia?.();   // en una emergencia, el chat se amplía
+      textos.set(li, texto);
+      if (/^(protocolo|emergencia)/.test(d.modo)) {
+        alEmergencia?.();                                   // en una emergencia, el chat se amplía
+        voz.alertar(voz.resumenEmergencia(texto));          // alarma y, en voz alta, qué pasa y a quién llamar
+      }
     } catch (e) {
       li.className = "msg msg-ia msg-error";
       li.querySelector(".ori").classList.remove("pensando");
@@ -169,9 +176,59 @@ export function crearChat({ lista, formulario, entrada, boton, sugerencias, obte
     + "I can tell you **how you're doing**, guide you if you feel unwell and explain your indicators. "
     + "I work without internet and show you which NASA guide each piece of advice comes from.\nTell me, how are you feeling today?")));
 
+  // Leer en voz alta una respuesta (botón 🔊 de cada mensaje).
+  lista.addEventListener("click", (ev) => {
+    const b = ev.target.closest(".btn-leer");
+    if (!b) return;
+    const li = b.closest("li");
+    if (!voz.hablar(textos.get(li) ?? li.querySelector(".cuerpo").innerText, { forzar: true })) {
+      b.title = L("Este equipo no tiene voces instaladas", "This device has no voices installed");
+    }
+  });
+
+  // Micrófono: clic para grabar, clic para enviar. Whisper transcribe en el servidor local.
+  const mic = document.getElementById("btnMic");
+  let grabacion = null;
+  voz.micDisponible().then((si) => { if (mic) mic.hidden = !si; });
+  voz.comprobarVozServidor();   // saber pronto si ORI tiene voz propia (Piper) en este servidor
+  mic?.addEventListener("click", async () => {
+    if (ocupado) return;
+    if (!grabacion) {
+      try {
+        grabacion = await voz.grabar();
+      } catch {
+        fijarEstado("listo", L("No hay permiso para usar el micrófono", "Microphone permission denied"));
+        return;
+      }
+      voz.callar();
+      mic.setAttribute("aria-pressed", "true");
+      mic.classList.add("grabando");
+      fijarEstado("pensando", L("Escuchando… toca el micrófono para enviar", "Listening… tap the microphone to send"));
+      grabacion.fin.then(() => { if (mic.classList.contains("grabando")) mic.click(); });   // tope de 30 s
+      return;
+    }
+    const g = grabacion;
+    grabacion = null;
+    mic.classList.remove("grabando");
+    mic.setAttribute("aria-pressed", "false");
+    mic.disabled = true;
+    fijarEstado("pensando", L("Transcribiendo tu voz en esta computadora…", "Transcribing your voice on this computer…"));
+    try {
+      const textoVoz = (await voz.transcribir(await g.detener())).trim();
+      if (textoVoz) preguntar(textoVoz);
+      else fijarEstado("listo", L("No te escuché bien, ¿lo repites?", "I didn't catch that, could you repeat it?"));
+    } catch (e) {
+      fijarEstado("listo", e.message || L("No se pudo transcribir", "Could not transcribe"));
+    } finally {
+      mic.disabled = false;
+    }
+  });
+
   // ORI comenta por iniciativa propia (al registrar una medición o si aparece una alerta).
   function decir(texto, alerta = false) {
     const li = mensajeORI(bloques(texto), alerta ? "msg-alerta" : "");
+    textos.set(li, texto);
+    if (alerta) voz.alertar(texto.split(/\n/)[0]);   // alarma y la primera frase en voz alta
     const av = li.querySelector(".ori");
     av.classList.toggle("alerta", alerta);
     av.classList.add("habla");

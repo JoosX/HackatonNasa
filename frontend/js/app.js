@@ -380,6 +380,17 @@ async function iniciar() {
     btnAmpliar.querySelector(".txt-ampliar").textContent = si ? L("Reducir", "Shrink") : L("Ampliar", "Expand");
   }
   btnAmpliar.addEventListener("click", () => ampliarChat(!document.body.classList.contains("chat-amplio")));
+  // Voz y alarmas: un botón para silenciarlas (se recuerda en el navegador).
+  const { estaSilenciado, silenciar } = await import("./voz.js");
+  const btnSilencio = $("#btnSilencio");
+  const pintarSilencio = () => {
+    const mudo = estaSilenciado();
+    btnSilencio.setAttribute("aria-pressed", String(mudo));
+    btnSilencio.title = mudo ? L("Voz y alarmas silenciadas", "Voice and alarms muted") : L("Voz y alarmas activadas", "Voice and alarms on");
+    btnSilencio.setAttribute("aria-label", mudo ? L("Activar la voz y las alarmas", "Turn voice and alarms on") : L("Silenciar la voz y las alarmas", "Mute voice and alarms"));
+  };
+  btnSilencio.addEventListener("click", () => { silenciar(!estaSilenciado()); pintarSilencio(); });
+  pintarSilencio();
   document.addEventListener("keydown", (ev) => {
     if (ev.key === "Escape" && document.body.classList.contains("chat-amplio") && !document.querySelector("dialog[open]")) ampliarChat(false);
   });

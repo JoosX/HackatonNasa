@@ -34,7 +34,7 @@ Los astronautas ya se entrenan y monitorean su salud. Las misiones largas añade
 </tr>
 </table>
 
-**Incluye:** español / inglés · capas anatómicas · historial local · reglas ilustrativas · instrucciones de medición · orientación urgente educativa · eventos de clima espacial guardados. El enlace con Tierra y el envío de resúmenes son simulados.
+**Incluye:** español / inglés · voz sin internet (hablarle a ORI, respuestas habladas y alarmas de emergencia) · capas anatómicas · historial local · reglas ilustrativas · instrucciones de medición · orientación urgente educativa · eventos de clima espacial guardados. El enlace con Tierra y el envío de resúmenes son simulados.
 
 ## Inicio rápido
 
@@ -55,6 +55,8 @@ ollama pull gemma3:4b
 ollama pull nomic-embed-text
 ```
 
+**Voz opcional sin internet:** descarga una vez las voces de ORI (`python scripts/descargar_voces.py`, ~60 MB cada una) e inicia el servidor con `--with faster-whisper --with numpy --with piper-tts` (requiere `ffmpeg`). El micrófono se transcribe en local con Whisper y ORI habla con Piper; el audio nunca sale de la computadora.
+
 Después de la instalación, la aplicación y los modelos funcionan localmente. Sin Ollama, ORI utiliza guías y respuestas predefinidas. Las descargas iniciales y las actualizaciones externas requieren conexión.
 
 <details>
@@ -64,7 +66,7 @@ Navegador / Three.js → FastAPI → SQLite + reglas + consulta de guías locale
 
 ```bash
 uv run --with pytest --with fastapi --with httpx python -m pytest -q tests
-node --test tests/emergencia.test.mjs tests/orientacion.test.mjs
+node --test tests/*.mjs
 ```
 
 Consulta la [configuración de IA](IA_LOCAL.md), los [créditos del modelo](frontend/modelos/LEEME.md) y la [revisión pendiente de las guías](docs/validacion-orientacion.md).
@@ -83,6 +85,6 @@ Consulta la [configuración de IA](IA_LOCAL.md), los [créditos del modelo](fron
 
 ---
 
-**Créditos:** BodyParts3D © The Database Center for Life Science, [CC BY 4.0](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html) · Three.js (MIT) · JetBrains Mono (OFL). Capturas del repositorio. Logo del evento proporcionado por el equipo, presentado sobre fondo oscuro. [Identidad de Space Apps](https://www.spaceappschallenge.org/brand/).
+**Créditos:** BodyParts3D © The Database Center for Life Science, [CC BY 4.0](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html) · Three.js (MIT) · JetBrains Mono (OFL) · faster-whisper (MIT) · Piper (GPL-3.0) con las voces es_MX-ald (dataset Unlicense) y en_US-lessac (dataset Blizzard 2013, investigación no comercial). Capturas del repositorio. Logo del evento proporcionado por el equipo, presentado sobre fondo oscuro. [Identidad de Space Apps](https://www.spaceappschallenge.org/brand/).
 
 **Uso de IA:** el código, los textos y las traducciones del proyecto incluyen asistencia de Claude; este README se preparó con asistencia de OpenAI Codex. La participación y las referencias a NASA no implican su respaldo.

@@ -502,3 +502,19 @@ body.chat-amplio .sugerencias { flex-wrap: nowrap; mask-image: linear-gradient(t
 .idioma button[aria-pressed="true"] { background: var(--texto); color: var(--negro); }
 .idioma button:hover:not([aria-pressed="true"]) { color: var(--texto); }
 .idioma button:focus-visible { outline: 1px solid var(--sel); outline-offset: 2px; }
+
+/* ---------- Voz: micrófono, silencio y leer en voz alta ---------- */
+.btn-mic { flex: none; width: 46px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--linea-2); border-left: 0; border-right: 0; background: var(--negro); color: var(--suave); cursor: pointer; transition: color var(--m-out) var(--ease), background var(--m-out) var(--ease); }
+.btn-mic:hover { color: var(--texto); transition-duration: var(--m-in); }
+.btn-mic:focus-visible { outline: 1px solid var(--sel); outline-offset: -2px; }
+.btn-mic[hidden] { display: none; }
+.btn-mic.grabando { color: #fff; background: var(--rojo); animation: grabar 1s ease-in-out infinite; }
+.btn-mic:disabled { opacity: .5; cursor: progress; }
+@keyframes grabar { 50% { background: color-mix(in srgb, var(--rojo) 60%, black); } }
+#btnSilencio { margin-left: 0; }
+#btnSilencio .i-mudo, #btnSilencio[aria-pressed="true"] .i-sonido { display: none; }
+#btnSilencio[aria-pressed="true"] .i-mudo { display: inline; }
+#btnSilencio[aria-pressed="true"] { color: var(--amarillo); border-color: var(--amarillo); }
+.btn-leer { padding: 0 4px; border: 0; background: none; cursor: pointer; font-size: 12px; line-height: 1; opacity: .7; filter: grayscale(1); }
+.btn-leer:hover, .btn-leer:focus-visible { opacity: 1; filter: none; outline: none; }
+@media (prefers-reduced-motion: reduce) { .btn-mic.grabando { animation: none; } }

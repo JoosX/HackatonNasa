@@ -7,3 +7,6 @@ venv/
 .DS_Store
 data/mision.db
 data/mision.db-*
+
+# Voces de Piper (~60 MB cada una): no van al repositorio, se descargan con scripts/descargar_voces.py
+data/voces/

@@ -1,2 +1,8 @@
 fastapi
 uvicorn[standard]
+
+# Opcional, para hablarle a ORI con el micrófono (voz a texto local con Whisper; requiere ffmpeg):
+# faster-whisper
+# numpy
+# Opcional, para que ORI hable con voz natural (Piper; voces con scripts/descargar_voces.py):
+# piper-tts
